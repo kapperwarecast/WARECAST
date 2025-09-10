@@ -71,7 +71,7 @@ export default function PostersImportPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Import des Affiches Personnalisées</h1>
         <p className="text-muted-foreground">
-          Importer et associer les affiches personnalisées du dossier "affiches" aux films de la base de données.
+          Importer et associer les affiches personnalisées du dossier &quot;affiches&quot; aux films de la base de données.
         </p>
       </div>
 
@@ -82,7 +82,7 @@ export default function PostersImportPage() {
             Import des Affiches
           </CardTitle>
           <CardDescription>
-            Cette action va scanner le dossier "affiches", uploader les images dans le bucket "posters" 
+            Cette action va scanner le dossier &quot;affiches&quot;, uploader les images dans le bucket &quot;posters&quot; 
             et associer automatiquement les affiches aux films correspondants selon leur ID TMDB.
           </CardDescription>
         </CardHeader>
@@ -116,12 +116,12 @@ export default function PostersImportPage() {
               ) : (
                 <XCircle className="h-5 w-5 text-red-500" />
               )}
-              Résultat de l'Import
+              Résultat de l&apos;Import
             </CardTitle>
             <CardDescription>
               {importResult.success 
                 ? `Import terminé avec succès - ${importResult.totalUploaded} affiches uploadées, ${importResult.totalSkipped || 0} ignorées, ${importResult.totalUpdated} films mis à jour`
-                : `Erreur lors de l'import: ${importResult.error}`
+                : `Erreur lors de l&apos;import: ${importResult.error}`
               }
             </CardDescription>
           </CardHeader>

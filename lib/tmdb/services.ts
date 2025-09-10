@@ -3,11 +3,12 @@ import { tmdbClient } from './client'
 import { photoUploadService, PhotoUploadService } from '@/lib/services/photo-upload'
 import { parseName } from '@/lib/utils/name-parser'
 import type { MovieImportResult, TMDBMovie, TMDBCredits } from './types'
-import type { Tables, TablesInsert } from '@/lib/supabase/types'
+import type { TablesInsert } from '@/lib/supabase/types'
 
-type Movie = Tables<"movies">
-type Actor = Tables<"actors">
-type Director = Tables<"directors">
+// Type definitions for database tables
+// type Movie = Tables<"movies">
+// type Actor = Tables<"actors">
+// type Director = Tables<"directors">
 
 export class MovieImportService {
   private async getSupabase() {

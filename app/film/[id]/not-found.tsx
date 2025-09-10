@@ -11,7 +11,7 @@ export default function NotFound() {
         <div className="space-y-2">
           <h1 className="text-4xl font-bold">Film introuvable</h1>
           <p className="text-zinc-400 text-lg">
-            Le film que vous recherchez n'existe pas ou a été supprimé.
+            Le film que vous recherchez n&apos;existe pas ou a été supprimé.
           </p>
         </div>
         
@@ -19,7 +19,7 @@ export default function NotFound() {
           <Button asChild className="bg-zinc-800 hover:bg-zinc-700">
             <Link href="/" className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Link>
           </Button>
         </div>

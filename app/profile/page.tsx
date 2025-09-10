@@ -59,7 +59,7 @@ export default async function ProfilePage() {
               </div>
               
               <div className="space-y-2">
-                <h3 className="text-zinc-300 font-medium">Nom d'utilisateur</h3>
+                <h3 className="text-zinc-300 font-medium">Nom d&apos;utilisateur</h3>
                 <p className="text-white">{profile?.username || 'Non défini'}</p>
               </div>
               

@@ -65,7 +65,7 @@ async function tmdbRequest<T>(endpoint: string): Promise<T> {
   
   try {
     return JSON.parse(responseText)
-  } catch (error) {
+  } catch {
     console.error(`TMDB JSON Parse Error: ${responseText}`)
     throw new Error(`Invalid JSON response from TMDB: ${responseText.substring(0, 100)}...`)
   }

@@ -56,7 +56,7 @@ export function ImportForm({ onImportStart, onImportComplete }: ImportFormProps)
         try {
           const errorData = await response.json()
           errorMessage = errorData.error || errorMessage
-        } catch (e) {
+        } catch {
           // Response is not JSON, use status text
           errorMessage = `Erreur ${response.status}: ${response.statusText}`
         }
@@ -66,7 +66,7 @@ export function ImportForm({ onImportStart, onImportComplete }: ImportFormProps)
       let data
       try {
         data = await response.json()
-      } catch (e) {
+      } catch {
         throw new Error("Réponse invalide du serveur")
       }
       

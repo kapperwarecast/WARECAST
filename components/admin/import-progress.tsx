@@ -24,7 +24,7 @@ export function ImportProgress({ results, isLoading }: ImportProgressProps) {
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Film className="h-5 w-5" />
-          Résultats de l'import
+          Résultats de l&apos;import
           {isLoading && <Clock className="h-4 w-4 animate-pulse text-yellow-500" />}
         </CardTitle>
       </CardHeader>

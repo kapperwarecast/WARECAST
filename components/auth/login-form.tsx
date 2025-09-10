@@ -99,7 +99,7 @@ export function LoginForm() {
               href="/auth/signup" 
               className="text-white hover:underline font-medium"
             >
-              S'inscrire
+              S&apos;inscrire
             </Link>
           </p>
         </div>

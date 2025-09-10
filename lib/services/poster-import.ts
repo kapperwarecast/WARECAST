@@ -4,6 +4,7 @@ import { join } from 'path'
 import type { Tables } from '@/lib/supabase/types'
 
 type Movie = Tables<"movies">
+type MovieMinimal = Pick<Movie, 'tmdb_id' | 'titre_francais' | 'titre_original' | 'poster_local_path'>
 
 interface PosterFile {
   fileName: string
@@ -222,7 +223,7 @@ export class PosterImportService {
         throw new Error(`Erreur récupération films: ${moviesError.message}`)
       }
 
-      const moviesByTmdbId = new Map<number, Movie>()
+      const moviesByTmdbId = new Map<number, MovieMinimal>()
       movies?.forEach(movie => {
         moviesByTmdbId.set(movie.tmdb_id, movie)
       })
@@ -242,19 +243,17 @@ export class PosterImportService {
         console.log(`\\n📸 Traitement: ${posterFile.fileName} → Film: ${movieTitle}`)
 
         // Vérifier si l'affiche existe déjà (sauf si force=true)
-        let shouldSkip = false
         if (!options.force && movie?.poster_local_path) {
           const exists = await this.checkPosterExists(movie.poster_local_path)
           if (exists) {
             console.log(`⏭️  Affiche déjà présente, ignorée: ${movie.poster_local_path}`)
-            shouldSkip = true
             totalSkipped++
             
             results.push({
               tmdbId: posterFile.tmdbId,
               fileName: posterFile.fileName,
               success: true,
-              action: 'skipped',
+              action: 'skipped' as const,
               publicUrl: movie.poster_local_path,
               movieTitle
             })
@@ -281,7 +280,7 @@ export class PosterImportService {
             tmdbId: posterFile.tmdbId,
             fileName: posterFile.fileName,
             success: uploadResult.success,
-            action: 'uploaded',
+            action: 'uploaded' as const,
             publicUrl: uploadResult.publicUrl,
             movieTitle
           })
@@ -291,7 +290,7 @@ export class PosterImportService {
             tmdbId: posterFile.tmdbId,
             fileName: posterFile.fileName,
             success: false,
-            action: 'error',
+            action: 'error' as const,
             movieTitle,
             error: uploadResult.error
           })

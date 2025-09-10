@@ -99,7 +99,7 @@ export default function AdminPage() {
             <div>
               <h3 className="text-zinc-300 font-medium mb-2">Affiches personnalisées</h3>
               <p className="text-zinc-500">
-                Nommez vos fichiers au format "123 - Titre du film.jpg" où 123 est l'ID TMDB. 
+                Nommez vos fichiers au format &quot;123 - Titre du film.jpg&quot; où 123 est l&apos;ID TMDB. 
                 Les affiches remplaceront automatiquement celles des films correspondants.
               </p>
             </div>

@@ -84,8 +84,6 @@ export class PhotoStorageService {
       if (error) {
         console.error(`📸 PhotoStorage: Upload failed - Error:`, {
           message: error.message,
-          statusCode: error.statusCode,
-          error: error.error,
           bucket: BUCKET_NAME,
           path: storagePath,
           contentType,
