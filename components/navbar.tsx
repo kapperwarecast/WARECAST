@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { AuthButton } from "@/components/auth/auth-button"
+import { useFiltersModal } from "@/contexts/filters-context"
 import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
 import Link from "next/link"
@@ -24,6 +25,7 @@ export function Navbar() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const { openFiltersModal, hasActiveFilters } = useFiltersModal()
 
   useEffect(() => {
     const supabase = createClient()
@@ -104,8 +106,12 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+                className={hasActiveFilters 
+                  ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800" 
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }
                 aria-label="Filter"
+                onClick={openFiltersModal}
               >
                 <ListFilter className="h-5 w-5" />
               </Button>
@@ -145,11 +151,15 @@ export function Navbar() {
                       size="icon"
                       className="text-zinc-400 hover:text-white hover:bg-zinc-800"
                     >
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium text-sm">
-                          {initials || <User className="h-4 w-4" />}
-                        </AvatarFallback>
-                      </Avatar>
+                      {initials ? (
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium text-sm">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <User className="h-5 w-5" />
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 w-56">

@@ -5,20 +5,24 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useState } from "react"
-import type { Tables } from "@/lib/supabase/types"
-
-type Movie = Tables<"movies">
+import type { MovieWithDirector } from "@/types/movie"
+import { getDirectorName } from "@/types/movie"
+import { formatDuration, getLanguageName } from "@/lib/utils/format"
 
 interface MovieCardProps {
-  movie: Movie
+  movie: MovieWithDirector
 }
 
 export function MovieCard({ movie }: MovieCardProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
 
-  const title = movie.titre_francais || movie.titre_original || "Sans titre"
+  const frenchTitle = movie.titre_francais || "Sans titre"
+  const originalTitle = movie.titre_original
   const year = movie.annee_sortie
+  const director = getDirectorName(movie)
+  const duration = formatDuration(movie.duree)
+  const language = movie.langue_vo
   
   // Handle both TMDB paths and full URLs
   const getPosterUrl = (path: string | null): string | null => {
@@ -49,7 +53,7 @@ export function MovieCard({ movie }: MovieCardProps) {
         {!imageError && posterUrl ? (
           <Image
             src={posterUrl}
-            alt={title}
+            alt={frenchTitle}
             fill
             className="object-cover"
             onError={() => {
@@ -61,24 +65,45 @@ export function MovieCard({ movie }: MovieCardProps) {
         ) : (
           <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
             <div className="text-center p-4">
-              <p className="text-zinc-500 text-sm font-medium mb-1">{title}</p>
+              <p className="text-zinc-500 text-sm font-medium mb-1">{frenchTitle}</p>
               {year && <p className="text-zinc-600 text-xs">{year}</p>}
             </div>
           </div>
         )}
         
         {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1">
-              {title}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            {/* Titre français */}
+            <h3 className="text-white font-semibold text-base line-clamp-2 mb-1">
+              {frenchTitle}
             </h3>
-            {year && (
-              <p className="text-zinc-400 text-xs">{year}</p>
+            
+            {/* Titre original (italique) */}
+            {originalTitle && originalTitle !== frenchTitle && (
+              <p className="text-zinc-300 text-sm italic line-clamp-1 mb-1">
+                {originalTitle}
+              </p>
             )}
-            {movie.note_tmdb && (
-              <p className="text-yellow-500 text-xs mt-1">
-                ★ {movie.note_tmdb.toFixed(1)}
+            
+            {/* Réalisateur */}
+            {director && (
+              <p className="text-zinc-400 text-sm mb-1">
+                {director}
+              </p>
+            )}
+            
+            {/* Année et durée */}
+            <div className="flex items-center gap-2 text-zinc-400 text-sm mb-1">
+              {year && <span>{year}</span>}
+              {year && duration && <span>•</span>}
+              {duration && <span>{duration}</span>}
+            </div>
+            
+            {/* Langue */}
+            {language && (
+              <p className="text-zinc-400 text-sm">
+                Langue : {getLanguageName(language)}
               </p>
             )}
           </div>

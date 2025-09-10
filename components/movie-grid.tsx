@@ -1,12 +1,10 @@
 "use client"
 
 import { MovieCard, MovieCardSkeleton } from "./movie-card"
-import type { Tables } from "@/lib/supabase/types"
-
-type Movie = Tables<"movies">
+import type { MovieWithDirector } from "@/types/movie"
 
 interface MovieGridProps {
-  movies: Movie[]
+  movies: MovieWithDirector[]
   loading?: boolean
 }
 

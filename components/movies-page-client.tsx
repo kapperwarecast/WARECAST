@@ -1,17 +1,25 @@
 'use client'
 
 import { MovieGrid } from '@/components/movie-grid'
+import { FiltersModal } from '@/components/filters-modal'
 import { useInfiniteMovies } from '@/hooks/useInfiniteMovies'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { useFiltersModal } from '@/contexts/filters-context'
 
 export function MoviesPageClient() {
+  const { isFiltersModalOpen, setFiltersModalOpen } = useFiltersModal()
+  
   const {
     movies,
     loading,
     loadingMore,
     error,
     pagination,
+    filters,
+    sort,
     loadMore,
+    applyFilters,
+    resetFilters,
   } = useInfiniteMovies(20)
 
   // Hook pour l'infinite scroll automatique très proactif
@@ -63,6 +71,16 @@ export function MoviesPageClient() {
           )}
         </div>
       )}
+
+      {/* Modal de filtres */}
+      <FiltersModal
+        open={isFiltersModalOpen}
+        onOpenChange={setFiltersModalOpen}
+        filters={filters}
+        sort={sort}
+        onApplyFilters={applyFilters}
+        onResetFilters={resetFilters}
+      />
     </>
   )
 }
