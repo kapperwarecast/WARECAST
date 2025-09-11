@@ -170,7 +170,7 @@ export function Navbar() {
         onClose={closeSidebar}
         user={user}
         profile={profile}
-        displayName={displayName}
+        displayName={displayName || undefined}
         initials={initials}
       />
     </nav>
