@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, CreditCard, Sparkles, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useSubscription } from "@/hooks/use-subscription"
+import Link from "next/link"
 import type { User } from "@supabase/supabase-js"
 import type { Tables } from "@/lib/supabase/types"
 
@@ -14,7 +15,7 @@ type UserProfile = Tables<"user_profiles">
 
 export default function AbonnementPage() {
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [subscribing, setSubscribing] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -110,7 +111,7 @@ export default function AbonnementPage() {
             <h1 className="text-4xl font-bold">Abonnements Warecast</h1>
           </div>
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-            Choisissez votre formule et profitez d'un accès illimité à notre catalogue de films uniques
+            Choisissez votre formule et profitez d&apos;un accès illimité à notre catalogue de films uniques
           </p>
         </div>
 
@@ -196,7 +197,7 @@ export default function AbonnementPage() {
                   </div>
                   {!user ? (
                     <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white" size="lg">
-                      <a href="/auth/login">Se connecter pour s'abonner</a>
+                      <a href="/auth/login">Se connecter pour s&apos;abonner</a>
                     </Button>
                   ) : hasActiveSubscription ? (
                     <Button disabled className="w-full" size="lg">
@@ -262,7 +263,7 @@ export default function AbonnementPage() {
                   </div>
                   {!user ? (
                     <Button asChild className="w-full bg-orange-500 hover:bg-orange-600 text-white" size="lg">
-                      <a href="/auth/login">Se connecter pour s'abonner</a>
+                      <a href="/auth/login">Se connecter pour s&apos;abonner</a>
                     </Button>
                   ) : hasActiveSubscription ? (
                     <Button disabled className="w-full" size="lg">
@@ -288,11 +289,11 @@ export default function AbonnementPage() {
             <div className="bg-zinc-900/50 rounded-lg p-6 border border-zinc-800">
               <h3 className="text-lg font-semibold mb-3">Vous préférez tester avant de vous abonner ?</h3>
               <p className="text-zinc-400 mb-4">
-                Empruntez des films à l'unité pour seulement <strong className="text-white">1,50€</strong> par film.
+                Empruntez des films à l&apos;unité pour seulement <strong className="text-white">1,50€</strong> par film.
                 Une excellente façon de découvrir notre catalogue avant de vous engager.
               </p>
               <Button asChild variant="outline" className="border-zinc-600 text-zinc-300 hover:bg-zinc-800">
-                <a href="/">Explorer le catalogue</a>
+                <Link href="/">Explorer le catalogue</Link>
               </Button>
             </div>
           </div>

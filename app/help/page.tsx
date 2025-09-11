@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Film, Navigation, Settings, User, Search, Info, Play } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Film, Navigation, Settings, User, Search, Info } from "lucide-react"
 
 export default function HelpPage() {
   return (
@@ -94,11 +94,11 @@ export default function HelpPage() {
               </div>
             </CardHeader>
             <CardContent className="text-zinc-300 space-y-3">
-              <p>Si vous êtes connecté, accédez aux outils d'administration :</p>
+              <p>Si vous êtes connecté, accédez aux outils d&apos;administration :</p>
               <ul className="space-y-2">
                 <li><span className="text-orange-500">•</span> <strong>Import :</strong> Ajoutez de nouveaux films à votre catalogue</li>
                 <li><span className="text-orange-500">•</span> <strong>Affiches :</strong> Gérez les images de vos films</li>
-                <li><span className="text-orange-500">•</span> <strong>Statistiques :</strong> Suivez l'évolution de votre collection</li>
+                <li><span className="text-orange-500">•</span> <strong>Statistiques :</strong> Suivez l&apos;évolution de votre collection</li>
               </ul>
             </CardContent>
           </Card>

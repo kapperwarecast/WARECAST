@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ListFilter, Search, Plus, User, LogIn, X } from "lucide-react"
+import { ListFilter, Search, Plus, LogIn, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useFiltersModal } from "@/contexts/filters-context"
 import { useSidebar } from "@/contexts/sidebar-context"

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X, SlidersHorizontal, ArrowUpDown, Check, ListFilter } from "lucide-react"
+import { X, ArrowUpDown, Check, ListFilter } from "lucide-react"
 import { SortAscIcon, SortDescIcon } from "@/components/icons/sort-icons"
 import type { Filters, Sort } from "@/contexts/filters-context"
 import { getLanguageName } from "@/lib/utils/format"
@@ -115,15 +115,12 @@ export function FiltersModal({
 
   // Debounced preview function
   const debouncedPreview = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout
-      return (currentFilters: Filters) => {
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => {
-          fetchPreviewCount(currentFilters)
-        }, 300)
-      }
-    })(),
+    (currentFilters: Filters) => {
+      const timeoutId = setTimeout(() => {
+        fetchPreviewCount(currentFilters)
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    },
     [fetchPreviewCount]
   )
 
