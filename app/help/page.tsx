@@ -23,7 +23,7 @@ export default function HelpPage() {
                 <div className="p-2 bg-orange-500/10 rounded-lg">
                   <Film className="h-6 w-6 text-orange-500" />
                 </div>
-                <CardTitle className="text-white">Vue d'ensemble</CardTitle>
+                <CardTitle className="text-white">Vue d&apos;ensemble</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="text-zinc-300 space-y-3">
