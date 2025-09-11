@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      abonnements: {
+        Row: {
+          created_at: string | null
+          duree_mois: number
+          emprunts_illimites: boolean
+          id: string
+          nom: string
+          prix: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duree_mois: number
+          emprunts_illimites?: boolean
+          id?: string
+          nom: string
+          prix: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duree_mois?: number
+          emprunts_illimites?: boolean
+          id?: string
+          nom?: string
+          prix?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       actors: {
         Row: {
           created_at: string | null
@@ -79,6 +109,60 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      emprunts: {
+        Row: {
+          created_at: string | null
+          date_emprunt: string | null
+          date_retour: string
+          id: string
+          montant_paye: number | null
+          movie_id: string
+          statut: string
+          type_emprunt: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date_emprunt?: string | null
+          date_retour: string
+          id?: string
+          montant_paye?: number | null
+          movie_id: string
+          statut?: string
+          type_emprunt: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date_emprunt?: string | null
+          date_retour?: string
+          id?: string
+          montant_paye?: number | null
+          movie_id?: string
+          statut?: string
+          type_emprunt?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emprunts_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emprunts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movie_actors: {
         Row: {
@@ -164,11 +248,13 @@ export type Database = {
       movies: {
         Row: {
           annee_sortie: number | null
+          copies_disponibles: number
           created_at: string | null
           duree: number | null
           genres: string[] | null
           id: string
           langue_vo: string | null
+          nombre_copies: number
           note_tmdb: number | null
           poster_local_path: string | null
           subtitle_path: string | null
@@ -180,11 +266,13 @@ export type Database = {
         }
         Insert: {
           annee_sortie?: number | null
+          copies_disponibles?: number
           created_at?: string | null
           duree?: number | null
           genres?: string[] | null
           id?: string
           langue_vo?: string | null
+          nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
           subtitle_path?: string | null
@@ -196,11 +284,13 @@ export type Database = {
         }
         Update: {
           annee_sortie?: number | null
+          copies_disponibles?: number
           created_at?: string | null
           duree?: number | null
           genres?: string[] | null
           id?: string
           langue_vo?: string | null
+          nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
           subtitle_path?: string | null
@@ -211,6 +301,54 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      user_abonnements: {
+        Row: {
+          abonnement_id: string
+          created_at: string | null
+          date_expiration: string
+          date_souscription: string | null
+          id: string
+          statut: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          abonnement_id: string
+          created_at?: string | null
+          date_expiration: string
+          date_souscription?: string | null
+          id?: string
+          statut?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          abonnement_id?: string
+          created_at?: string | null
+          date_expiration?: string
+          date_souscription?: string | null
+          id?: string
+          statut?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_abonnements_abonnement_id_fkey"
+            columns: ["abonnement_id"]
+            isOneToOne: false
+            referencedRelation: "abonnements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_abonnements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_profiles: {
         Row: {
@@ -247,7 +385,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_overdue_emprunts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

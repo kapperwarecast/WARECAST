@@ -1,19 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ListFilter, Search, Plus, User, LogIn } from "lucide-react"
+import { ListFilter, Search, Plus, User, LogIn, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { AuthButton } from "@/components/auth/auth-button"
 import { useFiltersModal } from "@/contexts/filters-context"
+import { useSidebar } from "@/contexts/sidebar-context"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { Sidebar } from "@/components/sidebar"
 import Image from "next/image"
 import Link from "next/link"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -26,6 +20,8 @@ export function Navbar() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const { openFiltersModal, hasActiveFilters } = useFiltersModal()
+  const { sidebarOpen, openSidebar, closeSidebar } = useSidebar()
+  const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
@@ -84,9 +80,14 @@ export function Navbar() {
     `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() :
     user?.email?.[0]?.toUpperCase()
 
+  const handleCloseAndGoHome = () => {
+    closeSidebar()
+    router.push('/')
+  }
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm border-b border-zinc-800">
-      <div className="max-w-[1600px] mx-auto px-6">
+      <div className="px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
@@ -126,68 +127,28 @@ export function Navbar() {
             </div>
           )}
 
-          {/* Right side - Auth dependent */}
+          {/* Right side - Always show + button */}
           <div className="flex items-center gap-2">
-            {loading ? (
-              <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
-            ) : user ? (
-              <>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="icon"
-                  className="text-zinc-400 hover:text-white hover:bg-zinc-800"
-                  aria-label="Administration"
-                >
-                  <Link href="/admin">
-                    <Plus className="h-5 w-5" />
-                  </Link>
-                </Button>
+            {/* Bouton + toujours visible */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={sidebarOpen 
+                ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800 z-50 relative" 
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800 z-50 relative"
+              }
+              aria-label={sidebarOpen ? "Fermer le menu et retourner au catalogue" : "Ouvrir le menu"}
+              onClick={sidebarOpen ? handleCloseAndGoHome : openSidebar}
+            >
+              {sidebarOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Plus className="h-5 w-5" />
+              )}
+            </Button>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-zinc-400 hover:text-white hover:bg-zinc-800"
-                    >
-                      {initials ? (
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium text-sm">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <User className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 w-56">
-                    {displayName && (
-                      <>
-                        <div className="px-2 py-1.5">
-                          <p className="text-sm font-medium text-white">{displayName}</p>
-                          <p className="text-xs text-zinc-400">{user.email}</p>
-                        </div>
-                        <DropdownMenuSeparator className="bg-zinc-800" />
-                      </>
-                    )}
-                    <DropdownMenuItem asChild className="text-zinc-300 hover:text-white hover:bg-zinc-800 cursor-pointer">
-                      <Link href="/profile">
-                        <User className="h-4 w-4 mr-2" />
-                        Profil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-zinc-800" />
-                    <DropdownMenuItem asChild className="text-zinc-300 hover:text-white hover:bg-zinc-800 cursor-pointer focus:bg-zinc-800">
-                      <div>
-                        <AuthButton variant="ghost" size="sm" className="w-full justify-start p-0 h-auto font-normal text-zinc-300 hover:text-white hover:bg-transparent" />
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
+            {/* Bouton connexion seulement si pas connecté */}
+            {!user && !loading && (
               <Button
                 asChild
                 variant="ghost"
@@ -203,6 +164,15 @@ export function Navbar() {
           </div>
         </div>
       </div>
+      
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={closeSidebar}
+        user={user}
+        profile={profile}
+        displayName={displayName}
+        initials={initials}
+      />
     </nav>
   )
 }
