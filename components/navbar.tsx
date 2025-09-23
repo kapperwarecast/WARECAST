@@ -1,84 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { ListFilter, Search, Plus, LogIn, X } from "lucide-react"
+import { ListFilter, Search, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useFiltersModal } from "@/contexts/filters-context"
 import { useSidebar } from "@/contexts/sidebar-context"
-import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import Image from "next/image"
 import Link from "next/link"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
-import type { Tables } from "@/lib/supabase/types"
-
-type UserProfile = Tables<"user_profiles">
 
 export function Navbar() {
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
   const { openFiltersModal, hasActiveFilters } = useFiltersModal()
   const { sidebarOpen, openSidebar, closeSidebar } = useSidebar()
   const router = useRouter()
-
-  useEffect(() => {
-    const supabase = createClient()
-    
-    // Get initial user
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      
-      if (user) {
-        // Get user profile
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single()
-        
-        setProfile(profile)
-      }
-      
-      setLoading(false)
-    }
-
-    getUser()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          setUser(session.user)
-          
-          // Get user profile
-          const { data: profile } = await supabase
-            .from("user_profiles")
-            .select("*")
-            .eq("id", session.user.id)
-            .single()
-          
-          setProfile(profile)
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setProfile(null)
-        }
-        setLoading(false)
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const displayName = profile ? 
-    `${profile.prenom || ''} ${profile.nom || ''}`.trim() || profile.username :
-    user?.email?.split('@')[0]
-
-  const initials = profile && (profile.prenom || profile.nom) ? 
-    `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() :
-    user?.email?.[0]?.toUpperCase()
 
   const handleCloseAndGoHome = () => {
     closeSidebar()
@@ -147,31 +83,13 @@ export function Navbar() {
               )}
             </Button>
 
-            {/* Bouton connexion seulement si pas connecté */}
-            {!user && !loading && (
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
-              >
-                <Link href="/auth/login">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Connexion
-                </Link>
-              </Button>
-            )}
           </div>
         </div>
       </div>
       
-      <Sidebar 
-        isOpen={sidebarOpen} 
+      <Sidebar
+        isOpen={sidebarOpen}
         onClose={closeSidebar}
-        user={user}
-        profile={profile}
-        displayName={displayName || undefined}
-        initials={initials}
       />
     </nav>
   )

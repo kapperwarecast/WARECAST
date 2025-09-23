@@ -38,11 +38,30 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect app routes - redirect if not logged in
-  const protectedPaths = ['/profile']
+  const protectedPaths = [
+    '/profile',
+    '/abonnement',
+    '/admin',
+    '/settings',
+    '/dashboard'
+  ]
+
   if (protectedPaths.some(path => request.nextUrl.pathname.startsWith(path)) && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
+    // Préserver les paramètres de query de la route originale
+    const returnUrl = request.nextUrl.pathname + request.nextUrl.search
+    url.searchParams.set('redirect', returnUrl)
+    return NextResponse.redirect(url)
+  }
+
+  // Routes publiques qui ne doivent pas être accessibles aux utilisateurs connectés
+  const publicOnlyPaths = ['/auth/login', '/auth/signup']
+  if (publicOnlyPaths.some(path => request.nextUrl.pathname === path) && user) {
+    const redirectTo = request.nextUrl.searchParams.get('redirect') || '/'
+    const url = request.nextUrl.clone()
+    url.pathname = redirectTo
+    url.search = '' // Nettoyer les paramètres de recherche
     return NextResponse.redirect(url)
   }
 

@@ -2,11 +2,14 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AuthErrorHandler } from "@/components/auth/auth-error-handler"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CheckCircle } from "lucide-react"
 import Link from "next/link"
 
 export function SignupForm() {
@@ -19,7 +22,8 @@ export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  
+
+  const { signUp } = useAuth()
   const router = useRouter()
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -28,28 +32,24 @@ export function SignupForm() {
     setError(null)
     setMessage(null)
 
-    const supabase = createClient()
-    
-    const { error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          nom: formData.nom,
-          prenom: formData.prenom
-        }
+    const { error: signUpError } = await signUp(
+      formData.email,
+      formData.password,
+      {
+        nom: formData.nom,
+        prenom: formData.prenom
       }
-    })
+    )
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError)
     } else {
       setMessage("Un email de confirmation vous a été envoyé. Vérifiez votre boîte de réception.")
       setTimeout(() => {
         router.push("/auth/login")
       }, 2000)
     }
-    
+
     setIsLoading(false)
   }
 
@@ -70,16 +70,13 @@ export function SignupForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSignup} className="space-y-4">
-          {error && (
-            <div className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded p-3">
-              {error}
-            </div>
-          )}
-          
+          <AuthErrorHandler error={error} onDismiss={() => setError(null)} />
+
           {message && (
-            <div className="text-green-400 text-sm bg-green-900/20 border border-green-800 rounded p-3">
-              {message}
-            </div>
+            <Alert variant="success">
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
           )}
           
           <div className="grid grid-cols-2 gap-4">

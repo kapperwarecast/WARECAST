@@ -1,29 +1,21 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+"use client"
+
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { User } from "lucide-react"
 
-export default async function ProfilePage() {
-  const supabase = await createClient()
-  
-  const { data: { user }, error } = await supabase.auth.getUser()
-  
-  if (error || !user) {
-    redirect('/auth/login')
-  }
+function ProfileContent() {
+  const { user, profile } = useAuth()
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  if (!user) return null
 
-  const displayName = profile ? 
+  const displayName = profile ?
     `${profile.prenom || ''} ${profile.nom || ''}`.trim() || profile.username :
     user.email?.split('@')[0]
 
-  const initials = profile && (profile.prenom || profile.nom) ? 
+  const initials = profile && (profile.prenom || profile.nom) ?
     `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase() :
     user.email?.[0]?.toUpperCase()
 
@@ -52,17 +44,17 @@ export default async function ProfilePage() {
                 <h3 className="text-zinc-300 font-medium">Prénom</h3>
                 <p className="text-white">{profile?.prenom || 'Non renseigné'}</p>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-zinc-300 font-medium">Nom</h3>
                 <p className="text-white">{profile?.nom || 'Non renseigné'}</p>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-zinc-300 font-medium">Nom d&apos;utilisateur</h3>
                 <p className="text-white">{profile?.username || 'Non défini'}</p>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-zinc-300 font-medium">Membre depuis</h3>
                 <p className="text-white">
@@ -74,7 +66,7 @@ export default async function ProfilePage() {
                 </p>
               </div>
             </div>
-            
+
             <div className="pt-6 border-t border-zinc-800">
               <h3 className="text-zinc-300 font-medium mb-2">Email</h3>
               <p className="text-white">{user.email}</p>
@@ -88,5 +80,13 @@ export default async function ProfilePage() {
         </Card>
       </div>
     </main>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
   )
 }

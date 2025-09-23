@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AuthErrorHandler } from "@/components/auth/auth-error-handler"
 import Link from "next/link"
 
 export function LoginForm() {
@@ -14,7 +15,8 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
+  const { signIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/'
@@ -24,20 +26,15 @@ export function LoginForm() {
     setIsLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error: signInError } = await signIn(email, password)
 
-    if (error) {
-      setError(error.message)
+    if (signInError) {
+      setError(signInError)
     } else {
       router.push(redirectTo)
       router.refresh()
     }
-    
+
     setIsLoading(false)
   }
 
@@ -51,11 +48,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
-          {error && (
-            <div className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded p-3">
-              {error}
-            </div>
-          )}
+          <AuthErrorHandler error={error} onDismiss={() => setError(null)} />
           
           <div className="space-y-2">
             <Label htmlFor="email" className="text-zinc-300">Email</Label>
@@ -92,16 +85,27 @@ export function LoginForm() {
           </Button>
         </form>
         
-        <div className="mt-4 text-center">
-          <p className="text-zinc-400 text-sm">
-            Pas encore de compte ?{" "}
-            <Link 
-              href="/auth/signup" 
-              className="text-white hover:underline font-medium"
+        <div className="mt-4 space-y-3">
+          <div className="text-center">
+            <Link
+              href="/auth/forgot-password"
+              className="text-zinc-400 hover:text-white text-sm hover:underline"
             >
-              S&apos;inscrire
+              Mot de passe oublié ?
             </Link>
-          </p>
+          </div>
+
+          <div className="text-center">
+            <p className="text-zinc-400 text-sm">
+              Pas encore de compte ?{" "}
+              <Link
+                href="/auth/signup"
+                className="text-white hover:underline font-medium"
+              >
+                S&apos;inscrire
+              </Link>
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
