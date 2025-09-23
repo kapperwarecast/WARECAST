@@ -9,13 +9,6 @@ interface AuthSectionProps {
 export function AuthSection({ onClose }: AuthSectionProps) {
   return (
     <div className="mb-6">
-      {/* Message d'accueil */}
-      <div className={CSS_CLASSES.welcomeMessage}>
-        <p className="text-zinc-300 text-sm text-center">
-          Connectez-vous pour accéder à toutes les fonctionnalités
-        </p>
-      </div>
-
       {/* Boutons d'authentification */}
       <div className="space-y-2">
         <NavLink

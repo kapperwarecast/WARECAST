@@ -45,12 +45,10 @@ export function UserSection({ onClose }: UserSectionProps) {
           onClick={onClose}
         />
 
-        <div onClick={onClose}>
-          <AuthButton
-            variant="ghost"
-            className="w-full justify-start text-zinc-300 hover:text-white hover:bg-zinc-800 h-auto py-3 px-3 font-normal"
-          />
-        </div>
+        <AuthButton
+          variant="ghost"
+          className="w-full justify-start text-zinc-300 hover:text-white hover:bg-zinc-800 h-auto py-3 px-3 font-normal"
+        />
       </div>
 
       <div className={CSS_CLASSES.separator}></div>

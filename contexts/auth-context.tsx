@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js"
 import type { Tables } from "@/lib/supabase/types"
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const supabase = createClient()
 
   // Fonction pour récupérer le profil utilisateur
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     const { data: profile } = await supabase
       .from("user_profiles")
       .select("*")
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .single()
 
     setProfile(profile)
-  }
+  }, [supabase])
 
   useEffect(() => {
     // Récupérer la session initiale
