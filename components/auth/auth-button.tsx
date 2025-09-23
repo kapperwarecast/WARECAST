@@ -20,11 +20,17 @@ export function AuthButton({ variant = "ghost", size = "sm", className }: AuthBu
   const handleLogout = async () => {
     setIsLoading(true)
 
-    await signOut()
-
-    router.push("/")
-    router.refresh()
-    setIsLoading(false)
+    try {
+      await signOut()
+      // Laisser le temps à l'état de se mettre à jour avant de rediriger
+      setTimeout(() => {
+        router.push("/")
+      }, 100)
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
