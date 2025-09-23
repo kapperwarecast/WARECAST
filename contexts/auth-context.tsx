@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js"
 import type { Tables } from "@/lib/supabase/types"
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // Fonction pour récupérer le profil utilisateur
   const fetchProfile = useCallback(async (userId: string) => {
@@ -118,9 +118,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   // Déconnexion
-  const signOut = async () => {
-    await supabase.auth.signOut()
-  }
+  const signOut = useCallback(async () => {
+    try {
+      setLoading(true)
+      await supabase.auth.signOut()
+
+      // Force la mise à jour de l'état local
+      setUser(null)
+      setProfile(null)
+      setSession(null)
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase.auth])
 
   // Récupération de mot de passe
   const resetPassword = async (email: string) => {
