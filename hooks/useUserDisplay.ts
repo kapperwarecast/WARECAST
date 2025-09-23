@@ -4,23 +4,28 @@ import { useAuth } from "@/contexts/auth-context"
  * Hook pour centraliser la logique d'affichage des informations utilisateur
  */
 export function useUserDisplay() {
-  const { user, profile } = useAuth()
+  const { user, profile, loading, isSigningOut } = useAuth()
 
-  const displayName = profile
+  // Pendant la déconnexion, éviter d'afficher des données obsolètes
+  const isTransitioning = isSigningOut || (loading && !user)
+
+  const displayName = (!isTransitioning && profile)
     ? `${profile.prenom || ''} ${profile.nom || ''}`.trim() || profile.username
-    : user?.email?.split('@')[0]
+    : (!isTransitioning && user?.email?.split('@')[0]) || null
 
-  const initials = profile && (profile.prenom || profile.nom)
+  const initials = (!isTransitioning && profile && (profile.prenom || profile.nom))
     ? `${profile.prenom?.[0] || ''}${profile.nom?.[0] || ''}`.toUpperCase()
-    : user?.email?.[0]?.toUpperCase()
+    : (!isTransitioning && user?.email?.[0]?.toUpperCase()) || null
 
-  const greetingMessage = profile?.prenom
-    ? `Bonjour ${profile.prenom}`
-    : displayName
-      ? `Bonjour ${displayName}`
-      : 'Bonjour'
+  const greetingMessage = !isTransitioning
+    ? (profile?.prenom
+        ? `Bonjour ${profile.prenom}`
+        : displayName
+          ? `Bonjour ${displayName}`
+          : 'Bonjour')
+    : 'Bonjour'
 
-  const fullName = profile
+  const fullName = (!isTransitioning && profile)
     ? `${profile.prenom || ''} ${profile.nom || ''}`.trim()
     : null
 
@@ -31,7 +36,10 @@ export function useUserDisplay() {
     initials,
     greetingMessage,
     fullName,
-    email: user?.email,
-    isAuthenticated: !!user
+    email: !isTransitioning ? user?.email : null,
+    isAuthenticated: !!user && !isSigningOut,
+    isLoading: loading,
+    isSigningOut,
+    isTransitioning
   }
 }

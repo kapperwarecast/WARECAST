@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { LikeButtonCompact } from "@/components/ui/like-button"
 import { useState } from "react"
 import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
@@ -71,6 +72,9 @@ export function MovieCard({ movie }: MovieCardProps) {
           </div>
         )}
         
+        {/* Like button - always visible but more prominent on hover */}
+        <LikeButtonCompact movieId={movie.id} />
+
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="absolute bottom-0 left-0 right-0 p-3">

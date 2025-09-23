@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
@@ -13,23 +13,23 @@ interface AuthButtonProps {
 }
 
 export function AuthButton({ variant = "ghost", size = "sm", className }: AuthButtonProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const { signOut } = useAuth()
+  const { signOut, isSigningOut, user } = useAuth()
   const router = useRouter()
 
-  const handleLogout = async () => {
-    setIsLoading(true)
+  // Rediriger vers la page d'accueil quand la déconnexion est terminée
+  useEffect(() => {
+    if (!user && !isSigningOut) {
+      console.log('[AuthButton] User signed out, redirecting to home page')
+      router.push("/")
+    }
+  }, [user, isSigningOut, router])
 
+  const handleLogout = async () => {
     try {
+      console.log('[AuthButton] Starting logout process')
       await signOut()
-      // Laisser le temps à l'état de se mettre à jour avant de rediriger
-      setTimeout(() => {
-        router.push("/")
-      }, 100)
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error)
-    } finally {
-      setIsLoading(false)
+      console.error('[AuthButton] Erreur lors de la déconnexion:', error)
     }
   }
 
@@ -38,11 +38,11 @@ export function AuthButton({ variant = "ghost", size = "sm", className }: AuthBu
       variant={variant}
       size={size}
       onClick={handleLogout}
-      disabled={isLoading}
+      disabled={isSigningOut}
       className={className}
     >
       <LogOut className="h-4 w-4 mr-2" />
-      {isLoading ? "..." : "Déconnexion"}
+      {isSigningOut ? "Déconnexion..." : "Déconnexion"}
     </Button>
   )
 }

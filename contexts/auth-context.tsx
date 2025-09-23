@@ -12,6 +12,7 @@ interface AuthContextType {
   profile: UserProfile | null
   session: Session | null
   loading: boolean
+  isSigningOut: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
   signUp: (email: string, password: string, metadata?: { nom?: string; prenom?: string }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -61,7 +63,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log('[AuthContext] Auth state change:', event, session?.user?.id || 'no user')
+
         setSession(session)
         setUser(session?.user || null)
 
@@ -69,6 +73,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await fetchProfile(session.user.id)
         } else {
           setProfile(null)
+        }
+
+        // Reset signing out state when sign out is complete
+        if (event === 'SIGNED_OUT') {
+          console.log('[AuthContext] Sign out complete, resetting states')
+          setIsSigningOut(false)
         }
 
         setLoading(false)
@@ -120,17 +130,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Déconnexion
   const signOut = useCallback(async () => {
     try {
-      setLoading(true)
-      await supabase.auth.signOut()
+      console.log('[AuthContext] Starting sign out process')
+      setIsSigningOut(true)
 
-      // Force la mise à jour de l'état local
-      setUser(null)
-      setProfile(null)
-      setSession(null)
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        console.error('[AuthContext] Sign out error:', error)
+        setIsSigningOut(false)
+        throw error
+      }
+
+      console.log('[AuthContext] Sign out request successful, waiting for auth state change')
+      // Ne pas mettre à jour l'état manuellement ici
+      // Laisser onAuthStateChange gérer la mise à jour de l'état
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error)
-    } finally {
-      setLoading(false)
+      console.error('[AuthContext] Erreur lors de la déconnexion:', error)
+      setIsSigningOut(false)
+      throw error
     }
   }, [supabase.auth])
 
@@ -156,6 +173,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     profile,
     session,
     loading,
+    isSigningOut,
     signIn,
     signUp,
     signOut,

@@ -164,6 +164,35 @@ export type Database = {
           },
         ]
       }
+      likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          movie_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movie_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movie_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movie_actors: {
         Row: {
           actor_id: string
@@ -254,9 +283,11 @@ export type Database = {
           genres: string[] | null
           id: string
           langue_vo: string | null
+          lien_vimeo: string | null
           nombre_copies: number
           note_tmdb: number | null
           poster_local_path: string | null
+          statut: string | null
           subtitle_path: string | null
           synopsis: string | null
           titre_francais: string | null
@@ -272,9 +303,11 @@ export type Database = {
           genres?: string[] | null
           id?: string
           langue_vo?: string | null
+          lien_vimeo?: string | null
           nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
+          statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
           titre_francais?: string | null
@@ -290,9 +323,11 @@ export type Database = {
           genres?: string[] | null
           id?: string
           langue_vo?: string | null
+          lien_vimeo?: string | null
           nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
+          statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
           titre_francais?: string | null
