@@ -61,7 +61,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setSession(session)
         setUser(session?.user || null)
 
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     )
 
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [supabase.auth, fetchProfile])
 
   // Connexion
   const signIn = async (email: string, password: string) => {
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return {}
-    } catch (error) {
+    } catch (_error) {
       return { error: "Une erreur inattendue s'est produite" }
     }
   }
@@ -112,7 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return {}
-    } catch (error) {
+    } catch (_error) {
       return { error: "Une erreur inattendue s'est produite" }
     }
   }
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return {}
-    } catch (error) {
+    } catch (_error) {
       return { error: "Une erreur inattendue s'est produite" }
     }
   }

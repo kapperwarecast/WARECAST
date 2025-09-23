@@ -51,8 +51,8 @@ export function ForgotPasswordForm() {
         <CardContent>
           <div className="space-y-4">
             <div className="text-center text-zinc-400 text-sm">
-              <p>Vérifiez votre boîte de réception et cliquez sur le lien dans l'email pour réinitialiser votre mot de passe.</p>
-              <p className="mt-2">L'email peut prendre quelques minutes à arriver.</p>
+              <p>Vérifiez votre boîte de réception et cliquez sur le lien dans l&apos;email pour réinitialiser votre mot de passe.</p>
+              <p className="mt-2">L&apos;email peut prendre quelques minutes à arriver.</p>
             </div>
 
             <div className="pt-4">
