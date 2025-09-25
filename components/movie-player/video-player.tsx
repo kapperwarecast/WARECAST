@@ -1,7 +1,6 @@
 "use client"
 
 import { AlertCircle, Play } from "lucide-react"
-import { cn } from "@/lib/utils"
 import type { VideoPlayerProps } from "@/types/player"
 import { getVimeoVideoData, getVimeoEmbedUrl } from "@/lib/utils/vimeo"
 
@@ -51,7 +50,7 @@ function VideoPlayerError({ title }: { title: string }) {
           </h3>
 
           <p className="text-zinc-400 text-sm mb-4">
-            La vidéo pour <span className="font-medium text-white">{title}</span> n'est
+            La vidéo pour <span className="font-medium text-white">{title}</span> n&apos;est
             pas encore disponible ou le lien est invalide.
           </p>
 

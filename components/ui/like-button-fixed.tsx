@@ -93,7 +93,7 @@ export function LikeButton({
 
 // Compact version specifically for cards with hydration fix
 export function LikeButtonCompact(props: Omit<LikeButtonProps, "compact" | "showCount">) {
-  const { isLiked, count, loading, hasPendingAction, toggle } = useMovieLike(props.movieId)
+  const { isLiked, loading, hasPendingAction, toggle } = useMovieLike(props.movieId)
   const [isAnimating, setIsAnimating] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
 
