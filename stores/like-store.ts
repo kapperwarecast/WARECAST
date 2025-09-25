@@ -199,8 +199,10 @@ export const useLikeStore = create<LikeStore>()(
   )
 )
 
-// Hook for components
+// Hook for components with hydration handling
 export const useMovieLike = (movieId: string) => {
+  const [isHydrated, setIsHydrated] = React.useState(false)
+
   const {
     getLikeData,
     isLoading,
@@ -213,19 +215,30 @@ export const useMovieLike = (movieId: string) => {
   const likeData = getLikeData(movieId)
   const loading = isLoading(movieId)
 
-  // Auto-fetch user likes if needed (only once per session)
+  // Track hydration status
   React.useEffect(() => {
-    if (needsInitialFetch() && !initializing) {
-      fetchUserLikes()
+    setIsHydrated(true)
+  }, [])
+
+  // Auto-fetch user likes if needed (only after hydration)
+  React.useEffect(() => {
+    if (isHydrated && needsInitialFetch() && !initializing) {
+      // Small delay to ensure hydration is complete
+      const timer = setTimeout(() => {
+        fetchUserLikes()
+      }, 100)
+
+      return () => clearTimeout(timer)
     }
-  }, [needsInitialFetch, fetchUserLikes, initializing])
+  }, [isHydrated, needsInitialFetch, fetchUserLikes, initializing])
 
   return {
     isLiked: likeData.isLiked,
     count: likeData.count,
-    loading: loading || initializing,
+    loading: loading || initializing || !isHydrated,
     hasPendingAction: !!likeData.pendingAction,
     toggle: () => toggleLike(movieId),
+    isHydrated,
   }
 }
 

@@ -1,11 +1,17 @@
 "use client"
 
 import { Heart } from "lucide-react"
+import { useMovieLike } from "@/stores/like-store"
 import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { useLikeButtonLogic, useHydration } from "@/hooks"
-import { ICON_SIZES, TRANSITION_CLASSES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
-import type { LikeButtonProps, BaseLikeButtonProps } from "@/types"
+
+interface LikeButtonProps {
+  movieId: string
+  className?: string
+  compact?: boolean
+  showCount?: boolean
+}
 
 export function LikeButton({
   movieId,
@@ -13,25 +19,34 @@ export function LikeButton({
   compact = false,
   showCount = true,
 }: LikeButtonProps) {
-  const {
-    isLiked,
-    count,
-    loading,
-    hasPendingAction,
-    isAnimating,
-    handleClick,
-    ariaLabel,
-  } = useLikeButtonLogic({ movieId })
+  const { isLiked, count, loading, hasPendingAction, toggle } = useMovieLike(movieId)
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (loading) return
+
+    // Trigger animation
+    setIsAnimating(true)
+    setTimeout(() => setIsAnimating(false), 200)
+
+    try {
+      await toggle()
+    } catch (error) {
+      console.error("Failed to toggle like:", error)
+    }
+  }
 
   return (
     <button
       onClick={handleClick}
       disabled={loading}
       className={cn(
-        "flex items-center gap-1.5 rounded-full",
-        TRANSITION_CLASSES.DEFAULT,
-        HOVER_SCALE_CLASSES.SUBTLE,
-        FOCUS_CLASSES.DEFAULT,
+        "flex items-center gap-1.5 rounded-full transition-all duration-200",
+        "hover:scale-105 active:scale-95",
+        "focus:outline-none focus:ring-2 focus:ring-red-500/50",
         compact
           ? "p-2 min-w-[44px] min-h-[44px]" // Touch-friendly size for mobile
           : "px-3 py-2",
@@ -39,12 +54,12 @@ export function LikeButton({
         isAnimating && "scale-110",
         className
       )}
-      aria-label={ariaLabel}
+      aria-label={isLiked ? "Unlike this movie" : "Like this movie"}
     >
       <Heart
-        size={compact ? ICON_SIZES.NORMAL : ICON_SIZES.LARGE}
+        size={compact ? 20 : 24}
         className={cn(
-          TRANSITION_CLASSES.DEFAULT,
+          "transition-all duration-200",
           isLiked
             ? "fill-red-500 text-red-500" // Filled red heart
             : "text-white/70 hover:text-white", // Empty white heart
@@ -77,26 +92,36 @@ export function LikeButton({
 }
 
 // Compact version specifically for cards with hydration fix
-export function LikeButtonCompact(props: BaseLikeButtonProps) {
-  const {
-    isLiked,
-    loading,
-    hasPendingAction,
-    isAnimating,
-    handleClick,
-    ariaLabel,
-  } = useLikeButtonLogic({ movieId: props.movieId })
+export function LikeButtonCompact(props: Omit<LikeButtonProps, "compact" | "showCount">) {
+  const { isLiked, count, loading, hasPendingAction, toggle } = useMovieLike(props.movieId)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
 
-  const { isHydrated } = useHydration()
+  // Fix hydration issue - only show after client mount
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
-  // Return invisible placeholder during hydration to maintain layout
-  if (!isHydrated) {
-    return (
-      <div
-        className="absolute top-2 right-2 z-10 w-10 h-10 opacity-0 pointer-events-none"
-        aria-hidden="true"
-      />
-    )
+  const handleClick = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (loading) return
+
+    // Trigger animation
+    setIsAnimating(true)
+    setTimeout(() => setIsAnimating(false), 200)
+
+    try {
+      await toggle()
+    } catch (error) {
+      console.error("Failed to toggle like:", error)
+    }
+  }
+
+  // Don't render until mounted to avoid hydration mismatch
+  if (!isMounted) {
+    return null
   }
 
   return (
@@ -106,26 +131,24 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
       onClick={handleClick}
       disabled={loading}
       className={cn(
-        "like-button absolute top-2 right-2 z-10",
+        "absolute top-2 right-2 z-10",
         "bg-black/20 backdrop-blur-sm hover:bg-black/40",
         "border border-white/10",
         "rounded-full",
-        // Force invisible state initially, only show on group hover
-        "invisible opacity-0",
-        "group-hover:visible group-hover:opacity-100",
-        TRANSITION_CLASSES.SMOOTH,
-        HOVER_SCALE_CLASSES.SUBTLE,
-        FOCUS_CLASSES.DEFAULT,
+        "opacity-0 group-hover:opacity-100",
+        "transition-all duration-300",
+        "hover:scale-105 active:scale-95",
+        "focus:outline-none focus:ring-2 focus:ring-red-500/50",
         loading && "opacity-50 cursor-not-allowed",
         isAnimating && "scale-110",
         props.className
       )}
-      aria-label={ariaLabel}
+      aria-label={isLiked ? "Unlike this movie" : "Like this movie"}
     >
       <Heart
-        size={ICON_SIZES.COMPACT}
+        size={16}
         className={cn(
-          TRANSITION_CLASSES.DEFAULT,
+          "transition-all duration-200",
           isLiked
             ? "fill-red-500 text-red-500"
             : "text-white/70 hover:text-white",

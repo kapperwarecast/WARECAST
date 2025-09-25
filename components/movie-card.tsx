@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LikeButtonCompact } from "@/components/ui/like-button"
+import { PlayButtonCompact } from "@/components/ui/play-button"
 import { useState } from "react"
 import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
@@ -46,7 +47,7 @@ export function MovieCard({ movie }: MovieCardProps) {
 
   return (
     <Link href={`/film/${movie.id}`}>
-      <Card className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0">
+      <Card className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0 [&:hover_.like-button]:visible [&:hover_.like-button]:opacity-100 [&:hover_.play-button]:visible [&:hover_.play-button]:opacity-100">
       <div className="relative aspect-[2/3] w-full">
         {imageLoading && (
           <Skeleton className="absolute inset-0 bg-zinc-800" />
@@ -71,7 +72,10 @@ export function MovieCard({ movie }: MovieCardProps) {
             </div>
           </div>
         )}
-        
+
+        {/* Play button - positioned on the left */}
+        <PlayButtonCompact movieId={movie.id} />
+
         {/* Like button - always visible but more prominent on hover */}
         <LikeButtonCompact movieId={movie.id} />
 
