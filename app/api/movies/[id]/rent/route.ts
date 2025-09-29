@@ -47,7 +47,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .select("id")
         .eq("user_id", user.id)
         .eq("movie_id", movieId)
-        .eq("statut", "actif")
+        .eq("statut", "en_cours")
         .single()
 
       let rentalId = existingRental?.id
@@ -56,17 +56,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // Libérer tout emprunt existant et créer le nouveau
         await supabase
           .from("emprunts")
-          .update({ statut: "termine", date_retour: new Date().toISOString() })
+          .update({ statut: "rendu", date_retour: new Date().toISOString() })
           .eq("user_id", user.id)
-          .eq("statut", "actif")
+          .eq("statut", "en_cours")
 
         // Créer le nouvel emprunt
+        const dateEmprunt = new Date()
+        const dateRetour = new Date()
+        dateRetour.setHours(dateRetour.getHours() + 48) // 48h pour les abonnés
+
         const { data: newRental, error: rentalError } = await supabase
           .from("emprunts")
           .insert({
             user_id: user.id,
             movie_id: movieId,
-            statut: "actif"
+            date_emprunt: dateEmprunt.toISOString(),
+            date_retour: dateRetour.toISOString(),
+            statut: "en_cours",
+            montant_paye: 0,
+            type_emprunt: "abonnement"
           })
           .select("id")
           .single()
