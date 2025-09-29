@@ -99,11 +99,11 @@ export function useModalSecurity({
       }
     }
 
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent | TouchEvent) => {
       // Si le clic n'est pas dans la modal, fermer
       const target = e.target as Element
       const isInModal = target.closest(modalSelector)
-      
+
       if (!isInModal) {
         e.preventDefault()
         e.stopPropagation()
