@@ -1,0 +1,177 @@
+/* Styles avancés pour le bouton play */
+
+.play-button-enhanced {
+  position: relative;
+  overflow: visible;
+}
+
+/* Effet de halo au survol */
+.play-button-enhanced::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.play-button-enhanced:hover::before {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* Animation de pulsation personnalisée */
+@keyframes play-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.play-button-enhanced:hover {
+  animation: play-pulse 2s infinite;
+}
+
+/* Effet de brillance qui traverse le bouton */
+.play-button-enhanced::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  border-radius: 50%;
+  opacity: 0;
+  transition: all 0.6s;
+  z-index: 1;
+}
+
+.play-button-enhanced:hover::after {
+  left: 100%;
+  opacity: 1;
+  animation: shine-effect 1.5s ease-in-out;
+}
+
+@keyframes shine-effect {
+  0% {
+    left: -100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* Amélioration du focus state */
+.play-button-enhanced:focus-visible {
+  outline: none;
+  box-shadow: 
+    0 0 0 2px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* État pressé avec feedback tactile */
+.play-button-enhanced:active {
+  transform: scale(0.95);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Animation d'apparition du bouton */
+@keyframes play-button-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-180deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.group:hover .play-button-enhanced {
+  animation: play-button-appear 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Contour animé */
+.play-button-border-animation {
+  position: relative;
+}
+
+.play-button-border-animation::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.8), transparent);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.play-button-border-animation:hover::before {
+  opacity: 1;
+  animation: rotate-border 2s linear infinite;
+}
+
+@keyframes rotate-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .play-button-enhanced {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .play-button-enhanced::before {
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .play-button-enhanced,
+  .play-button-enhanced::before,
+  .play-button-enhanced::after {
+    animation: none !important;
+    transition: opacity 0.2s !important;
+  }
+}

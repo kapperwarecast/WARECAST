@@ -8,6 +8,7 @@ export const ROUTES = {
   FAVORITES: '/favorites',
   WATCHED: '/watched',
   TO_WATCH: '/to-watch',
+  FILMS_EN_COURS: '/films-en-cours',
   BUY_MOVIE: '/buy-movie',
   ABONNEMENT: '/abonnement',
   AUTH: {

@@ -34,8 +34,12 @@ export function MovieGrid({ movies, loading = false }: MovieGridProps) {
 
   return (
     <div className="movie-grid">
-      {movies.map((movie) => (
-        <MovieCard key={movie.id} movie={movie} />
+      {movies.map((movie, index) => (
+        <MovieCard
+          key={movie.id}
+          movie={movie}
+          priority={index < 8}
+        />
       ))}
     </div>
   )

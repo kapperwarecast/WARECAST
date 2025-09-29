@@ -34,58 +34,81 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const supabase = useMemo(() => createClient(), [])
 
-  // Fonction pour récupérer le profil utilisateur
+  // Cache mémoire pour éviter les appels répétés
+  const profileCache = useMemo(() => new Map<string, UserProfile>(), [])
+
+  // Fonction pour récupérer le profil utilisateur (avec cache)
   const fetchProfile = useCallback(async (userId: string) => {
+    // Vérifier le cache d'abord
+    if (profileCache.has(userId)) {
+      setProfile(profileCache.get(userId)!)
+      return
+    }
+
     const { data: profile } = await supabase
       .from("user_profiles")
       .select("*")
       .eq("id", userId)
       .single()
 
-    setProfile(profile)
-  }, [supabase])
+    if (profile) {
+      profileCache.set(userId, profile)
+      setProfile(profile)
+    }
+  }, [supabase, profileCache])
 
   useEffect(() => {
-    // Récupérer la session initiale
+    let subscription: any = null
+
+    // Récupérer la session initiale de manière optimisée
     const getInitialSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (session?.user && !error) {
         setSession(session)
         setUser(session.user)
-        await fetchProfile(session.user.id)
+        // Charger le profil de manière asynchrone (non-bloquant)
+        fetchProfile(session.user.id)
       }
 
+      // Démarrage immédiat, le profil se chargera en arrière-plan
       setLoading(false)
     }
 
     getInitialSession()
 
-    // Écouter les changements d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[AuthContext] Auth state change:', event, session?.user?.id || 'no user')
+    // Délai léger pour éviter le blocage initial
+    const authTimer = setTimeout(() => {
+      // Écouter les changements d'authentification
+      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('[AuthContext] Auth state change:', event, session?.user?.id || 'no user')
 
-        setSession(session)
-        setUser(session?.user || null)
+          setSession(session)
+          setUser(session?.user || null)
 
-        if (session?.user) {
-          await fetchProfile(session.user.id)
-        } else {
-          setProfile(null)
+          if (session?.user) {
+            fetchProfile(session.user.id)
+          } else {
+            setProfile(null)
+          }
+
+          // Reset signing out state when sign out is complete
+          if (event === 'SIGNED_OUT') {
+            console.log('[AuthContext] Sign out complete, resetting states')
+            setIsSigningOut(false)
+          }
+
+          setLoading(false)
         }
+      )
+      subscription = sub
+    }, 50)
 
-        // Reset signing out state when sign out is complete
-        if (event === 'SIGNED_OUT') {
-          console.log('[AuthContext] Sign out complete, resetting states')
-          setIsSigningOut(false)
-        }
-
-        setLoading(false)
-      }
-    )
-
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(authTimer)
+      subscription?.unsubscribe()
+    }
   }, [supabase.auth, fetchProfile])
 
   // Connexion
@@ -132,22 +155,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('[AuthContext] Starting sign out process')
       setIsSigningOut(true)
+      
+      // Nettoyer immédiatement l'état local pour une UI réactive
+      setUser(null)
+      setProfile(null)
+      setSession(null)
 
       const { error } = await supabase.auth.signOut()
 
       if (error) {
         console.error('[AuthContext] Sign out error:', error)
-        setIsSigningOut(false)
         throw error
       }
 
-      console.log('[AuthContext] Sign out request successful, waiting for auth state change')
-      // Ne pas mettre à jour l'état manuellement ici
-      // Laisser onAuthStateChange gérer la mise à jour de l'état
+      console.log('[AuthContext] Sign out completed successfully')
     } catch (error) {
       console.error('[AuthContext] Erreur lors de la déconnexion:', error)
-      setIsSigningOut(false)
       throw error
+    } finally {
+      setIsSigningOut(false)
     }
   }, [supabase.auth])
 

@@ -5,10 +5,11 @@ import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { VideoPlayer } from "@/components/movie-player/video-player"
 import { MovieInfo } from "@/components/movie-player/movie-info"
+import { MovieAccessGuard } from "@/components/movie-player/movie-access-guard"
 import type { MovieWithPlayer } from "@/types/player"
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 async function getMovie(id: string): Promise<MovieWithPlayer | null> {
@@ -41,7 +42,8 @@ async function getMovie(id: string): Promise<MovieWithPlayer | null> {
 }
 
 export default async function MoviePlayerPage({ params }: PageProps) {
-  const movie = await getMovie(params.id)
+  const { id } = await params
+  const movie = await getMovie(id)
 
   if (!movie) {
     notFound()
@@ -50,54 +52,57 @@ export default async function MoviePlayerPage({ params }: PageProps) {
   const title = movie.titre_francais || movie.titre_original || "Film sans titre"
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Retour
-              </Button>
-            </Link>
+    <MovieAccessGuard movieId={id}>
+      <div className="min-h-screen bg-zinc-950">
+        {/* Header */}
+        <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  Retour
+                </Button>
+              </Link>
 
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold text-white truncate">
-                {title}
-              </h1>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-semibold text-white truncate">
+                  {title}
+                </h1>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 md:py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Video Player Section */}
-          <div className="w-full">
-            <VideoPlayer
-              vimeoUrl={movie.lien_vimeo}
-              title={title}
-            />
-          </div>
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-6 md:py-8">
+          <div className="max-w-6xl mx-auto space-y-8">
+            {/* Video Player Section */}
+            <div className="w-full">
+              <VideoPlayer
+                vimeoUrl={movie.lien_vimeo}
+                title={title}
+              />
+            </div>
 
-          {/* Movie Information Section */}
-          <div className="w-full">
-            <MovieInfo
-              movie={movie}
-              className="max-w-4xl"
-            />
+            {/* Movie Information Section */}
+            <div className="w-full">
+              <MovieInfo
+                movie={movie}
+                className="max-w-4xl"
+              />
+            </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </MovieAccessGuard>
   )
 }
 
 // Generate metadata for the page
 export async function generateMetadata({ params }: PageProps) {
-  const movie = await getMovie(params.id)
+  const { id } = await params
+  const movie = await getMovie(id)
 
   if (!movie) {
     return {

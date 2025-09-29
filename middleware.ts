@@ -43,7 +43,8 @@ export async function middleware(request: NextRequest) {
     '/abonnement',
     '/admin',
     '/settings',
-    '/dashboard'
+    '/dashboard',
+    '/films-en-cours'
   ]
 
   if (protectedPaths.some(path => request.nextUrl.pathname.startsWith(path)) && !user) {

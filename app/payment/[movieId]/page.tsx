@@ -248,6 +248,8 @@ export default function PaymentPage() {
   }, [])
 
   const handlePaymentSuccess = () => {
+    // Rediriger vers le player
+    // Le webhook aura créé l'emprunt et décrémenté les copies disponibles
     router.push(`/movie-player/${movieId}`)
   }
 

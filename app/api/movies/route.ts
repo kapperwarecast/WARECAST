@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const MOVIES_PER_PAGE = 20
 
+// Configuration du cache pour accélérer les requêtes
+export const dynamic = 'force-dynamic'
+export const revalidate = 60 // Revalider toutes les 60 secondes
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

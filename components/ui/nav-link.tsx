@@ -16,14 +16,19 @@ export function NavLink({ href, label, icon: Icon, onClick, exact = true }: NavL
   const { isRouteActive } = useActiveRoute()
   const isActive = isRouteActive(href, exact)
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      onClick()
+    }
+  }
+
   return (
     <Button
       asChild
       variant="ghost"
       className={getButtonStyles(isActive)}
-      onClick={onClick}
     >
-      <Link href={href}>
+      <Link href={href} onClick={handleClick}>
         <Icon className="h-5 w-5 mr-3" />
         {label}
       </Link>

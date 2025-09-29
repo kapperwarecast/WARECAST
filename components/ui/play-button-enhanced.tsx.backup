@@ -1,0 +1,200 @@
+"use client"
+
+import { Play } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { useHydration } from "@/hooks"
+import { useAuth } from "@/contexts/auth-context"
+import { useSubscription } from "@/hooks/use-subscription"
+import { PaymentChoiceModal } from "@/components/ui/payment-choice-modal"
+import { ICON_SIZES, TRANSITION_CLASSES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
+
+interface PlayButtonProps {
+  movieId: string
+  className?: string
+  disabled?: boolean
+}
+
+export function PlayButtonEnhanced({ movieId, className, disabled = false }: PlayButtonProps) {
+  const router = useRouter()
+  const { isHydrated } = useHydration()
+  const { user } = useAuth()
+  const { hasActiveSubscription, loadingUserSubscription } = useSubscription(user)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (disabled || loadingUserSubscription) return
+
+    // 1. User non-connecté → Login
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    // 2. User abonné → Player direct
+    if (hasActiveSubscription) {
+      router.push(`/movie-player/${movieId}`)
+      return
+    }
+
+    // 3. User non-abonné → Modale de paiement
+    setShowPaymentModal(true)
+  }
+
+  // Return invisible placeholder during hydration to maintain layout
+  if (!isHydrated) {
+    return (
+      <div
+        className="absolute top-2 left-2 z-10 w-12 h-12 opacity-0 pointer-events-none"
+        aria-hidden="true"
+      />
+    )
+  }
+
+  return (
+    <>
+      {/* Wrapper avec effet de halo */}
+      <div className="absolute top-2 left-2 z-10 group/play-button">
+        {/* Halo effect - visible uniquement au survol */}
+        <div className="absolute inset-0 rounded-full bg-white/10 scale-150 opacity-0 transition-all duration-500 group-hover/play-button:opacity-100 group-hover/play-button:scale-110 blur-sm" />
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleClick}
+          disabled={disabled || loadingUserSubscription}
+          className={cn(
+            "play-button relative w-12 h-12",
+            "bg-black/20 backdrop-blur-sm",
+            "border border-white/20 transition-all duration-300",
+            // Effet au survol : contour blanc épais + background plus opaque
+            "hover:bg-black/60 hover:border-white hover:border-[3px] hover:shadow-lg hover:shadow-white/20",
+            "rounded-full",
+            // Force invisible state initially, only show on group hover
+            "invisible opacity-0",
+            "group-hover:visible group-hover:opacity-100",
+            // Animations
+            "transform transition-all duration-300 ease-out",
+            "hover:scale-110 active:scale-95",
+            // Focus states
+            "focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-transparent",
+            loadingUserSubscription && "animate-pulse",
+            className
+          )}
+          aria-label={loadingUserSubscription ? "Vérification..." : "Regarder le film"}
+        >
+          <Play
+            size={ICON_SIZES.COMPACT}
+            className={cn(
+              "transition-all duration-300",
+              "text-white/80 fill-white/80",
+              // Effet au survol de l'icône
+              "group-hover/play-button:text-white group-hover/play-button:fill-white",
+              "group-hover/play-button:drop-shadow-lg",
+              // Animation en cas de loading
+              loadingUserSubscription ? "animate-spin" : "group-hover/play-button:scale-110"
+            )}
+          />
+          
+          {/* Effet de pulsation subtile */}
+          <div className="absolute inset-0 rounded-full border border-white/40 opacity-0 group-hover/play-button:opacity-100 group-hover/play-button:animate-ping" />
+        </Button>
+      </div>
+
+      {/* Modale de choix de paiement */}
+      <PaymentChoiceModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        movieId={movieId}
+      />
+    </>
+  )
+}
+
+// Composant compact original avec améliorations
+export function PlayButtonCompact({ movieId, className, disabled = false }: PlayButtonProps) {
+  const router = useRouter()
+  const { isHydrated } = useHydration()
+  const { user } = useAuth()
+  const { hasActiveSubscription, loadingUserSubscription } = useSubscription(user)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (disabled || loadingUserSubscription) return
+
+    // 1. User non-connecté → Login
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    // 2. User abonné → Player direct
+    if (hasActiveSubscription) {
+      router.push(`/movie-player/${movieId}`)
+      return
+    }
+
+    // 3. User non-abonné → Modale de paiement
+    setShowPaymentModal(true)
+  }
+
+  // Return invisible placeholder during hydration to maintain layout
+  if (!isHydrated) {
+    return (
+      <div
+        className="absolute top-2 left-2 z-10 w-10 h-10 opacity-0 pointer-events-none"
+        aria-hidden="true"
+      />
+    )
+  }
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleClick}
+        disabled={disabled || loadingUserSubscription}
+        className={cn(
+          "play-button absolute top-2 left-2 z-10",
+          "bg-black/20 backdrop-blur-sm hover:bg-black/40",
+          "border border-white/20 hover:border-white hover:border-2",
+          "rounded-full",
+          // Force invisible state initially, only show on group hover
+          "invisible opacity-0",
+          "group-hover:visible group-hover:opacity-100",
+          TRANSITION_CLASSES.SMOOTH,
+          HOVER_SCALE_CLASSES.SUBTLE,
+          FOCUS_CLASSES.DEFAULT,
+          loadingUserSubscription && "animate-pulse",
+          className
+        )}
+        aria-label={loadingUserSubscription ? "Vérification..." : "Regarder le film"}
+      >
+        <Play
+          size={ICON_SIZES.COMPACT}
+          className={cn(
+            TRANSITION_CLASSES.DEFAULT,
+            "text-white/70 hover:text-white fill-white/70 hover:fill-white",
+            loadingUserSubscription && "animate-spin"
+          )}
+        />
+      </Button>
+
+      {/* Modale de choix de paiement */}
+      <PaymentChoiceModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        movieId={movieId}
+      />
+    </>
+  )
+}

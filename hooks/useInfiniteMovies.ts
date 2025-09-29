@@ -76,7 +76,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     return params.toString()
   }, [initialLimit])
 
-  const fetchMovies = useCallback(async (page: number, append = false, currentFilters = filters, currentSort = sort) => {
+  const fetchMovies = useCallback(async (page: number, append = false, currentFilters?: Filters, currentSort?: Sort) => {
     try {
       if (!append) {
         setLoading(true)
@@ -85,18 +85,29 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
         setLoadingMore(true)
       }
 
-      const queryParams = buildQueryParams(page, currentFilters, currentSort)
+      // Utiliser les filtres actuels si non fournis
+      const activeFilters = currentFilters ?? filters
+      const activeSort = currentSort ?? sort
+
+      const queryParams = buildQueryParams(page, activeFilters, activeSort)
       const response = await fetch(`/api/movies?${queryParams}`, {
         headers: {
           'Content-Type': 'application/json',
         },
+        // Désactiver le cache pour les données sensibles à la pagination
+        cache: 'no-store'
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`Erreur ${response.status}: ${response.statusText}`)
       }
 
       const data: MoviesResponse = await response.json()
+      
+      // Validation des données reçues
+      if (!data.movies || !Array.isArray(data.movies)) {
+        throw new Error('Format de données invalide')
+      }
       
       if (append) {
         setMovies(prev => {
@@ -113,9 +124,14 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       setCurrentPage(page)
       
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch movies'
+      const errorMessage = err instanceof Error ? err.message : 'Erreur de chargement des films'
       setError(errorMessage)
       console.error('Error fetching movies:', err)
+      
+      // En cas d'erreur lors d'un append, on garde les films existants
+      if (!append) {
+        setMovies([])
+      }
     } finally {
       setLoading(false)
       setLoadingMore(false)
@@ -162,15 +178,17 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     await fetchMovies(1, false, defaultFilters, defaultSort)
   }, [fetchMovies, updateFiltersState])
 
-  // Synchroniser le contexte avec l'état initial
-  useEffect(() => {
-    updateFiltersState(filters, sort)
-  }, [filters, sort, updateFiltersState])
-
-  // Initial load
+  // Initial load - une seule fois au montage
+  const [initialized, setInitialized] = useState(false)
+  
   React.useEffect(() => {
-    fetchMovies(1, false)
-  }, [fetchMovies])
+    if (!initialized) {
+      updateFiltersState(filters, sort)
+      fetchMovies(1, false)
+      setInitialized(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return {
     movies,

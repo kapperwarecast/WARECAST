@@ -42,6 +42,13 @@ export const NAV_ITEMS: NavItem[] = [
     alwaysVisible: true
   },
   {
+    id: 'films-en-cours',
+    label: 'Films en cours',
+    href: ROUTES.FILMS_EN_COURS,
+    icon: Clock,
+    requiresAuth: true
+  },
+  {
     id: 'favorites',
     label: 'Mes favoris',
     href: ROUTES.FAVORITES,
@@ -103,7 +110,10 @@ export const NAV_ITEMS: NavItem[] = [
 export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'main',
-    items: [NAV_ITEMS.find(item => item.id === 'catalog')!],
+    items: [
+      NAV_ITEMS.find(item => item.id === 'catalog')!,
+      NAV_ITEMS.find(item => item.id === 'films-en-cours')!
+    ],
     requiresAuth: false
   },
   {

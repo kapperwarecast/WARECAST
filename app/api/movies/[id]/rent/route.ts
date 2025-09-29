@@ -10,7 +10,7 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const supabase = await createClient()
-    const { id: movieId } = await params // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { id: movieId } = await params
 
     // Vérifier l'authentification
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -21,36 +21,97 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 401 })
     }
 
-    // TODO: Appeler la fonction RPC intelligente qui gère emprunt existant OU nouveau
-    // Fonction RPC temporairement désactivée pour résoudre l'erreur TypeScript
-    /* const { data: result, error: rpcError } = await supabase
-      .rpc('rent_or_access_movie', {
-        p_movie_id: movieId,
-        p_auth_user_id: user.id,
-        p_payment_id: null
-      }) */
+    // Vérifier d'abord si l'utilisateur a un abonnement actif
+    const { data: userSubscription, error: subscriptionError } = await supabase
+      .from("user_abonnements")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("statut", "actif")
+      .gt("date_expiration", new Date().toISOString())
+      .limit(1)
+      .single()
 
-    // Mock response temporaire
-    const result = {
-      success: false,
-      requires_payment_choice: true,
-      movie_title: "Film de test",
-      rental_price: 1.50
-    }
-    const rpcError = null
-
-    if (rpcError) {
-      console.error("Erreur RPC rent_movie:", rpcError)
+    if (subscriptionError && subscriptionError.code !== "PGRST116") {
+      console.error("Erreur lors de la vérification de l'abonnement:", subscriptionError)
       return NextResponse.json({
         success: false,
-        error: "Erreur technique lors de l'emprunt"
+        error: "Erreur technique lors de la vérification de l'abonnement"
       }, { status: 500 })
     }
 
-    // Retourner le résultat de la fonction RPC
-    return NextResponse.json(result, {
-      status: result.success ? 200 : 409
-    })
+    // Si l'utilisateur a un abonnement actif, permettre l'accès direct
+    if (userSubscription) {
+      // Créer ou vérifier l'emprunt pour les utilisateurs abonnés
+      const { data: existingRental } = await supabase
+        .from("emprunts")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("movie_id", movieId)
+        .eq("statut", "actif")
+        .single()
+
+      let rentalId = existingRental?.id
+
+      if (!existingRental) {
+        // Libérer tout emprunt existant et créer le nouveau
+        await supabase
+          .from("emprunts")
+          .update({ statut: "termine", date_retour: new Date().toISOString() })
+          .eq("user_id", user.id)
+          .eq("statut", "actif")
+
+        // Créer le nouvel emprunt
+        const { data: newRental, error: rentalError } = await supabase
+          .from("emprunts")
+          .insert({
+            user_id: user.id,
+            movie_id: movieId,
+            statut: "actif"
+          })
+          .select("id")
+          .single()
+
+        if (rentalError) {
+          console.error("Erreur lors de la création de l'emprunt:", rentalError)
+          return NextResponse.json({
+            success: false,
+            error: "Impossible de créer l'emprunt"
+          }, { status: 500 })
+        }
+
+        rentalId = newRental.id
+      }
+
+      return NextResponse.json({
+        success: true,
+        existing_rental: !!existingRental,
+        emprunt_id: rentalId,
+        subscription_access: true
+      })
+    }
+
+    // Si pas d'abonnement, récupérer les détails du film pour la modal
+    const { data: movie, error: movieError } = await supabase
+      .from("movies")
+      .select("titre_francais, titre_original")
+      .eq("id", movieId)
+      .single()
+
+    if (movieError) {
+      console.error("Erreur lors de la récupération du film:", movieError)
+      return NextResponse.json({
+        success: false,
+        error: "Film introuvable"
+      }, { status: 404 })
+    }
+
+    // Utilisateur sans abonnement → modal de choix
+    return NextResponse.json({
+      success: false,
+      requires_payment_choice: true,
+      movie_title: movie.titre_francais || movie.titre_original || "Film",
+      rental_price: 1.50
+    }, { status: 409 })
 
   } catch (error) {
     console.error("Erreur API rent:", error)

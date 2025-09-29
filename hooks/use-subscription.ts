@@ -97,12 +97,31 @@ export function useSubscription(user: User | null): UseSubscriptionReturn {
       console.error("Erreur lors du chargement de l'abonnement utilisateur:", error)
       setUserSubscription(null)
     } finally {
+      // Force completion après 10s max
+      setTimeout(() => setLoadingUserSubscription(false), 10000)
       setLoadingUserSubscription(false)
     }
   }
 
   useEffect(() => {
-    fetchUserSubscription()
+    let isMounted = true
+    
+    const runFetch = async () => {
+      try {
+        await fetchUserSubscription()
+      } catch (error) {
+        console.error("Error in useEffect fetchUserSubscription:", error)
+        if (isMounted) {
+          setLoadingUserSubscription(false)
+        }
+      }
+    }
+    
+    runFetch()
+    
+    return () => {
+      isMounted = false
+    }
   }, [user, supabase])
 
   // Calculer les propriétés dérivées

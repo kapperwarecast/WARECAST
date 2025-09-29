@@ -6,6 +6,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-08-27.basil",
 })
 
+// URL de l'edge function webhook
+const WEBHOOK_URL = `${process.env.SUPABASE_URL}/functions/v1/stripe-webhook`
+
 interface RouteParams {
   params: Promise<{
     id: string
@@ -56,9 +59,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         description: `Location du film "${movieTitle}" pour 48h`,
       })
 
-      // TODO: Enregistrer le paiement en attente dans notre base de données
-      // Table 'payments' temporairement désactivée pour résoudre l'erreur TypeScript
-      /* const { data: payment, error: paymentError } = await supabase
+      // Enregistrer le paiement en attente dans notre base de données
+      const { data: payment, error: paymentError } = await supabase
         .from('payments')
         .insert({
           user_id: user.id,
@@ -77,10 +79,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           }
         })
         .select('id')
-        .single() */
-
-      const payment = { id: 'mock_payment_id' }
-      const paymentError = null
+        .single()
 
       if (paymentError) {
         console.error("Erreur création payment en base:", paymentError)

@@ -8,7 +8,7 @@ import { useFiltersModal } from '@/contexts/filters-context'
 
 export function MoviesPageClient() {
   const { isFiltersModalOpen, setFiltersModalOpen } = useFiltersModal()
-  
+
   const {
     movies,
     loading,
@@ -27,7 +27,7 @@ export function MoviesPageClient() {
     onLoadMore: loadMore,
     hasNextPage: pagination?.hasNextPage ?? false,
     loading: loadingMore,
-    rootMargin: '1000px', // Commencer à charger 1000px avant d'atteindre le bas pour un chargement ultra-fluide
+    rootMargin: '1000px',
     threshold: 0.1
   })
 

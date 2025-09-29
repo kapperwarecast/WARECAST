@@ -69,9 +69,9 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className={sidebarOpen 
-                ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800 z-50 relative" 
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800 z-50 relative"
+              className={sidebarOpen
+                ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800 z-[51] relative"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800 z-[51] relative"
               }
               aria-label={sidebarOpen ? "Fermer le menu et retourner au catalogue" : "Ouvrir le menu"}
               onClick={sidebarOpen ? handleCloseAndGoHome : openSidebar}

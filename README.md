@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 Warecast App
 
-## Getting Started
+Application de streaming vidéo construite avec Next.js 15, React 19, et Supabase.
 
-First, run the development server:
+## 🚀 Démarrage Rapide
+
+### Prérequis
+- Node.js 18+ 
+- npm, yarn, pnpm ou bun
+
+### Installation
 
 ```bash
+# Installer les dépendances
+npm install
+
+# Configurer les variables d'environnement
+cp .env.example .env.local
+# Éditer .env.local avec vos clés Supabase
+
+# Lancer le serveur de développement
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Stack Technique
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework:** Next.js 15 (App Router)
+- **UI:** React 19, TailwindCSS, shadcn/ui
+- **Backend:** Supabase (PostgreSQL, Auth, Storage)
+- **État:** Zustand, React Context
+- **Vidéo:** Player vidéo personnalisé avec HLS
 
-## Learn More
+## 📁 Structure du Projet
 
-To learn more about Next.js, take a look at the following resources:
+```
+warecast-app/
+├── app/                    # Routes Next.js (App Router)
+│   ├── api/               # API Routes
+│   ├── auth/              # Pages d'authentification
+│   ├── film/              # Pages de détail des films
+│   └── profile/           # Pages de profil utilisateur
+├── components/            # Composants React réutilisables
+│   ├── ui/               # Composants UI (shadcn)
+│   └── sidebar/          # Composants de navigation
+├── contexts/             # Contextes React (Auth, Filters, etc.)
+├── hooks/                # Hooks personnalisés
+├── lib/                  # Utilitaires et configuration
+│   └── supabase/         # Client Supabase
+├── stores/               # Stores Zustand
+└── types/                # Types TypeScript
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔑 Fonctionnalités Principales
 
-## Deploy on Vercel
+- ✅ Authentification utilisateur (Supabase Auth)
+- ✅ Catalogue de films avec filtres et tri
+- ✅ Scroll infini optimisé
+- ✅ Lecteur vidéo personnalisé
+- ✅ Gestion des favoris
+- ✅ Profil utilisateur
+- ✅ Interface responsive
+- ✅ Mode sombre
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎯 Optimisations Récentes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Voir [README-OPTIMISATIONS.md](./README-OPTIMISATIONS.md) pour les détails sur les dernières améliorations de performance.
+
+## 📝 Scripts Disponibles
+
+```bash
+# Développement
+npm run dev
+
+# Build de production
+npm run build
+
+# Démarrer en production
+npm start
+
+# Linter
+npm run lint
+```
+
+## 🔧 Configuration
+
+### Variables d'environnement requises
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=votre_url_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_cle_anon_supabase
+```
+
+## 📚 Documentation
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [TailwindCSS Documentation](https://tailwindcss.com/docs)
+
+## 🤝 Contribution
+
+Ce projet est en développement actif. Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue.
+
+## 📄 Licence
+
+Propriétaire - Tous droits réservés

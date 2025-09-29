@@ -5,19 +5,46 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LikeButtonCompact } from "@/components/ui/like-button"
-import { PlayButtonCompact } from "@/components/ui/play-button"
-import { useState } from "react"
+import { PlayButtonCompact } from "@/components/ui/play-button-improved"
+import { useState, useRef, useEffect } from "react"
 import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
 import { formatDuration, getLanguageName } from "@/lib/utils/format"
 
 interface MovieCardProps {
   movie: MovieWithDirector
+  priority?: boolean
 }
 
-export function MovieCard({ movie }: MovieCardProps) {
+export function MovieCard({ movie, priority = false }: MovieCardProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
+  const [isVisible, setIsVisible] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // Intersection Observer pour lazy loading intelligent
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true)
+            observer.disconnect()
+          }
+        })
+      },
+      {
+        rootMargin: '200px', // Commence à charger 200px avant d'être visible
+        threshold: 0.01
+      }
+    )
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
 
   const frenchTitle = movie.titre_francais || "Sans titre"
   const originalTitle = movie.titre_original
@@ -47,34 +74,43 @@ export function MovieCard({ movie }: MovieCardProps) {
 
   return (
     <Link href={`/film/${movie.id}`}>
-      <Card className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0 [&:hover_.like-button]:visible [&:hover_.like-button]:opacity-100 [&:hover_.play-button]:visible [&:hover_.play-button]:opacity-100">
-      <div className="relative aspect-[2/3] w-full">
+      <Card 
+        ref={cardRef}
+        className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0 [&:hover_.like-button]:visible [&:hover_.like-button]:opacity-100 [&:hover_.play-button]:visible [&:hover_.play-button]:opacity-100">
+      <div className="relative aspect-[2/3] w-full bg-zinc-800">
         {imageLoading && (
-          <Skeleton className="absolute inset-0 bg-zinc-800" />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-700 to-zinc-800 animate-pulse" />
         )}
-        {!imageError && posterUrl ? (
+        {isVisible && !imageError && posterUrl ? (
           <Image
             src={posterUrl}
             alt={frenchTitle}
             fill
-            className="object-cover"
+            className="object-cover transition-opacity duration-300"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            quality={75}
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
             onError={() => {
               setImageError(true)
               setImageLoading(false)
             }}
             onLoad={() => setImageLoading(false)}
           />
-        ) : (
+        ) : isVisible && imageError ? (
           <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
             <div className="text-center p-4">
               <p className="text-zinc-500 text-sm font-medium mb-1">{frenchTitle}</p>
               {year && <p className="text-zinc-600 text-xs">{year}</p>}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Play button - positioned on the left */}
-        <PlayButtonCompact movieId={movie.id} />
+        <PlayButtonCompact
+          movieId={movie.id}
+          copiesDisponibles={movie.copies_disponibles}
+        />
 
         {/* Like button - always visible but more prominent on hover */}
         <LikeButtonCompact movieId={movie.id} />

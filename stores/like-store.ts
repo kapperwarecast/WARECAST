@@ -54,8 +54,8 @@ export const useLikeStore = create<LikeStore>()(
 
       needsInitialFetch: () => {
         const { lastUserFetch } = get()
-        // Fetch if never fetched or fetch is older than 5 minutes
-        return lastUserFetch === 0 || (Date.now() - lastUserFetch) > 5 * 60 * 1000
+        // Fetch if never fetched or fetch is older than 10 minutes (plus conservateur)
+        return lastUserFetch === 0 || (Date.now() - lastUserFetch) > 10 * 60 * 1000
       },
 
       setLikeData: (movieId: string, data: Partial<LikeData>) => {

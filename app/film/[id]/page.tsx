@@ -24,9 +24,9 @@ interface MovieWithCast extends Movie {
 }
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 
@@ -159,7 +159,8 @@ function ActorCard({ actor, role }: { actor: Actor; role: string | null }) {
 }
 
 export default async function FilmPage({ params }: Props) {
-  const movie = await getMovie(params.id)
+  const { id } = await params
+  const movie = await getMovie(id)
 
   if (!movie) {
     notFound()

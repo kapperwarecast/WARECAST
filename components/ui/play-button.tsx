@@ -2,11 +2,13 @@
 
 import { Play } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useHydration } from "@/hooks"
 import { useAuth } from "@/contexts/auth-context"
+import { useSubscription } from "@/hooks/use-subscription"
+import { useMovieRental } from "@/hooks/useMovieRental"
 import { PaymentChoiceModal } from "@/components/ui/payment-choice-modal"
 import { ICON_SIZES, TRANSITION_CLASSES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
 
@@ -20,71 +22,59 @@ export function PlayButtonCompact({ movieId, className, disabled = false }: Play
   const router = useRouter()
   const { isHydrated } = useHydration()
   const { user } = useAuth()
-  const [isLoading, setIsLoading] = useState(false)
+  const { hasActiveSubscription, loadingUserSubscription } = useSubscription(user)
+  const { isCurrentlyRented, loading: loadingRental, error: rentalError, unknownStatus } = useMovieRental(movieId)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [movieTitle, setMovieTitle] = useState("")
-  const [rentalPrice, setRentalPrice] = useState(1.50)
+  const [fallbackMode, setFallbackMode] = useState(false)
 
-  const handleClick = async (e: React.MouseEvent) => {
-    console.log("PlayButton clicked")
+  // Fallback après 6 secondes si le chargement ne se termine pas
+  useEffect(() => {
+    if (loadingRental && !fallbackMode) {
+      const timer = setTimeout(() => {
+        console.warn('PlayButton: Activating fallback mode after timeout')
+        setFallbackMode(true)
+      }, 6000)
+      return () => clearTimeout(timer)
+    }
+  }, [loadingRental, fallbackMode])
+
+  const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    if (disabled || isLoading) return
+    // En mode fallback ou si erreur de chargement, ne pas bloquer l'interaction
+    const effectiveLoading = loadingRental && !fallbackMode && !rentalError
 
-    // Si utilisateur pas connecté, rediriger vers login
+    if (disabled || loadingUserSubscription || effectiveLoading) return
+
+    // 1. User non-connecté → Login
     if (!user) {
-      console.log("User not logged in, redirecting to login")
       router.push('/auth/login')
       return
     }
 
-    try {
-      setIsLoading(true)
-      console.log("Calling rent API for movie:", movieId)
-
-      // Appeler l'API d'emprunt
-      const response = await fetch(`/api/movies/${movieId}/rent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      })
-
-      const result = await response.json()
-      console.log("API response:", result)
-
-      if (result.success) {
-        // Succès : gérer les différents cas d'emprunt unique
-        if (result.existing_rental) {
-          console.log("Accès autorisé - emprunt existant:", result.emprunt_id)
-        } else if (result.previous_rental_released) {
-          console.log("Film précédent libéré, nouveau film emprunté:", result.emprunt_id)
-        } else {
-          console.log("Premier emprunt créé:", result.emprunt_id)
-        }
-        // Dans tous les cas, rediriger vers le player
-        console.log("Redirecting to player")
-        router.push(`/movie-player/${movieId}`)
-      } else if (result.requires_payment_choice) {
-        // Utilisateur sans abonnement → afficher la modale de choix
-        console.log("Showing payment modal")
-        setMovieTitle(result.movie_title)
-        setRentalPrice(result.rental_price)
-        setShowPaymentModal(true)
-      } else {
-        // Autres erreurs
-        console.error("Erreur emprunt:", result.error)
-        alert(result.error || "Impossible d'emprunter ce film")
-      }
-    } catch (error) {
-      console.error("Erreur réseau:", error)
-      alert("Erreur de connexion. Veuillez réessayer.")
-    } finally {
-      setIsLoading(false)
+    // 2. User abonné → Player direct
+    if (hasActiveSubscription) {
+      router.push(`/movie-player/${movieId}`)
+      return
     }
-  }
 
+    // 3. User avec film déjà loué → Player direct
+    if (isCurrentlyRented) {
+      router.push(`/movie-player/${movieId}`)
+      return
+    }
+
+    // 4. Si le statut de location est inconnu → Tenter le player (l'utilisateur aura peut-être loué)
+    if (unknownStatus) {
+      console.log('Statut de location inconnu, tentative d\'accès au player pour:', movieId)
+      router.push(`/movie-player/${movieId}`)
+      return
+    }
+
+    // 5. User non-abonné sans location confirmée → Modale de paiement
+    setShowPaymentModal(true)
+  }
 
   // Return invisible placeholder during hydration to maintain layout
   if (!isHydrated) {
@@ -102,29 +92,34 @@ export function PlayButtonCompact({ movieId, className, disabled = false }: Play
         variant="ghost"
         size="icon"
         onClick={handleClick}
-        disabled={disabled || isLoading}
+        disabled={disabled || loadingUserSubscription || (loadingRental && !fallbackMode && !rentalError)}
         className={cn(
           "play-button absolute top-2 left-2 z-10",
           "bg-black/20 backdrop-blur-sm hover:bg-black/40",
-          "border border-white/10",
+          "border border-white/20 hover:border-white hover:border-2",
           "rounded-full",
           // Force invisible state initially, only show on group hover
           "invisible opacity-0",
           "group-hover:visible group-hover:opacity-100",
-          TRANSITION_CLASSES.SMOOTH,
+          "transition-all duration-200 ease-out", // Transition simple et rapide
           HOVER_SCALE_CLASSES.SUBTLE,
           FOCUS_CLASSES.DEFAULT,
-          isLoading && "animate-pulse",
+          (loadingUserSubscription || (loadingRental && !fallbackMode && !rentalError)) && "animate-pulse",
           className
         )}
-        aria-label={isLoading ? "Emprunt en cours..." : "Regarder le film"}
+        aria-label={
+          loadingUserSubscription ? "Vérification de l'abonnement..." :
+          (loadingRental && !fallbackMode && !rentalError) ? "Vérification de la location..." :
+          unknownStatus ? "Statut inconnu - Tenter d'accéder au film" :
+          "Regarder le film"
+        }
       >
         <Play
           size={ICON_SIZES.COMPACT}
           className={cn(
             TRANSITION_CLASSES.DEFAULT,
             "text-white/70 hover:text-white fill-white/70 hover:fill-white",
-            isLoading && "animate-spin"
+            (loadingUserSubscription || (loadingRental && !fallbackMode && !rentalError)) && "animate-spin"
           )}
         />
       </Button>
@@ -133,9 +128,7 @@ export function PlayButtonCompact({ movieId, className, disabled = false }: Play
       <PaymentChoiceModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        movieTitle={movieTitle}
         movieId={movieId}
-        rentalPrice={rentalPrice}
       />
     </>
   )

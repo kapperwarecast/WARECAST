@@ -108,12 +108,12 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
       className={cn(
         "like-button absolute top-2 right-2 z-10",
         "bg-black/20 backdrop-blur-sm hover:bg-black/40",
-        "border border-white/10",
+        "border border-white/20 hover:border-white hover:border-2",
         "rounded-full",
         // Force invisible state initially, only show on group hover
         "invisible opacity-0",
         "group-hover:visible group-hover:opacity-100",
-        TRANSITION_CLASSES.SMOOTH,
+        "transition-all duration-200 ease-out", // Même transition que le bouton play
         HOVER_SCALE_CLASSES.SUBTLE,
         FOCUS_CLASSES.DEFAULT,
         loading && "opacity-50 cursor-not-allowed",

@@ -1,0 +1,58 @@
+/* Styles pour la modal ultra-sécurisée */
+
+/* Overlay qui capture absolument TOUS les clics */
+.modal-click-blocker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  pointer-events: auto !important;
+}
+
+/* S'assurer que la modal est au-dessus */
+.modal-content-secure {
+  position: relative;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+/* Désactiver TOUS les éléments en arrière-plan */
+.modal-open {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.modal-open a,
+.modal-open button,
+.modal-open [role="button"],
+.modal-open input,
+.modal-open textarea,
+.modal-open select {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Réactiver seulement les éléments de la modal */
+.modal-open [data-payment-modal] *,
+.modal-open [data-radix-dialog-content] * {
+  pointer-events: auto !important;
+  user-select: auto !important;
+}
+
+/* Empêcher le scroll de la page */
+.modal-open {
+  overflow: hidden !important;
+}
+
+/* Style pour les éléments désactivés temporairement */
+[data-disabled-by-modal] {
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0.7;
+  filter: grayscale(0.3);
+}

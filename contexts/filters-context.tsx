@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo } from 'react'
 
 export interface Filters {
   genres: string[]
@@ -57,25 +57,26 @@ export function FiltersProvider({ children }: FiltersProviderProps) {
     setCurrentSort(sort)
   }
 
-  // Déterminer si des filtres ou tri sont actifs
-  const hasActiveFilters = 
+  // Déterminer si des filtres ou tri sont actifs - memoized
+  const hasActiveFilters = useMemo(() => 
     currentFilters.genres.length > 0 ||
     currentFilters.decade !== '' ||
     currentFilters.language !== '' ||
     currentSort.by !== 'created_at' ||
     currentSort.order !== 'desc'
+  , [currentFilters, currentSort])
+
+  const value = useMemo(() => ({
+    isFiltersModalOpen,
+    openFiltersModal,
+    closeFiltersModal,
+    setFiltersModalOpen,
+    hasActiveFilters,
+    updateFiltersState,
+  }), [isFiltersModalOpen, hasActiveFilters])
 
   return (
-    <FiltersContext.Provider
-      value={{
-        isFiltersModalOpen,
-        openFiltersModal,
-        closeFiltersModal,
-        setFiltersModalOpen,
-        hasActiveFilters,
-        updateFiltersState,
-      }}
-    >
+    <FiltersContext.Provider value={value}>
       {children}
     </FiltersContext.Provider>
   )
