@@ -337,6 +337,82 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          external_payment_id: string | null
+          id: string
+          payment_intent_data: Json | null
+          payment_method: string | null
+          payment_type: string
+          rental_id: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          external_payment_id?: string | null
+          id?: string
+          payment_intent_data?: Json | null
+          payment_method?: string | null
+          payment_type: string
+          rental_id?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          external_payment_id?: string | null
+          id?: string
+          payment_intent_data?: Json | null
+          payment_method?: string | null
+          payment_type?: string
+          rental_id?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "emprunts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_abonnements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_abonnements: {
         Row: {
           abonnement_id: string
@@ -415,11 +491,67 @@ export type Database = {
         }
         Relationships: []
       }
+      video_watch_sessions: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          last_position: number | null
+          movie_id: string
+          session_id: string
+          updated_at: string | null
+          user_id: string | null
+          watch_duration: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_position?: number | null
+          movie_id: string
+          session_id: string
+          updated_at?: string | null
+          user_id?: string | null
+          watch_duration?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_position?: number | null
+          movie_id?: string
+          session_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          watch_duration?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_watch_sessions_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      rent_movie: {
+        Args: { p_auth_user_id: string; p_movie_id: string }
+        Returns: Json
+      }
+      rent_or_access_movie: {
+        Args: {
+          p_auth_user_id: string
+          p_movie_id: string
+          p_payment_id?: string
+        }
+        Returns: Json
+      }
       update_overdue_emprunts: {
         Args: Record<PropertyKey, never>
         Returns: undefined
