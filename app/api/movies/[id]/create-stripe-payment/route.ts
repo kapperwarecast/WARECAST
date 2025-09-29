@@ -6,9 +6,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-08-27.basil",
 })
 
-// URL de l'edge function webhook
-const WEBHOOK_URL = `${process.env.SUPABASE_URL}/functions/v1/stripe-webhook`
-
 interface RouteParams {
   params: Promise<{
     id: string

@@ -75,9 +75,9 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(total / limit)
 
     // Transformer les données pour correspondre au format attendu
-    const transformedMovies = rentals?.map((rental: any) => ({
+    const transformedMovies = rentals?.map((rental) => ({
       ...rental.movies,
-      directors: rental.movies?.movie_directors?.map((md: any) => md.directors) || [],
+      directors: rental.movies?.movie_directors?.map((md) => md.directors) || [],
       rental: {
         id: rental.id,
         date_emprunt: rental.date_emprunt,

@@ -97,7 +97,14 @@ export function diagnoseInteractions() {
 }
 
 // Ajouter les fonctions au window pour accès global en cas d'urgence
+declare global {
+  interface Window {
+    emergencyRestoreInteractions: typeof emergencyRestoreInteractions
+    diagnoseInteractions: typeof diagnoseInteractions
+  }
+}
+
 if (typeof window !== 'undefined') {
-  ;(window as any).emergencyRestoreInteractions = emergencyRestoreInteractions
-  ;(window as any).diagnoseInteractions = diagnoseInteractions
+  window.emergencyRestoreInteractions = emergencyRestoreInteractions
+  window.diagnoseInteractions = diagnoseInteractions
 }

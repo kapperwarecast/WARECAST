@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 // Configuration du cache pour améliorer les performances
@@ -10,7 +10,7 @@ export const revalidate = 60 // Revalider toutes les 60 secondes
  * Récupère tous les emprunts actifs de l'utilisateur connecté
  * Optimisé pour le rental-store (retourne uniquement les IDs et status)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transformer en format attendu par le store
-    const transformedRentals = rentals?.map((rental: any) => ({
+    const transformedRentals = rentals?.map((rental) => ({
       movieId: rental.movie_id,
       isRented: true,
       rentalId: rental.id,

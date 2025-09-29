@@ -62,7 +62,7 @@ export default function FilmsEnCoursPage() {
               <div className="mb-4">
                 <Clock className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
               </div>
-              <p className="text-zinc-400 text-lg mb-2">Aucun film en cours d'emprunt</p>
+              <p className="text-zinc-400 text-lg mb-2">Aucun film en cours d&apos;emprunt</p>
               <p className="text-zinc-500 text-sm">
                 Explorez notre catalogue pour emprunter de nouveaux films
               </p>

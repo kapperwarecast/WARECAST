@@ -16,7 +16,7 @@ export function NavLink({ href, label, icon: Icon, onClick, exact = true }: NavL
   const { isRouteActive } = useActiveRoute()
   const isActive = isRouteActive(href, exact)
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = () => {
     if (onClick) {
       onClick()
     }
