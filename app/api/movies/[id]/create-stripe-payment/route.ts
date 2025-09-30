@@ -2,9 +2,15 @@ import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-08-27.basil",
-})
+// Fonction pour obtenir l'instance Stripe (évite l'initialisation au build)
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY manquante")
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-08-27.basil",
+  })
+}
 
 interface RouteParams {
   params: Promise<{
@@ -43,6 +49,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const movieTitle = movie_title || movie.titre_francais || movie.titre_original
 
     try {
+      // Obtenir l'instance Stripe
+      const stripe = getStripe()
+      
       // Créer le Payment Intent avec Stripe
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount, // montant en centimes

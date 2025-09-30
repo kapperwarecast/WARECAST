@@ -1,11 +1,16 @@
-// import { createClient } from "@/lib/supabase/server" // Temporairement désactivé
+import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
-// Stripe instance temporairement désactivée
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-//   apiVersion: "2024-12-18.acacia",
-// })
+// Fonction pour obtenir l'instance Stripe (évite l'initialisation au build)
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY manquante")
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-08-27.basil",
+  })
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()

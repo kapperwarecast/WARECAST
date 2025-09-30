@@ -27,10 +27,10 @@ interface DirectorWithMovies extends Director {
 }
 
 interface Props {
-  params: {
+  params: Promise<{
     type: 'acteur' | 'directeur'
     id: string
-  }
+  }>
 }
 
 async function getActor(id: string): Promise<ActorWithMovies | null> {
@@ -97,7 +97,7 @@ function getPersonPhotoUrl(path: string | null): string | null {
 }
 
 export default async function PersonnePage({ params }: Props) {
-  const { type, id } = params
+  const { type, id } = await params
   
   if (type !== 'acteur' && type !== 'directeur') {
     notFound()
