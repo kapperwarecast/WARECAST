@@ -1,15 +1,8 @@
 "use client"
 
-import { Play, XCircle } from "lucide-react"
+import { Play } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { useHydration } from "@/hooks"
 import { usePlayButton } from "@/hooks/usePlayButton"
 import { useMovieRentalStore } from "@/stores/rental-store"
@@ -57,12 +50,13 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
 
   // Détermine l'apparence selon l'action
   const getButtonProps = () => {
-    // Si film indisponible, afficher en rouge/grisé
+    // Si film indisponible, afficher comme le bouton orange mais avec barre d'interdiction
     if (isUnavailable) {
       return {
         ariaLabel: "Film indisponible",
-        iconClass: "text-red-400/50",
-        tooltipMessage: "Film indisponible"
+        iconClass: "!text-gray-400/70 !fill-gray-400/70",
+        tooltipMessage: "Film indisponible",
+        bgClass: "!bg-orange-600 !border-2 !border-white"
       }
     }
 
@@ -70,8 +64,9 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
       case 'login':
         return {
           ariaLabel: "Connectez-vous pour regarder le film",
-          iconClass: "text-yellow-400/70 hover:text-yellow-400 fill-yellow-400/70 hover:fill-yellow-400",
-          tooltipMessage: "Connectez-vous pour regarder"
+          iconClass: "!text-yellow-400/70 !fill-yellow-400/70",
+          tooltipMessage: "Connectez-vous pour regarder",
+          bgClass: "!bg-black/20 !border !border-white/20 hover:[&_svg]:!text-yellow-400 hover:[&_svg]:!fill-yellow-400"
         }
       case 'play':
         const playLabel = hasActiveSubscription
@@ -79,20 +74,23 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
           : "Regarder le film (Loué)"
         return {
           ariaLabel: playLabel,
-          iconClass: "text-green-400/70 hover:text-green-400 fill-green-400/70 hover:fill-green-400",
-          tooltipMessage: playLabel
+          iconClass: "!text-white !fill-white",
+          tooltipMessage: playLabel,
+          bgClass: "!bg-orange-600 !border-2 !border-white hover:!bg-white hover:!border-orange-600 hover:[&_svg]:!text-orange-600 hover:[&_svg]:!fill-orange-600"
         }
       case 'payment':
         return {
           ariaLabel: "Louer ou s'abonner pour regarder le film",
-          iconClass: "text-blue-400/70 hover:text-blue-400 fill-blue-400/70 hover:fill-blue-400",
-          tooltipMessage: "Louer ou s'abonner"
+          iconClass: "!text-white !fill-white",
+          tooltipMessage: "Louer ou s'abonner",
+          bgClass: "!bg-blue-500/80 !border-2 !border-white hover:!bg-white hover:!border-blue-500 hover:[&_svg]:!text-blue-500 hover:[&_svg]:!fill-blue-500"
         }
       default: // loading
         return {
           ariaLabel: "Chargement...",
-          iconClass: "text-white/70 hover:text-white fill-white/70 hover:fill-white",
-          tooltipMessage: "Chargement..."
+          iconClass: "!text-white/70 !fill-white/70",
+          tooltipMessage: "Chargement...",
+          bgClass: "!bg-black/20 !border !border-white/20 hover:[&_svg]:!text-white hover:[&_svg]:!fill-white"
         }
     }
   }
@@ -107,22 +105,22 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
     )
   }
 
-  const { ariaLabel, iconClass, tooltipMessage } = getButtonProps()
+  const { ariaLabel, iconClass, tooltipMessage, bgClass } = getButtonProps()
   const isLoading = action === 'loading'
 
   const buttonContent = (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={handleButtonClick}
       disabled={disabled || isLoading || isUnavailable}
       className={cn(
         "play-button absolute top-2 left-2 z-10",
-        "bg-black/20 backdrop-blur-sm",
-        !isUnavailable && "hover:bg-black/40",
-        "border border-white/20",
-        !isUnavailable && "hover:border-white hover:border-2",
+        "size-9", // Équivalent de size="icon"
+        "inline-flex items-center justify-center",
+        bgClass,
+        "backdrop-blur-sm",
+        !isUnavailable && action !== 'payment' && action !== 'play' && "hover:bg-black/40",
         "rounded-full",
+        "overflow-hidden",
         // Force invisible state initially, only show on group hover
         "invisible opacity-0",
         "group-hover:visible group-hover:opacity-100",
@@ -135,36 +133,25 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
       )}
       aria-label={ariaLabel}
     >
-      {isUnavailable ? (
-        <XCircle
-          size={ICON_SIZES.COMPACT}
-          className={cn("transition-all duration-200", iconClass)}
-        />
-      ) : (
-        <Play
-          size={ICON_SIZES.COMPACT}
-          className={cn(
-            "transition-all duration-200",
-            iconClass,
-            isLoading && "animate-spin"
-          )}
-        />
+      <Play
+        size={ICON_SIZES.COMPACT}
+        className={cn(
+          "transition-all duration-200",
+          iconClass,
+          isLoading && "animate-spin"
+        )}
+      />
+      {isUnavailable && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full h-0.5 bg-white rotate-[-45deg]" />
+        </div>
       )}
-    </Button>
+    </button>
   )
 
   return (
     <>
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {buttonContent}
-          </TooltipTrigger>
-          <TooltipContent side="right" className="bg-zinc-900 border-zinc-700">
-            <p>{tooltipMessage}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {buttonContent}
 
       {/* Modale de choix de paiement */}
       <PaymentChoiceModal
