@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Clock, Star, Calendar, User } from "lucide-react"
 import type { Tables } from "@/lib/supabase/types"
+import { MovieActionButtons } from "@/components/movie-action-buttons"
 
 type Movie = Tables<"movies">
 type Actor = Tables<"actors">
@@ -195,6 +196,14 @@ export default async function FilmPage({ params }: Props) {
         <div className="flex flex-col md:flex-row gap-12">
           {/* Poster */}
           <div className="flex-shrink-0 md:w-[350px] w-full">
+            {/* Boutons d'action alignés à droite au-dessus de l'affiche */}
+            <div className="flex justify-end mb-4">
+              <MovieActionButtons
+                movieId={movie.id}
+                copiesDisponibles={movie.copies_disponibles}
+              />
+            </div>
+
             <Card className="overflow-hidden bg-zinc-900 border-zinc-800 py-0 md:mx-0 mx-auto w-full max-w-[350px] md:max-w-none">
               <div className="relative aspect-[2/3] w-full md:h-[525px]">
                 {posterUrl ? (
