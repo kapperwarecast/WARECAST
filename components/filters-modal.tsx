@@ -53,6 +53,7 @@ const DECADES = [
 ]
 
 const SORT_OPTIONS = [
+  { value: 'random', label: 'Aléatoire' },
   { value: 'created_at', label: 'Date d\'ajout' },
   { value: 'annee_sortie', label: 'Année de sortie' },
   { value: 'titre_francais', label: 'Titre alphabétique' },
@@ -147,7 +148,7 @@ export function FiltersModal({
       language: ''
     }
     const resetSort: Sort = {
-      by: 'created_at',
+      by: 'random',
       order: 'desc'
     }
     setLocalFilters(resetFilters)

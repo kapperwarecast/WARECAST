@@ -2,7 +2,6 @@
 
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { useLikeButtonLogic, useHydration } from "@/hooks"
 import { ICON_SIZES, TRANSITION_CLASSES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
 import type { LikeButtonProps, BaseLikeButtonProps } from "@/types"
@@ -100,16 +99,20 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={handleClick}
       disabled={loading}
       className={cn(
         "like-button absolute top-2 right-2 z-10",
-        "bg-black/20 backdrop-blur-sm hover:bg-black/40",
-        "border border-white/20 hover:border-white hover:border-2",
+        "size-9",
+        "inline-flex items-center justify-center",
+        "backdrop-blur-sm",
         "rounded-full",
+        "overflow-hidden",
+        // Styles conditionnels selon l'état liked
+        isLiked
+          ? "!bg-orange-600 !border-2 !border-white hover:!bg-orange-700"
+          : "!bg-transparent !border-2 !border-white hover:!bg-orange-600",
         // Force invisible state initially, only show on group hover
         "invisible opacity-0",
         "group-hover:visible group-hover:opacity-100",
@@ -126,9 +129,7 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
         size={ICON_SIZES.COMPACT}
         className={cn(
           TRANSITION_CLASSES.DEFAULT,
-          isLiked
-            ? "fill-red-500 text-red-500"
-            : "text-white/70 hover:text-white",
+          "!fill-white !text-white",
           loading && "animate-pulse",
           isAnimating && "scale-125"
         )}
@@ -141,6 +142,6 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
           title="Pending sync"
         />
       )}
-    </Button>
+    </button>
   )
 }

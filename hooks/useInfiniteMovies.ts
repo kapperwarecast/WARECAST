@@ -42,16 +42,19 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  
+
+  // Random seed pour l'ordre aléatoire - généré une seule fois au montage
+  const [randomSeed] = useState(() => Math.random().toString(36).substring(7))
+
   // State for filters and sorting
   const [filters, setFilters] = useState<Filters>({
     genres: [],
     decade: '',
     language: ''
   })
-  
+
   const [sort, setSort] = useState<Sort>({
-    by: 'created_at',
+    by: 'random',
     order: 'desc'
   })
 
@@ -62,6 +65,11 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       sortBy: currentSort.by,
       sortOrder: currentSort.order
     })
+
+    // Ajouter le seed aléatoire pour le tri random
+    if (currentSort.by === 'random') {
+      params.append('randomSeed', randomSeed)
+    }
 
     if (currentFilters.genres.length > 0) {
       params.append('genres', currentFilters.genres.join(','))
@@ -74,7 +82,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     }
 
     return params.toString()
-  }, [initialLimit])
+  }, [initialLimit, randomSeed])
 
   const fetchMovies = useCallback(async (page: number, append = false, currentFilters?: Filters, currentSort?: Sort) => {
     try {
@@ -167,7 +175,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       language: ''
     }
     const defaultSort: Sort = {
-      by: 'created_at',
+      by: 'random',
       order: 'desc'
     }
     

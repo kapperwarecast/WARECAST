@@ -9,7 +9,7 @@ export interface Filters {
 }
 
 export interface Sort {
-  by: 'created_at' | 'titre_francais' | 'annee_sortie' | 'note_tmdb'
+  by: 'created_at' | 'titre_francais' | 'annee_sortie' | 'note_tmdb' | 'random'
   order: 'asc' | 'desc'
 }
 
@@ -44,7 +44,7 @@ export function FiltersProvider({ children }: FiltersProviderProps) {
     language: ''
   })
   const [currentSort, setCurrentSort] = useState<Sort>({
-    by: 'created_at',
+    by: 'random',
     order: 'desc'
   })
 
@@ -58,11 +58,12 @@ export function FiltersProvider({ children }: FiltersProviderProps) {
   }
 
   // Déterminer si des filtres ou tri sont actifs - memoized
-  const hasActiveFilters = useMemo(() => 
+  // Note: 'random' est considéré comme l'état par défaut (pas un filtre actif)
+  const hasActiveFilters = useMemo(() =>
     currentFilters.genres.length > 0 ||
     currentFilters.decade !== '' ||
     currentFilters.language !== '' ||
-    currentSort.by !== 'created_at' ||
+    (currentSort.by !== 'random' && currentSort.by !== 'created_at') ||
     currentSort.order !== 'desc'
   , [currentFilters, currentSort])
 

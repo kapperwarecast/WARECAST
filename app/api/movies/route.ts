@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     // Sort parameters
     const sortBy = searchParams.get('sortBy') || 'created_at'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
+    const randomSeed = searchParams.get('randomSeed') || ''
     
     // Preview mode (count only)
     const preview = searchParams.get('preview') === 'true'
@@ -41,7 +42,10 @@ export async function GET(request: NextRequest) {
           )
         )
       `, { count: 'exact' })
-    
+
+    // Filter by status - only show "en ligne" movies
+    query = query.eq('statut', 'en ligne')
+
     // Apply filters
     if (genres.length > 0) {
       // Assuming genres is stored as an array or comma-separated string
@@ -79,12 +83,44 @@ export async function GET(request: NextRequest) {
     
     // Apply sorting with fallback for full query
     const ascending = sortOrder === 'asc'
-    
+
     // Ensure we have a valid sort field (using real Supabase column names)
-    const validSortFields = ['annee_sortie', 'created_at', 'titre_francais', 'note_tmdb']
+    const validSortFields = ['annee_sortie', 'created_at', 'titre_francais', 'note_tmdb', 'random']
     const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_at'
-    
-    query = query.order(safeSortBy, { ascending })
+
+    // For random sort, use seed to determine pseudo-random order
+    if (safeSortBy === 'random' && randomSeed) {
+      // Générer un hash simple du seed pour déterminer la stratégie de tri
+      const seedHash = randomSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+      const strategy = seedHash % 6
+
+      // Différentes stratégies de tri pour créer de la variété
+      switch (strategy) {
+        case 0:
+          query = query.order('tmdb_id', { ascending: true })
+          break
+        case 1:
+          query = query.order('tmdb_id', { ascending: false })
+          break
+        case 2:
+          query = query.order('annee_sortie', { ascending: true }).order('tmdb_id', { ascending: true })
+          break
+        case 3:
+          query = query.order('annee_sortie', { ascending: false }).order('tmdb_id', { ascending: false })
+          break
+        case 4:
+          query = query.order('note_tmdb', { ascending: false, nullsFirst: false }).order('tmdb_id', { ascending: true })
+          break
+        case 5:
+          query = query.order('duree', { ascending: true, nullsFirst: false }).order('tmdb_id', { ascending: false })
+          break
+      }
+    } else if (safeSortBy === 'random') {
+      // Fallback si pas de seed
+      query = query.order('tmdb_id', { ascending: true })
+    } else {
+      query = query.order(safeSortBy, { ascending })
+    }
     
     // Apply pagination
     query = query.range(offset, offset + limit - 1)
