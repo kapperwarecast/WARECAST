@@ -13,6 +13,7 @@ import {
 import { useHydration } from "@/hooks"
 import { usePlayButton } from "@/hooks/usePlayButton"
 import { useMovieRentalStore } from "@/stores/rental-store"
+import { useRealtimeUserRental } from "@/hooks/useRealtimeUserRental"
 import { useAuth } from "@/contexts/auth-context"
 import { useSubscription } from "@/hooks/use-subscription"
 import { PaymentChoiceModal } from "@/components/ui/payment-choice-modal"
@@ -32,8 +33,12 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
   const { hasActiveSubscription } = useSubscription(user)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
 
-  // Utiliser uniquement le store Zustand pour les emprunts (comme le bouton Like)
-  const { isCurrentlyRented, loading } = useMovieRentalStore(movieId)
+  // Utiliser Realtime pour les emprunts (instantané) avec fallback sur le store
+  const { isCurrentlyRented: realtimeRented } = useRealtimeUserRental(movieId)
+  const { isCurrentlyRented: storeRented, loading } = useMovieRentalStore(movieId)
+
+  // Priorité à Realtime si disponible (non-null), sinon fallback sur store
+  const isCurrentlyRented = realtimeRented !== null ? realtimeRented : storeRented
 
   // Vérifier la disponibilité : désactiver SI pas déjà emprunté ET aucune copie disponible
   const isUnavailable = !isCurrentlyRented && copiesDisponibles === 0

@@ -10,6 +10,7 @@ import { useState, useRef, useEffect } from "react"
 import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
 import { formatDuration, getLanguageName } from "@/lib/utils/format"
+import { useRealtimeMovieAvailability } from "@/hooks/useRealtimeMovieAvailability"
 
 interface MovieCardProps {
   movie: MovieWithDirector
@@ -21,6 +22,15 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
   const [imageLoading, setImageLoading] = useState(true)
   const [isVisible, setIsVisible] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+
+  // S'abonner aux mises à jour en temps réel du nombre de copies disponibles
+  const { copiesDisponibles: realtimeCopies } = useRealtimeMovieAvailability(
+    movie.id,
+    movie.copies_disponibles
+  )
+
+  // Utiliser la valeur en temps réel si disponible, sinon la valeur initiale
+  const effectiveCopies = realtimeCopies ?? movie.copies_disponibles
 
   // Intersection Observer pour lazy loading intelligent
   useEffect(() => {
@@ -109,7 +119,7 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
         {/* Play button - positioned on the left */}
         <PlayButtonCompact
           movieId={movie.id}
-          copiesDisponibles={movie.copies_disponibles}
+          copiesDisponibles={effectiveCopies}
         />
 
         {/* Like button - always visible but more prominent on hover */}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, CreditCard, Lock, AlertCircle, RefreshCw } from "lucide-react"
+import { ArrowLeft, CreditCard, Lock, AlertCircle, RefreshCw, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
@@ -187,6 +187,8 @@ export default function PaymentPage() {
   const [isLoadingStripe, setIsLoadingStripe] = useState(true)
   const [isLoadingMovie, setIsLoadingMovie] = useState(true)
   const [movieError, setMovieError] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingMessage, setProcessingMessage] = useState('')
 
   const rentalPrice = 1.50
 
@@ -247,10 +249,51 @@ export default function PaymentPage() {
     loadStripeInstance()
   }, [])
 
-  const handlePaymentSuccess = () => {
-    // Rediriger vers le player
-    // Le webhook aura créé l'emprunt et décrémenté les copies disponibles
-    router.push(`/movie-player/${movieId}`)
+  const handlePaymentSuccess = async () => {
+    setIsProcessing(true)
+    setProcessingMessage("Paiement confirmé !")
+
+    // Polling pour vérifier la création de l'emprunt par le webhook
+    const maxAttempts = 30 // 15 secondes (30 × 500ms)
+    let attempts = 0
+
+    while (attempts < maxAttempts) {
+      attempts++
+
+      try {
+        const response = await fetch(`/api/movie-rental-status/${movieId}`)
+
+        if (response.ok) {
+          const data = await response.json()
+
+          if (data.isCurrentlyRented) {
+            // Emprunt créé avec succès !
+            setProcessingMessage("Location confirmée ! Redirection...")
+            await new Promise(r => setTimeout(r, 500))
+            router.push(`/movie-player/${movieId}`)
+            return
+          }
+        }
+      } catch (err) {
+        console.error('Erreur vérification emprunt:', err)
+      }
+
+      // Mise à jour du message de progression
+      if (attempts === 10) {
+        setProcessingMessage("Finalisation en cours...")
+      } else if (attempts === 20) {
+        setProcessingMessage("Encore quelques instants...")
+      }
+
+      // Attendre 500ms avant le prochain essai
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+
+    // Timeout atteint - Afficher une erreur mais donner une option
+    setIsProcessing(false)
+    setProcessingMessage('')
+    alert("La location prend plus de temps que prévu. Veuillez vérifier vos locations dans votre espace personnel ou recharger la page dans quelques instants.")
+    router.push('/')
   }
 
   const handleBack = () => {
@@ -359,6 +402,19 @@ export default function PaymentPage() {
           </Button>
         </div>
       </div>
+
+      {/* Overlay de finalisation de paiement */}
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-background p-8 rounded-lg max-w-md mx-4 border shadow-2xl">
+            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-center text-xl font-semibold mb-2">{processingMessage}</p>
+            <p className="text-center text-sm text-muted-foreground">
+              Veuillez patienter pendant que nous finalisons votre location...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
