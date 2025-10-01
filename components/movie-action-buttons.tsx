@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { PlayButtonCompact } from "@/components/ui/play-button-improved"
-import { LikeButtonCompact } from "@/components/ui/like-button-fixed"
+import { LikeButtonCompact } from "@/components/ui/like-button"
 
 interface MovieActionButtonsProps {
   movieId: string
@@ -23,7 +23,7 @@ export function MovieActionButtons({
   className,
 }: MovieActionButtonsProps) {
   return (
-    <div className={cn("flex flex-row items-center gap-3", className)}>
+    <div className={cn("flex flex-row items-center gap-2 mb-3", className)}>
       <PlayButtonCompact
         movieId={movieId}
         copiesDisponibles={copiesDisponibles}

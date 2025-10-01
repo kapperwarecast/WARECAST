@@ -5,9 +5,10 @@ import { createClient } from "@/lib/supabase/server"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Clock, Star, Calendar, User } from "lucide-react"
+import { ArrowLeft, Clock, Calendar, User, Speech } from "lucide-react"
 import type { Tables } from "@/lib/supabase/types"
 import { MovieActionButtons } from "@/components/movie-action-buttons"
+import { formatDuration } from "@/lib/utils/format"
 
 type Movie = Tables<"movies">
 type Actor = Tables<"actors">
@@ -249,18 +250,12 @@ export default async function FilmPage({ params }: Props) {
               {movie.duree && (
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{movie.duree} min</span>
-                </div>
-              )}
-              {movie.note_tmdb && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span>{movie.note_tmdb.toFixed(1)}/10</span>
+                  <span>{formatDuration(movie.duree)}</span>
                 </div>
               )}
               {movie.langue_vo && (
-                <div>
-                  <span className="text-zinc-400">Langue: </span>
+                <div className="flex items-center gap-1">
+                  <Speech className="w-4 h-4" />
                   <span>{movie.langue_vo}</span>
                 </div>
               )}
@@ -323,22 +318,6 @@ export default async function FilmPage({ params }: Props) {
             </div>
           </div>
         )}
-
-        {/* Additional info - Full width */}
-        <div className="pt-8 mt-8 border-t border-zinc-800">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-zinc-400">ID TMDB: </span>
-              <span>{movie.tmdb_id}</span>
-            </div>
-            {movie.created_at && (
-              <div>
-                <span className="text-zinc-400">Ajouté le: </span>
-                <span>{new Date(movie.created_at).toLocaleDateString('fr-FR')}</span>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   )

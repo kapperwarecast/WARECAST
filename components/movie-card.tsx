@@ -4,8 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { LikeButtonCompact } from "@/components/ui/like-button-fixed"
-import { PlayButtonCompact } from "@/components/ui/play-button-improved"
+import { MovieActionButtons } from "@/components/movie-action-buttons"
 import { useState, useRef, useEffect } from "react"
 import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
@@ -120,17 +119,10 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="absolute bottom-0 left-0 right-0 p-3">
             {/* Boutons Play et Like côte à côte */}
-            <div className="flex gap-2 mb-3">
-              <PlayButtonCompact
-                movieId={movie.id}
-                copiesDisponibles={effectiveCopies}
-                className="!relative !top-auto !left-auto !visible !opacity-100"
-              />
-              <LikeButtonCompact
-                movieId={movie.id}
-                className="!relative !top-auto !right-auto !visible !opacity-100"
-              />
-            </div>
+            <MovieActionButtons
+              movieId={movie.id}
+              copiesDisponibles={effectiveCopies}
+            />
 
             {/* Titre français */}
             <h3 className="text-white font-semibold text-base line-clamp-2 mb-1">
