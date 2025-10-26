@@ -71,8 +71,8 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'subscription',
-    label: 'Abonnements',
-    href: ROUTES.ABONNEMENT,
+    label: 'Formules',
+    href: ROUTES.FORMULES,
     icon: CreditCard,
     requiresAuth: true
   },

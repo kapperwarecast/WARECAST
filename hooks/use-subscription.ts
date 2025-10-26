@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { Tables } from "@/lib/supabase/types"
 import type { User } from "@supabase/supabase-js"
+import { useSubscriptionFromStore, useSubscriptionStore } from "@/stores/subscription-store"
 
 type Abonnement = Tables<"abonnements">
 type UserAbonnement = Tables<"user_abonnements">
@@ -16,129 +16,38 @@ interface UseSubscriptionReturn {
   // État des abonnements disponibles
   availableSubscriptions: Abonnement[]
   loadingSubscriptions: boolean
-  
+
   // État de l'abonnement utilisateur
   userSubscription: UserSubscriptionData | null
   loadingUserSubscription: boolean
-  
+
   // Fonctions utilitaires
   hasActiveSubscription: boolean
   isSubscriptionExpired: boolean
   daysUntilExpiration: number | null
-  
+
   // Actions
   subscribe: (abonnementId: string) => Promise<{ success: boolean; error?: string }>
   cancelSubscription: () => Promise<{ success: boolean; error?: string }>
-  
+
   // Refresh
   refreshUserSubscription: () => Promise<void>
 }
 
 export function useSubscription(user: User | null): UseSubscriptionReturn {
-  const [availableSubscriptions, setAvailableSubscriptions] = useState<Abonnement[]>([])
-  const [loadingSubscriptions, setLoadingSubscriptions] = useState(true)
-  
-  const [userSubscription, setUserSubscription] = useState<UserSubscriptionData | null>(null)
-  const [loadingUserSubscription, setLoadingUserSubscription] = useState(true)
-
   const supabase = createClient()
 
-  // Charger les abonnements disponibles
-  useEffect(() => {
-    const fetchAvailableSubscriptions = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("abonnements")
-          .select("*")
-          .order("prix", { ascending: true })
-        
-        if (error) throw error
-        setAvailableSubscriptions(data || [])
-      } catch (error) {
-        console.error("Erreur lors du chargement des abonnements:", error)
-        setAvailableSubscriptions([])
-      } finally {
-        setLoadingSubscriptions(false)
-      }
-    }
+  // Utiliser le store pour les données cachées
+  const {
+    userSubscription,
+    availableSubscriptions,
+    hasActiveSubscription,
+    isSubscriptionExpired,
+    daysUntilExpiration,
+    loading,
+  } = useSubscriptionFromStore()
 
-    fetchAvailableSubscriptions()
-  }, [supabase])
-
-  // Charger l'abonnement de l'utilisateur
-  const fetchUserSubscription = async () => {
-    if (!user) {
-      setUserSubscription(null)
-      setLoadingUserSubscription(false)
-      return
-    }
-
-    try {
-      setLoadingUserSubscription(true)
-      
-      const { data, error } = await supabase
-        .from("user_abonnements")
-        .select(`
-          *,
-          abonnement:abonnements(*)
-        `)
-        .eq("user_id", user.id)
-        .eq("statut", "actif")
-        .order("date_expiration", { ascending: false })
-        .limit(1)
-        .single()
-
-      if (error && error.code !== "PGRST116") { // PGRST116 = no rows returned
-        throw error
-      }
-
-      setUserSubscription(data || null)
-    } catch (error) {
-      console.error("Erreur lors du chargement de l'abonnement utilisateur:", error)
-      setUserSubscription(null)
-    } finally {
-      // Force completion après 10s max
-      setTimeout(() => setLoadingUserSubscription(false), 10000)
-      setLoadingUserSubscription(false)
-    }
-  }
-
-  useEffect(() => {
-    let isMounted = true
-    
-    const runFetch = async () => {
-      try {
-        await fetchUserSubscription()
-      } catch (error) {
-        console.error("Error in useEffect fetchUserSubscription:", error)
-        if (isMounted) {
-          setLoadingUserSubscription(false)
-        }
-      }
-    }
-    
-    runFetch()
-    
-    return () => {
-      isMounted = false
-    }
-  }, [user, supabase])
-
-  // Calculer les propriétés dérivées
-  const hasActiveSubscription = Boolean(
-    userSubscription && 
-    userSubscription.statut === "actif" && 
-    new Date(userSubscription.date_expiration) > new Date()
-  )
-
-  const isSubscriptionExpired = Boolean(
-    userSubscription && 
-    new Date(userSubscription.date_expiration) <= new Date()
-  )
-
-  const daysUntilExpiration = userSubscription 
-    ? Math.ceil((new Date(userSubscription.date_expiration).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-    : null
+  const { fetchData: fetchUserSubscription } = useSubscriptionStore()
 
   // Fonction pour souscrire à un abonnement
   const subscribe = async (abonnementId: string): Promise<{ success: boolean; error?: string }> => {
@@ -170,8 +79,8 @@ export function useSubscription(user: User | null): UseSubscriptionReturn {
       if (error) throw error
 
       // Actualiser l'abonnement utilisateur
-      await fetchUserSubscription()
-      
+      await fetchUserSubscription(user.id)
+
       return { success: true }
     } catch (error) {
       console.error("Erreur lors de la souscription:", error)
@@ -194,8 +103,8 @@ export function useSubscription(user: User | null): UseSubscriptionReturn {
       if (error) throw error
 
       // Actualiser l'abonnement utilisateur
-      await fetchUserSubscription()
-      
+      await fetchUserSubscription(user.id)
+
       return { success: true }
     } catch (error) {
       console.error("Erreur lors de l'annulation:", error)
@@ -205,14 +114,14 @@ export function useSubscription(user: User | null): UseSubscriptionReturn {
 
   // Fonction pour actualiser l'abonnement utilisateur
   const refreshUserSubscription = async () => {
-    await fetchUserSubscription()
+    await fetchUserSubscription(user?.id || null)
   }
 
   return {
     availableSubscriptions,
-    loadingSubscriptions,
+    loadingSubscriptions: false, // Handled by store
     userSubscription,
-    loadingUserSubscription,
+    loadingUserSubscription: loading,
     hasActiveSubscription,
     isSubscriptionExpired,
     daysUntilExpiration,

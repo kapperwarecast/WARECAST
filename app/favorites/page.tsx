@@ -1,8 +1,8 @@
 'use client'
 
 import { MovieGrid } from '@/components/movie-grid'
-import { useFavoriteMovies } from '@/hooks/useFavoriteMovies'
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { useFavoriteMovies } from '@/hooks/data'
+import { useInfiniteScroll } from '@/hooks/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'

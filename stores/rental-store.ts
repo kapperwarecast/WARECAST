@@ -1,9 +1,8 @@
 "use client"
 
 import React from "react"
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
 import { useAuth } from "@/contexts/auth-context"
+import { createCachedStore, BaseCachedStore } from "./create-cached-store"
 
 interface RentalData {
   movieId: string
@@ -13,24 +12,13 @@ interface RentalData {
   lastSync: number
 }
 
-interface RentalStore {
-  rentals: Record<string, RentalData>
-  loading: boolean
-  initializing: boolean
-  lastUserFetch: number
-  currentUserId: string | null
-
+interface RentalStore extends BaseCachedStore<Record<string, RentalData>> {
   // Actions
   setRentalData: (movieId: string, data: Partial<RentalData>) => void
-  fetchUserRentals: (userId?: string | null) => Promise<void>
   refreshRental: (movieId: string) => Promise<void>
-  clearUserData: () => void
-  checkUserChanged: (userId: string | null) => boolean
 
   // Getters
   getRentalData: (movieId: string) => RentalData
-  isLoading: () => boolean
-  needsInitialFetch: () => boolean
 }
 
 const defaultRentalData: RentalData = {
@@ -41,181 +29,118 @@ const defaultRentalData: RentalData = {
   lastSync: 0,
 }
 
-export const useRentalStore = create<RentalStore>()(
-  persist(
-    (set, get) => ({
-      rentals: {},
-      loading: false,
-      initializing: false,
-      lastUserFetch: 0,
-      currentUserId: null,
+// Fetch user rentals from API
+async function fetchUserRentals(userId: string | null): Promise<Record<string, RentalData>> {
+  if (!userId) return {}
 
-      getRentalData: (movieId: string) => {
-        return get().rentals[movieId] || { ...defaultRentalData, movieId }
-      },
+  const response = await fetch("/api/rentals", {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  })
 
-      isLoading: () => {
-        return get().loading || get().initializing
-      },
+  // Always parse the JSON response first
+  const result = await response.json()
 
-      needsInitialFetch: () => {
-        const { lastUserFetch } = get()
-        // Fetch if never fetched or fetch is older than 10 minutes
-        return lastUserFetch === 0 || (Date.now() - lastUserFetch) > 10 * 60 * 1000
-      },
+  // If unauthorized, return empty (user not logged in)
+  if (response.status === 401) {
+    return {}
+  }
 
-      clearUserData: () => {
-        set({
-          rentals: {},
-          lastUserFetch: 0,
-          currentUserId: null,
-        })
-      },
+  // Other errors
+  if (!response.ok) {
+    console.warn("Error fetching rentals:", result.error || response.statusText)
+    throw new Error(result.error || response.statusText)
+  }
 
-      checkUserChanged: (userId: string | null) => {
-        const { currentUserId } = get()
-        return currentUserId !== userId
-      },
+  if (result.success && result.rentals) {
+    // Convert array to Record<string, RentalData>
+    const serverRentals = result.rentals as RentalData[]
+    const rentalsMap: Record<string, RentalData> = {}
 
-      setRentalData: (movieId: string, data: Partial<RentalData>) => {
-        set((state) => ({
-          rentals: {
-            ...state.rentals,
-            [movieId]: {
-              ...state.rentals[movieId],
-              movieId,
-              ...data,
-            },
+    serverRentals.forEach((rental) => {
+      rentalsMap[rental.movieId] = {
+        ...rental,
+        lastSync: Date.now(),
+      }
+    })
+
+    return rentalsMap
+  }
+
+  throw new Error("Invalid response format")
+}
+
+export const useRentalStore = createCachedStore<
+  Record<string, RentalData>,
+  RentalStore
+>({
+  name: "warecast-rentals",
+  cacheDuration: 10 * 60 * 1000, // 10 minutes
+  partializeFields: ["data", "lastFetch", "currentUserId"],
+
+  initialState: () => ({}),
+
+  fetchData: fetchUserRentals,
+
+  storeActions: (set, get) => ({
+    getRentalData: (movieId: string) => {
+      return get().data[movieId] || { ...defaultRentalData, movieId }
+    },
+
+    setRentalData: (movieId: string, data: Partial<RentalData>) => {
+      set({
+        data: {
+          ...get().data,
+          [movieId]: {
+            ...get().data[movieId],
+            movieId,
+            ...data,
           },
-        }))
-      },
+        },
+      })
+    },
 
-      fetchUserRentals: async (userId?: string | null) => {
-        const { initializing, setRentalData, checkUserChanged, clearUserData } = get()
+    refreshRental: async (movieId: string) => {
+      const { setRentalData } = get()
 
-        // Check if user changed - if so, clear cache and force refresh
-        if (userId !== undefined && checkUserChanged(userId)) {
-          console.log(`Rental store: User changed (${get().currentUserId} → ${userId}), clearing cache`)
-          clearUserData()
-          set({ currentUserId: userId })
-        }
+      set({ loading: true })
 
-        // Prevent concurrent fetches
-        if (initializing) return
+      try {
+        const response = await fetch(`/api/movie-rental-status/${movieId}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        })
 
-        set({ initializing: true })
-
-        try {
-          const response = await fetch("/api/rentals", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          })
-
-          // Always parse the JSON response first
-          const result = await response.json()
-
-          // If unauthorized, silently fail (user not logged in) - NOT an error!
+        if (!response.ok) {
           if (response.status === 401) {
-            // User not logged in - clear data and update userId
-            clearUserData()
-            set({ initializing: false, lastUserFetch: Date.now(), currentUserId: null })
+            setRentalData(movieId, {
+              isRented: false,
+              rentalId: null,
+              expiresAt: null,
+              lastSync: Date.now(),
+            })
             return
           }
-
-          // Other errors
-          if (!response.ok) {
-            console.warn("Error fetching rentals:", result.error || response.statusText)
-            set({ initializing: false, lastUserFetch: Date.now() })
-            return
-          }
-
-          if (result.success && result.rentals) {
-            // Clear old rentals and set new ones
-            const serverRentals = result.rentals as RentalData[]
-
-            // Reset all rentals to not rented
-            const currentRentals = get().rentals
-            Object.keys(currentRentals).forEach((movieId) => {
-              setRentalData(movieId, {
-                isRented: false,
-                rentalId: null,
-                expiresAt: null,
-                lastSync: Date.now(),
-              })
-            })
-
-            // Update with server data
-            serverRentals.forEach((rental) => {
-              setRentalData(rental.movieId, {
-                isRented: rental.isRented,
-                rentalId: rental.rentalId,
-                expiresAt: rental.expiresAt,
-                lastSync: Date.now(),
-              })
-            })
-
-            // Update last fetch time and userId
-            set({ lastUserFetch: Date.now(), currentUserId: userId || null })
-          }
-        } catch (error) {
-          // Network error or parsing error - fail silently
-          console.debug("Rental store: Could not fetch rentals (network or parsing error)")
-          // Don't throw - fail silently to not break the app
-        } finally {
-          set({ initializing: false })
+          throw new Error(`HTTP error! status: ${response.status}`)
         }
-      },
 
-      refreshRental: async (movieId: string) => {
-        const { setRentalData } = get()
+        const data = await response.json()
 
-        set({ loading: true })
-
-        try {
-          const response = await fetch(`/api/movie-rental-status/${movieId}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          })
-
-          if (!response.ok) {
-            if (response.status === 401) {
-              setRentalData(movieId, {
-                isRented: false,
-                rentalId: null,
-                expiresAt: null,
-                lastSync: Date.now(),
-              })
-              return
-            }
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-
-          const data = await response.json()
-
-          setRentalData(movieId, {
-            isRented: data.isCurrentlyRented,
-            rentalId: data.rentalId || null,
-            expiresAt: null,
-            lastSync: Date.now(),
-          })
-        } catch (error) {
-          console.error(`Failed to refresh rental for movie ${movieId}:`, error)
-          // Don't update the data if fetch fails
-        } finally {
-          set({ loading: false })
-        }
-      },
-    }),
-    {
-      name: "warecast-rentals",
-      partialize: (state) => ({
-        rentals: state.rentals,
-        lastUserFetch: state.lastUserFetch,
-        currentUserId: state.currentUserId,
-      }),
-    }
-  )
-)
+        setRentalData(movieId, {
+          isRented: data.isCurrentlyRented,
+          rentalId: data.rentalId || null,
+          expiresAt: null,
+          lastSync: Date.now(),
+        })
+      } catch (error) {
+        console.error(`Failed to refresh rental for movie ${movieId}:`, error)
+        // Don't update the data if fetch fails
+      } finally {
+        set({ loading: false })
+      }
+    },
+  }),
+})
 
 // Hook for components with hydration handling
 export const useMovieRentalStore = (movieId: string) => {
@@ -225,8 +150,8 @@ export const useMovieRentalStore = (movieId: string) => {
   const {
     getRentalData,
     isLoading,
-    fetchUserRentals,
-    needsInitialFetch,
+    fetchData: fetchUserRentals,
+    needsRefresh,
     initializing,
     checkUserChanged,
   } = useRentalStore()
@@ -244,7 +169,7 @@ export const useMovieRentalStore = (movieId: string) => {
   // Also force fetch if user changed
   React.useEffect(() => {
     const userChanged = checkUserChanged(userId)
-    const shouldFetch = isHydrated && (needsInitialFetch() || userChanged) && !initializing
+    const shouldFetch = isHydrated && (needsRefresh() || userChanged) && !initializing
 
     if (shouldFetch) {
       // Small delay to ensure hydration is complete
@@ -254,7 +179,7 @@ export const useMovieRentalStore = (movieId: string) => {
 
       return () => clearTimeout(timer)
     }
-  }, [isHydrated, needsInitialFetch, fetchUserRentals, initializing, userId, checkUserChanged])
+  }, [isHydrated, needsRefresh, fetchUserRentals, initializing, userId, checkUserChanged])
 
   return {
     isCurrentlyRented: rentalData.isRented,
@@ -263,23 +188,4 @@ export const useMovieRentalStore = (movieId: string) => {
     loading: loading || !isHydrated,
     isHydrated,
   }
-}
-
-// Network resilience - Auto-refresh when coming online
-if (typeof window !== "undefined") {
-  const handleOnline = () => {
-    useRentalStore.getState().fetchUserRentals()
-  }
-
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      const { needsInitialFetch, fetchUserRentals } = useRentalStore.getState()
-      if (needsInitialFetch()) {
-        fetchUserRentals()
-      }
-    }
-  }
-
-  window.addEventListener("online", handleOnline)
-  document.addEventListener("visibilitychange", handleVisibilityChange)
 }

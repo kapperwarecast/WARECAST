@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     const genres = searchParams.get('genres')?.split(',').filter(g => g.trim()) || []
     const decade = searchParams.get('decade')
     const language = searchParams.get('language')
+    const search = searchParams.get('search')?.trim() || ''
+    const availableOnly = searchParams.get('availableOnly') === 'true'
     
     // Sort parameters
     const sortBy = searchParams.get('sortBy') || 'created_at'
@@ -46,23 +48,77 @@ export async function GET(request: NextRequest) {
     // Filter by status - only show "en ligne" movies
     query = query.eq('statut', 'en ligne')
 
+    // Apply search filter
+    if (search) {
+      // Pour la recherche, nous devons d'abord trouver les IDs de films qui correspondent
+      // soit dans le titre, soit via les acteurs/réalisateurs
+      const searchPattern = `%${search}%`
+
+      // Recherche dans les titres
+      const { data: moviesByTitle } = await supabase
+        .from('movies')
+        .select('id')
+        .eq('statut', 'en ligne')
+        .or(`titre_francais.ilike.${searchPattern},titre_original.ilike.${searchPattern}`)
+
+      // Recherche dans les acteurs
+      const { data: moviesByActor } = await supabase
+        .from('movie_actors')
+        .select('movie_id, actors!inner(nom_complet)')
+        .ilike('actors.nom_complet', searchPattern)
+
+      // Recherche dans les réalisateurs
+      const { data: moviesByDirector } = await supabase
+        .from('movie_directors')
+        .select('movie_id, directors!inner(nom_complet)')
+        .ilike('directors.nom_complet', searchPattern)
+
+      // Combiner tous les IDs de films trouvés
+      const movieIds = new Set<string>()
+      moviesByTitle?.forEach(m => movieIds.add(m.id))
+      moviesByActor?.forEach(m => movieIds.add(m.movie_id))
+      moviesByDirector?.forEach(m => movieIds.add(m.movie_id))
+
+      // Si aucun film trouvé, retourner une liste vide
+      if (movieIds.size === 0) {
+        return NextResponse.json({
+          movies: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false
+          }
+        })
+      }
+
+      // Filtrer par les IDs trouvés
+      query = query.in('id', Array.from(movieIds))
+    }
+
     // Apply filters
     if (genres.length > 0) {
       // Assuming genres is stored as an array or comma-separated string
       query = query.overlaps('genres', genres)
     }
-    
+
     if (decade) {
       // Convert decade to year range (e.g., "2020s" -> 2020-2029)
       const decadeStart = parseInt(decade.replace('s', ''))
       const decadeEnd = decadeStart + 9
       query = query.gte('annee_sortie', decadeStart).lte('annee_sortie', decadeEnd)
     }
-    
+
     if (language) {
       query = query.eq('langue_vo', language)
     }
-    
+
+    if (availableOnly) {
+      query = query.gt('copies_disponibles', 0)
+    }
+
     // For preview mode, we only need the count
     if (preview) {
       const { count, error } = await query

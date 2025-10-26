@@ -35,7 +35,7 @@ interface UseInfiniteMoviesReturn {
 }
 
 export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
-  const { updateFiltersState } = useFiltersModal()
+  const { updateFiltersState, searchQuery } = useFiltersModal()
   const [movies, setMovies] = useState<MovieWithDirector[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -50,7 +50,8 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
   const [filters, setFilters] = useState<Filters>({
     genres: [],
     decade: '',
-    language: ''
+    language: '',
+    availableOnly: false
   })
 
   const [sort, setSort] = useState<Sort>({
@@ -58,7 +59,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     order: 'desc'
   })
 
-  const buildQueryParams = useCallback((page: number, currentFilters: Filters, currentSort: Sort) => {
+  const buildQueryParams = useCallback((page: number, currentFilters: Filters, currentSort: Sort, search?: string) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: initialLimit.toString(),
@@ -71,6 +72,11 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       params.append('randomSeed', randomSeed)
     }
 
+    // Ajouter la recherche si présente
+    if (search && search.trim()) {
+      params.append('search', search.trim())
+    }
+
     if (currentFilters.genres.length > 0) {
       params.append('genres', currentFilters.genres.join(','))
     }
@@ -79,6 +85,9 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     }
     if (currentFilters.language) {
       params.append('language', currentFilters.language)
+    }
+    if (currentFilters.availableOnly) {
+      params.append('availableOnly', 'true')
     }
 
     return params.toString()
@@ -97,7 +106,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       const activeFilters = currentFilters ?? filters
       const activeSort = currentSort ?? sort
 
-      const queryParams = buildQueryParams(page, activeFilters, activeSort)
+      const queryParams = buildQueryParams(page, activeFilters, activeSort, searchQuery)
       const response = await fetch(`/api/movies?${queryParams}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +153,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [filters, sort, buildQueryParams])
+  }, [filters, sort, searchQuery, buildQueryParams])
 
   const loadMore = useCallback(async () => {
     if (!pagination?.hasNextPage || loadingMore) {
@@ -172,7 +181,8 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     const defaultFilters: Filters = {
       genres: [],
       decade: '',
-      language: ''
+      language: '',
+      availableOnly: false
     }
     const defaultSort: Sort = {
       by: 'random',
@@ -188,7 +198,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
 
   // Initial load - une seule fois au montage
   const [initialized, setInitialized] = useState(false)
-  
+
   React.useEffect(() => {
     if (!initialized) {
       updateFiltersState(filters, sort)
@@ -197,6 +207,15 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Réagir aux changements de searchQuery
+  React.useEffect(() => {
+    if (initialized && searchQuery !== undefined) {
+      setCurrentPage(1)
+      fetchMovies(1, false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery])
 
   return {
     movies,

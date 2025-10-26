@@ -22,6 +22,7 @@ export type Database = {
           id: string
           nom: string
           prix: number
+          stripe_price_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           nom: string
           prix: number
+          stripe_price_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           id?: string
           nom?: string
           prix?: number
+          stripe_price_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -421,6 +424,7 @@ export type Database = {
           date_souscription: string | null
           id: string
           statut: string
+          stripe_subscription_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -431,6 +435,7 @@ export type Database = {
           date_souscription?: string | null
           id?: string
           statut?: string
+          stripe_subscription_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -441,6 +446,7 @@ export type Database = {
           date_souscription?: string | null
           id?: string
           statut?: string
+          stripe_subscription_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -468,6 +474,7 @@ export type Database = {
           id: string
           nom: string | null
           prenom: string | null
+          stripe_customer_id: string | null
           updated_at: string | null
           username: string | null
         }
@@ -477,6 +484,7 @@ export type Database = {
           id: string
           nom?: string | null
           prenom?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -486,6 +494,7 @@ export type Database = {
           id?: string
           nom?: string | null
           prenom?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
           username?: string | null
         }

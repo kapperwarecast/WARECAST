@@ -26,7 +26,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from("user_abonnements")
       .select("*")
       .eq("user_id", user.id)
-      .eq("statut", "actif")
+      .in("statut", ["actif", "résilié"])
       .gt("date_expiration", new Date().toISOString())
       .limit(1)
       .single()

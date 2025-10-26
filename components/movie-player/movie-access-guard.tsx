@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-import { useMovieAccess } from '@/hooks/useMovieAccess'
+import { useMovieAccess } from '@/hooks/data'
 
 interface MovieAccessGuardProps {
   movieId: string

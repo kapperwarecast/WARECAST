@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/ui/nav-link"
-import { useUserDisplay } from "@/hooks/useUserDisplay"
+import { useUserDisplay } from "@/hooks/ui"
 import { type NavSection } from "@/constants/navigation"
 import { CSS_CLASSES } from "@/constants/theme"
 

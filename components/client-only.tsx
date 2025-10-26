@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
-import { useHydration } from "@/hooks"
+import { useHydration } from "@/hooks/use-hydration"
 
 interface ClientOnlyProps {
   children: ReactNode

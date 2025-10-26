@@ -51,13 +51,5 @@ export function useInfiniteScroll({
     }
   }, [handleIntersection, rootMargin, threshold])
 
-  // Mettre à jour l'observer quand les dépendances changent
-  useEffect(() => {
-    if (observerRef.current && sentinelRef.current) {
-      observerRef.current.disconnect()
-      observerRef.current.observe(sentinelRef.current)
-    }
-  }, [hasNextPage, loading])
-
   return { sentinelRef }
 }

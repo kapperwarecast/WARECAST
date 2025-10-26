@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { CreditCard, Star, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useMovieInfo } from "@/hooks/use-movie-info"
+import { useMovieInfo } from "@/hooks/actions"
 import { useEffect, useRef } from "react"
 
 interface PaymentChoiceModalProps {
@@ -29,7 +29,7 @@ export function PaymentChoiceModalSimple({
     onClose()
     // Délai pour s'assurer que la modal est fermée avant navigation
     setTimeout(() => {
-      router.push('/abonnement')
+      router.push('/formules')
       isClosingRef.current = false
     }, 100)
   }

@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { useSubscription } from "@/hooks/use-subscription"
-import { useHydration } from "@/hooks"
+import { useHydration } from "@/hooks/use-hydration"
 
 export function SubscriptionDebug() {
   const { user, loading: authLoading } = useAuth()

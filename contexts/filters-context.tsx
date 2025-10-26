@@ -6,6 +6,7 @@ export interface Filters {
   genres: string[]
   decade: string
   language: string
+  availableOnly: boolean
 }
 
 export interface Sort {
@@ -20,6 +21,11 @@ interface FiltersContextType {
   setFiltersModalOpen: (open: boolean) => void
   hasActiveFilters: boolean
   updateFiltersState: (filters: Filters, sort: Sort) => void
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  searchBarOpen: boolean
+  toggleSearchBar: () => void
+  closeSearchBar: () => void
 }
 
 const FiltersContext = createContext<FiltersContextType | undefined>(undefined)
@@ -41,16 +47,25 @@ export function FiltersProvider({ children }: FiltersProviderProps) {
   const [currentFilters, setCurrentFilters] = useState<Filters>({
     genres: [],
     decade: '',
-    language: ''
+    language: '',
+    availableOnly: false
   })
   const [currentSort, setCurrentSort] = useState<Sort>({
     by: 'random',
     order: 'desc'
   })
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchBarOpen, setSearchBarOpen] = useState(false)
 
   const openFiltersModal = () => setIsFiltersModalOpen(true)
   const closeFiltersModal = () => setIsFiltersModalOpen(false)
   const setFiltersModalOpen = (open: boolean) => setIsFiltersModalOpen(open)
+
+  const toggleSearchBar = () => setSearchBarOpen(prev => !prev)
+  const closeSearchBar = () => {
+    setSearchBarOpen(false)
+    setSearchQuery('')
+  }
 
   const updateFiltersState = (filters: Filters, sort: Sort) => {
     setCurrentFilters(filters)
@@ -63,6 +78,7 @@ export function FiltersProvider({ children }: FiltersProviderProps) {
     currentFilters.genres.length > 0 ||
     currentFilters.decade !== '' ||
     currentFilters.language !== '' ||
+    currentFilters.availableOnly ||
     (currentSort.by !== 'random' && currentSort.by !== 'created_at') ||
     currentSort.order !== 'desc'
   , [currentFilters, currentSort])
@@ -74,7 +90,12 @@ export function FiltersProvider({ children }: FiltersProviderProps) {
     setFiltersModalOpen,
     hasActiveFilters,
     updateFiltersState,
-  }), [isFiltersModalOpen, hasActiveFilters])
+    searchQuery,
+    setSearchQuery,
+    searchBarOpen,
+    toggleSearchBar,
+    closeSearchBar,
+  }), [isFiltersModalOpen, hasActiveFilters, searchQuery, searchBarOpen])
 
   return (
     <FiltersContext.Provider value={value}>

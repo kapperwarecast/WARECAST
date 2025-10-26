@@ -1,8 +1,8 @@
 'use client'
 
 import { MovieGridRental } from '@/components/movie-grid-rental'
-import { useCurrentRentals } from '@/hooks/useCurrentRentals'
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { useCurrentRentals } from '@/hooks/data'
+import { useInfiniteScroll } from '@/hooks/ui'
 import { Clock } from 'lucide-react'
 
 export default function FilmsEnCoursPage() {

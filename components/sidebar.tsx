@@ -3,7 +3,7 @@
 import { UserSection } from "@/components/sidebar/user-section"
 import { AuthSection } from "@/components/sidebar/auth-section"
 import { MenuSection } from "@/components/sidebar/menu-section"
-import { useUserDisplay } from "@/hooks/useUserDisplay"
+import { useUserDisplay } from "@/hooks/ui"
 import { NAV_SECTIONS } from "@/constants/navigation"
 
 interface SidebarProps {

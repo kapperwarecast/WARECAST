@@ -9,6 +9,8 @@ import { ArrowLeft, Clock, Calendar, User, Speech } from "lucide-react"
 import type { Tables } from "@/lib/supabase/types"
 import { MovieActionButtons } from "@/components/movie-action-buttons"
 import { formatDuration } from "@/lib/utils/format"
+import { getMoviePlayData } from "@/lib/server/movie-play-data"
+import type { MoviePlayData } from "@/types"
 
 type Movie = Tables<"movies">
 type Actor = Tables<"actors">
@@ -168,13 +170,16 @@ export default async function FilmPage({ params }: Props) {
     notFound()
   }
 
+  // Charger les données du bouton Play côté serveur (SSR)
+  const playData = await getMoviePlayData(id)
+
   const title = movie.titre_francais || movie.titre_original || "Sans titre"
   const originalTitle = movie.titre_original !== movie.titre_francais ? movie.titre_original : null
   const posterUrl = getPosterUrl(movie.poster_local_path)
-  
+
   // Get directors
   const directors = movie.movie_directors?.map(md => md.directors) || []
-  
+
   // Get actors sorted by casting order
   const actors = movie.movie_actors
     ?.sort((a, b) => (a.ordre_casting ?? 999) - (b.ordre_casting ?? 999))
@@ -202,6 +207,7 @@ export default async function FilmPage({ params }: Props) {
               <MovieActionButtons
                 movieId={movie.id}
                 copiesDisponibles={movie.copies_disponibles}
+                initialPlayData={playData || undefined}
               />
             </div>
 

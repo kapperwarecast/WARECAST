@@ -24,7 +24,7 @@ export async function GET(
       .from('user_abonnements')
       .select('statut, date_expiration')
       .eq('user_id', user.id)
-      .eq('statut', 'actif')
+      .in('statut', ['actif', 'résilié'])
       .gt('date_expiration', new Date().toISOString())
       .order('date_expiration', { ascending: false })
       .limit(1)

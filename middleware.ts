@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   // Protect app routes - redirect if not logged in
   const protectedPaths = [
     '/profile',
-    '/abonnement',
+    '/formules',
     '/admin',
     '/settings',
     '/dashboard',

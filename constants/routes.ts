@@ -10,7 +10,7 @@ export const ROUTES = {
   TO_WATCH: '/to-watch',
   FILMS_EN_COURS: '/films-en-cours',
   BUY_MOVIE: '/buy-movie',
-  ABONNEMENT: '/abonnement',
+  FORMULES: '/formules',
   AUTH: {
     LOGIN: '/auth/login',
     SIGNUP: '/auth/signup',

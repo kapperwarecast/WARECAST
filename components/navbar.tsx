@@ -9,16 +9,51 @@ import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import Image from "next/image"
 import Link from "next/link"
+import { useState, useEffect, useRef } from "react"
 
 export function Navbar() {
   const { user } = useAuth()
-  const { openFiltersModal, hasActiveFilters } = useFiltersModal()
+  const { openFiltersModal, hasActiveFilters, searchQuery, setSearchQuery, searchBarOpen, toggleSearchBar } = useFiltersModal()
   const { sidebarOpen, openSidebar, closeSidebar } = useSidebar()
   const router = useRouter()
+  const [inputValue, setInputValue] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleCloseAndGoHome = () => {
     closeSidebar()
     router.push('/')
+  }
+
+  // Debounce pour la recherche en temps réel
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(inputValue)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [inputValue, setSearchQuery])
+
+  // Focus sur l'input quand la barre s'ouvre
+  useEffect(() => {
+    if (searchBarOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [searchBarOpen])
+
+  const handleSearchClick = () => {
+    toggleSearchBar()
+    if (!searchBarOpen) {
+      // La barre va s'ouvrir, on va focus l'input
+      setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 100)
+    }
+  }
+
+  const handleClearSearch = () => {
+    setInputValue('')
+    setSearchQuery('')
+    searchInputRef.current?.focus()
   }
 
   return (
@@ -43,8 +78,8 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className={hasActiveFilters 
-                  ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800" 
+                className={hasActiveFilters
+                  ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }
                 aria-label="Filter"
@@ -52,14 +87,48 @@ export function Navbar() {
               >
                 <ListFilter className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-zinc-400 hover:text-white hover:bg-zinc-800"
-                aria-label="Search"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
+
+              {/* Barre de recherche avec expansion */}
+              <div className="flex items-center gap-2">
+                <div
+                  className="relative flex items-center overflow-hidden transition-all duration-300 ease-in-out"
+                  style={{
+                    width: searchBarOpen ? '280px' : '0px',
+                    opacity: searchBarOpen ? 1 : 0
+                  }}
+                >
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Rechercher un film, acteur, réalisateur..."
+                    className="w-full h-9 px-3 pr-8 bg-zinc-800 border border-zinc-700 rounded-full text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500"
+                  />
+                  {inputValue && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="absolute right-2 text-zinc-400 hover:text-white"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={searchQuery || searchBarOpen
+                    ? "text-orange-500 hover:text-orange-400 hover:bg-zinc-800"
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  }
+                  aria-label="Search"
+                  onClick={handleSearchClick}
+                >
+                  <Search className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           )}
 

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, CreditCard, Sparkles, AlertCircle, Film } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useSubscription } from "@/hooks/use-subscription"
+import { getSubscriptionDisplayStatus } from "@/lib/utils/subscription"
 import Link from "next/link"
 import type { User } from "@supabase/supabase-js"
 import type { Tables } from "@/lib/supabase/types"
@@ -64,14 +65,35 @@ export default function AbonnementPage() {
     setMessage(null)
 
     try {
-      const result = await subscribe(abonnementId)
+      // Appeler l'API pour créer la session Stripe Checkout
+      const response = await fetch('/api/subscriptions/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          abonnement_id: abonnementId
+        })
+      })
 
-      if (result.success) {
-        setMessage({ type: 'success', text: 'Abonnement souscrit avec succès !' })
-      } else {
-        setMessage({ type: 'error', text: result.error || 'Erreur lors de la souscription' })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: data.error || 'Erreur lors de la création du paiement' })
+        setSubscribing(null)
+        return
       }
-    } finally {
+
+      // Rediriger vers Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setMessage({ type: 'error', text: 'URL de paiement non disponible' })
+        setSubscribing(null)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la souscription:', error)
+      setMessage({ type: 'error', text: 'Erreur lors de la souscription' })
       setSubscribing(null)
     }
   }
@@ -86,13 +108,59 @@ export default function AbonnementPage() {
     setMessage(null)
 
     try {
-      const result = await cancelSubscription()
+      const response = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
 
-      if (result.success) {
-        setMessage({ type: 'success', text: 'Votre abonnement a été résilié. Vous pouvez continuer à profiter de vos avantages jusqu\'à la date d\'expiration.' })
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: data.error || 'Erreur lors de la résiliation' })
       } else {
-        setMessage({ type: 'error', text: result.error || 'Erreur lors de la résiliation' })
+        setMessage({ type: 'success', text: data.message || 'Votre abonnement a été résilié. Vous pouvez continuer à profiter de vos avantages jusqu\'à la date d\'expiration.' })
+        // Rafraîchir l'abonnement utilisateur
+        window.location.reload()
       }
+    } catch (error) {
+      console.error('Erreur lors de la résiliation:', error)
+      setMessage({ type: 'error', text: 'Erreur lors de la résiliation' })
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const handleReactivateSubscription = async () => {
+    if (!user) {
+      setMessage({ type: 'error', text: 'Vous devez être connecté' })
+      return
+    }
+
+    setCancelling(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/subscriptions/reactivate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: data.error || 'Erreur lors de la réactivation' })
+      } else {
+        setMessage({ type: 'success', text: data.message || 'Votre abonnement a été réactivé avec succès.' })
+        // Rafraîchir l'abonnement utilisateur
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Erreur lors de la réactivation:', error)
+      setMessage({ type: 'error', text: 'Erreur lors de la réactivation' })
     } finally {
       setCancelling(false)
     }
@@ -123,6 +191,9 @@ export default function AbonnementPage() {
   }
 
   const monthlyPlan = availableSubscriptions.find(a => a.duree_mois === 1)
+
+  // Calculer le statut d'affichage de l'abonnement
+  const subscriptionStatus = getSubscriptionDisplayStatus(userSubscription)
 
   return (
     <div className="min-h-screen bg-black text-white pt-20">
@@ -204,6 +275,15 @@ export default function AbonnementPage() {
                   <Button asChild variant="outline" className="w-full border-zinc-600 text-zinc-300 hover:bg-zinc-800" size="lg">
                     <Link href="/">Explorer le catalogue</Link>
                   </Button>
+                ) : subscriptionStatus.isScheduledForCancellation ? (
+                  <Button
+                    disabled
+                    variant="outline"
+                    className="w-full border-blue-500 text-blue-400"
+                    size="lg"
+                  >
+                    Formule activée à l&apos;expiration
+                  </Button>
                 ) : (
                   <Button
                     onClick={handleCancelSubscription}
@@ -241,17 +321,35 @@ export default function AbonnementPage() {
                     </div>
                     <div className="text-zinc-400">par mois</div>
                     {hasActiveSubscription && userSubscription && (
-                      <div className="text-sm text-orange-400 mt-2">
-                        Expire le {new Date(userSubscription.date_expiration).toLocaleDateString('fr-FR')}
-                        {daysUntilExpiration !== null && daysUntilExpiration > 0 && (
-                          <span className="ml-1">
-                            ({daysUntilExpiration} jour{daysUntilExpiration > 1 ? 's' : ''} restant{daysUntilExpiration > 1 ? 's' : ''})
-                          </span>
-                        )}
-                      </div>
+                      subscriptionStatus.isScheduledForCancellation ? (
+                        <div className="text-sm text-orange-400 mt-2">
+                          Expire le {new Date(userSubscription.date_expiration).toLocaleDateString('fr-FR')}
+                          {daysUntilExpiration !== null && daysUntilExpiration > 0 && (
+                            <span className="ml-1">
+                              ({daysUntilExpiration} jour{daysUntilExpiration > 1 ? 's' : ''} restant{daysUntilExpiration > 1 ? 's' : ''})
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-green-400 mt-2">
+                          Prochain prélèvement le {new Date(userSubscription.date_expiration).toLocaleDateString('fr-FR')}
+                        </div>
+                      )
                     )}
                   </div>
                 </CardHeader>
+
+                {/* Message de résiliation permanent */}
+                {subscriptionStatus.isScheduledForCancellation && (
+                  <div className="px-6 pb-4">
+                    <div className="bg-orange-900/20 border border-orange-500 text-orange-400 p-4 rounded-lg text-sm">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                        <span>{subscriptionStatus.message}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -276,15 +374,30 @@ export default function AbonnementPage() {
                       <a href="/auth/login">Se connecter pour s&apos;abonner</a>
                     </Button>
                   ) : hasActiveSubscription ? (
-                    <Button
-                      onClick={handleCancelSubscription}
-                      disabled={cancelling}
-                      variant="outline"
-                      className="w-full border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
-                      size="lg"
-                    >
-                      {cancelling ? "Résiliation..." : "Résilier"}
-                    </Button>
+                    subscriptionStatus.canReactivate ? (
+                      <Button
+                        onClick={handleReactivateSubscription}
+                        disabled={cancelling}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        size="lg"
+                      >
+                        {cancelling ? "Réactivation..." : "Réactiver"}
+                      </Button>
+                    ) : subscriptionStatus.canCancel ? (
+                      <Button
+                        onClick={handleCancelSubscription}
+                        disabled={cancelling}
+                        variant="outline"
+                        className="w-full border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+                        size="lg"
+                      >
+                        {cancelling ? "Résiliation..." : "Résilier"}
+                      </Button>
+                    ) : (
+                      <Button disabled className="w-full" size="lg">
+                        Abonnement expiré
+                      </Button>
+                    )
                   ) : monthlyPlan ? (
                     <Button
                       onClick={() => handleSubscribe(monthlyPlan.id)}

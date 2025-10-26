@@ -2,7 +2,8 @@
 
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useLikeButtonLogic, useHydration } from "@/hooks"
+import { useLikeButtonLogic } from "@/hooks/ui"
+import { useHydration } from "@/hooks/use-hydration"
 import { ICON_SIZES, TRANSITION_CLASSES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
 import type { LikeButtonProps, BaseLikeButtonProps } from "@/types"
 

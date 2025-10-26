@@ -2,12 +2,11 @@
 
 import { MovieGrid } from '@/components/movie-grid'
 import { FiltersModal } from '@/components/filters-modal'
-import { useInfiniteMovies } from '@/hooks/useInfiniteMovies'
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { useInfiniteMovies, useInfiniteScroll } from '@/hooks/ui'
 import { useFiltersModal } from '@/contexts/filters-context'
 
 export function MoviesPageClient() {
-  const { isFiltersModalOpen, setFiltersModalOpen } = useFiltersModal()
+  const { isFiltersModalOpen, setFiltersModalOpen, searchQuery } = useFiltersModal()
 
   const {
     movies,
@@ -44,8 +43,21 @@ export function MoviesPageClient() {
 
   return (
     <>
-      <MovieGrid movies={movies} loading={loading} />
-      
+      {/* Message si aucun résultat pour la recherche */}
+      {!loading && searchQuery && movies.length === 0 && (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-zinc-400 text-lg mb-2">Aucun résultat pour &quot;{searchQuery}&quot;</p>
+            <p className="text-zinc-500 text-sm">Essayez avec d&apos;autres mots-clés</p>
+          </div>
+        </div>
+      )}
+
+      {/* Grille de films */}
+      {(movies.length > 0 || loading) && (
+        <MovieGrid movies={movies} loading={loading} />
+      )}
+
       {/* Élément sentinel pour déclencher le chargement automatique */}
       {!loading && pagination && pagination.hasNextPage && (
         <div ref={sentinelRef} className="w-full py-8">
@@ -61,13 +73,21 @@ export function MoviesPageClient() {
       )}
 
       {/* Indicateur de progression */}
-      {pagination && (
+      {pagination && movies.length > 0 && (
         <div className="text-center mt-6 text-zinc-400 text-sm">
-          {movies.length} films sur {pagination.total}
-          {!pagination.hasNextPage && movies.length > 20 && (
-            <div className="mt-2 text-zinc-500">
-              ✓ Tous les films ont été chargés
-            </div>
+          {searchQuery ? (
+            <>
+              {movies.length} résultat{movies.length > 1 ? 's' : ''} trouvé{movies.length > 1 ? 's' : ''}
+            </>
+          ) : (
+            <>
+              {movies.length} films sur {pagination.total}
+              {!pagination.hasNextPage && movies.length > 20 && (
+                <div className="mt-2 text-zinc-500">
+                  ✓ Tous les films ont été chargés
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

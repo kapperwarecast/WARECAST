@@ -4,12 +4,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MovieActionButtons } from "@/components/movie-action-buttons"
 import { useState, useRef, useEffect } from "react"
 import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
 import { formatDuration, getLanguageName } from "@/lib/utils/format"
-import { useRealtimeMovieAvailability } from "@/hooks/useRealtimeMovieAvailability"
 
 interface MovieCardProps {
   movie: MovieWithDirector
@@ -21,15 +19,6 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
   const [imageLoading, setImageLoading] = useState(true)
   const [isVisible, setIsVisible] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
-
-  // S'abonner aux mises à jour en temps réel du nombre de copies disponibles
-  const { copiesDisponibles: realtimeCopies } = useRealtimeMovieAvailability(
-    movie.id,
-    movie.copies_disponibles
-  )
-
-  // Utiliser la valeur en temps réel si disponible, sinon la valeur initiale
-  const effectiveCopies = realtimeCopies ?? movie.copies_disponibles
 
   // Intersection Observer pour lazy loading intelligent
   useEffect(() => {
@@ -83,9 +72,9 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
 
   return (
     <Link href={`/film/${movie.id}`}>
-      <Card 
+      <Card
         ref={cardRef}
-        className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0 [&:hover_.like-button]:visible [&:hover_.like-button]:opacity-100 [&:hover_.play-button]:visible [&:hover_.play-button]:opacity-100">
+        className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0">
       <div className="relative aspect-[2/3] w-full bg-zinc-800">
         {imageLoading && (
           <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-700 to-zinc-800 animate-pulse" />
@@ -118,12 +107,6 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="absolute bottom-0 left-0 right-0 p-3">
-            {/* Boutons Play et Like côte à côte */}
-            <MovieActionButtons
-              movieId={movie.id}
-              copiesDisponibles={effectiveCopies}
-            />
-
             {/* Titre français */}
             <h3 className="text-white font-semibold text-base line-clamp-2 mb-1">
               {frenchTitle}

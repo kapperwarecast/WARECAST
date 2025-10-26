@@ -1,7 +1,7 @@
 import { type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useActiveRoute } from "@/hooks/useActiveRoute"
+import { useActiveRoute } from "@/hooks/ui"
 import { getButtonStyles } from "@/constants/theme"
 
 interface NavLinkProps {

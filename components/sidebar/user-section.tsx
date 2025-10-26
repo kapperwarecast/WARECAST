@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { User } from "lucide-react"
 import { NavLink } from "@/components/ui/nav-link"
 import { AuthButton } from "@/components/auth/auth-button"
-import { useUserDisplay } from "@/hooks/useUserDisplay"
+import { useUserDisplay } from "@/hooks/ui"
 import { AUTH_ITEMS } from "@/constants/navigation"
 import { CSS_CLASSES } from "@/constants/theme"
 

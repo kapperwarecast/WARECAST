@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { CreditCard, Star, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useMovieInfo } from "@/hooks/use-movie-info"
+import { useMovieInfo } from "@/hooks/actions"
 
 interface PaymentChoiceModalProps {
   isOpen: boolean
@@ -24,7 +24,7 @@ export function PaymentChoiceModalResponsive({
     e.preventDefault()
     e.stopPropagation()
     onClose()
-    router.push('/abonnement')
+    router.push('/formules')
   }
 
   const handlePayWithStripe = (e: React.MouseEvent) => {

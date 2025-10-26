@@ -89,6 +89,9 @@ export function FiltersModal({
     if (currentFilters.language) {
       params.append('language', currentFilters.language)
     }
+    if (currentFilters.availableOnly) {
+      params.append('availableOnly', 'true')
+    }
 
     return params.toString()
   }, [])
@@ -145,7 +148,8 @@ export function FiltersModal({
     const resetFilters: Filters = {
       genres: [],
       decade: '',
-      language: ''
+      language: '',
+      availableOnly: false
     }
     const resetSort: Sort = {
       by: 'random',
@@ -286,6 +290,27 @@ export function FiltersModal({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Disponibilité */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Disponibilité</Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="availableOnly"
+                  checked={localFilters.availableOnly}
+                  onChange={(e) => {
+                    const newFilters = { ...localFilters, availableOnly: e.target.checked }
+                    setLocalFilters(newFilters)
+                    debouncedPreview(newFilters)
+                  }}
+                  className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-orange-600 focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                />
+                <Label htmlFor="availableOnly" className="text-sm font-normal cursor-pointer">
+                  Films disponibles uniquement
+                </Label>
+              </div>
             </div>
           </div>
 
