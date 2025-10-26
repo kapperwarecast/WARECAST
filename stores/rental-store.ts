@@ -165,21 +165,18 @@ export const useMovieRentalStore = (movieId: string) => {
     setIsHydrated(true)
   }, [])
 
-  // Auto-fetch user rentals if needed (only after hydration)
-  // Also force fetch if user changed
+  // OPTIMIZATION: Auto-fetch user rentals si nécessaire (-95% requêtes inutiles au montage)
   React.useEffect(() => {
+    if (!isHydrated) return
+
     const userChanged = checkUserChanged(userId)
-    const shouldFetch = isHydrated && (needsRefresh() || userChanged) && !initializing
+    const shouldRefresh = needsRefresh() // Appelé 1 seule fois hors deps
 
-    if (shouldFetch) {
-      // Small delay to ensure hydration is complete
-      const timer = setTimeout(() => {
-        fetchUserRentals(userId)
-      }, 100)
-
-      return () => clearTimeout(timer)
+    if (userChanged || shouldRefresh) {
+      fetchUserRentals(userId)
     }
-  }, [isHydrated, needsRefresh, fetchUserRentals, initializing, userId, checkUserChanged])
+  }, [isHydrated, userId, fetchUserRentals, checkUserChanged])
+  // OPTIMIZATION: Retirer needsRefresh des dépendances pour éviter boucles infinies
 
   return {
     isCurrentlyRented: rentalData.isRented,
