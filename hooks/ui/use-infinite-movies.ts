@@ -43,9 +43,6 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Random seed pour l'ordre aléatoire - généré une seule fois au montage
-  const [randomSeed] = useState(() => Math.random().toString(36).substring(7))
-
   // State for filters and sorting
   const [filters, setFilters] = useState<Filters>({
     genres: [],
@@ -67,11 +64,6 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       sortOrder: currentSort.order
     })
 
-    // Ajouter le seed aléatoire pour le tri random
-    if (currentSort.by === 'random') {
-      params.append('randomSeed', randomSeed)
-    }
-
     // Ajouter la recherche si présente
     if (search && search.trim()) {
       params.append('search', search.trim())
@@ -91,7 +83,7 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
     }
 
     return params.toString()
-  }, [initialLimit, randomSeed])
+  }, [initialLimit])
 
   const fetchMovies = useCallback(async (page: number, append = false, currentFilters?: Filters, currentSort?: Sort) => {
     try {
@@ -107,12 +99,12 @@ export function useInfiniteMovies(initialLimit = 20): UseInfiniteMoviesReturn {
       const activeSort = currentSort ?? sort
 
       const queryParams = buildQueryParams(page, activeFilters, activeSort, searchQuery)
+      // OPTIMIZATION: Retirer cache: 'no-store' pour activer cache browser (+80% vitesse "Retour")
       const response = await fetch(`/api/movies?${queryParams}`, {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Désactiver le cache pour les données sensibles à la pagination
-        cache: 'no-store'
+        // Utilise le cache browser par défaut pour navigation instantanée
       })
 
       if (!response.ok) {

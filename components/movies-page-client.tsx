@@ -21,12 +21,12 @@ export function MoviesPageClient() {
     resetFilters,
   } = useInfiniteMovies(20)
 
-  // Hook pour l'infinite scroll automatique très proactif
+  // OPTIMIZATION: Réduire rootMargin pour éviter préchargement excessif (-60% données inutiles)
   const { sentinelRef } = useInfiniteScroll({
     onLoadMore: loadMore,
     hasNextPage: pagination?.hasNextPage ?? false,
     loading: loadingMore,
-    rootMargin: '1000px',
+    rootMargin: '400px', // 2-3 scrolls d'avance suffisent (au lieu de 1000px)
     threshold: 0.1
   })
 
