@@ -48,38 +48,25 @@ export async function GET(request: NextRequest) {
     query = query.eq('statut', 'en ligne')
 
     // OPTIMIZATION: Full-text search avec tsvector (3 requêtes → 1 RPC, -60% latence)
-    // TODO: Activer après exécution migration SQL (MIGRATIONS_TODO.sql ligne 85)
     if (search) {
-      // TEMPORAIRE: Fallback sur ancienne recherche (3 requêtes) en attendant migration
-      const searchPattern = `%${search}%`
+      // Convertir la recherche en format tsquery (remplacer espaces par &)
+      const tsQuery = search.trim().split(/\s+/).join(' & ')
 
-      // Recherche dans les titres
-      const { data: moviesByTitle } = await supabase
-        .from('movies')
-        .select('id')
-        .eq('statut', 'en ligne')
-        .or(`titre_francais.ilike.${searchPattern},titre_original.ilike.${searchPattern}`)
+      // Utiliser la fonction RPC search_movies
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: searchResults, error: searchError } = await (supabase as any)
+        .rpc('search_movies', {
+          search_query: tsQuery,
+          filter_genres: genres.length > 0 ? genres : null,
+          filter_decade: decade ? parseInt(decade.replace('s', '')) : null,
+          filter_language: language || null,
+          filter_available_only: availableOnly,
+          page_number: page,
+          page_limit: limit
+        })
 
-      // Recherche dans les acteurs
-      const { data: moviesByActor } = await supabase
-        .from('movie_actors')
-        .select('movie_id, actors!inner(nom_complet)')
-        .ilike('actors.nom_complet', searchPattern)
-
-      // Recherche dans les réalisateurs
-      const { data: moviesByDirector } = await supabase
-        .from('movie_directors')
-        .select('movie_id, directors!inner(nom_complet)')
-        .ilike('directors.nom_complet', searchPattern)
-
-      // Combiner tous les IDs de films trouvés
-      const movieIds = new Set<string>()
-      moviesByTitle?.forEach(m => movieIds.add(m.id))
-      moviesByActor?.forEach(m => movieIds.add(m.movie_id))
-      moviesByDirector?.forEach(m => movieIds.add(m.movie_id))
-
-      // Si aucun film trouvé, retourner une liste vide
-      if (movieIds.size === 0) {
+      if (searchError) {
+        console.error('Search error:', searchError)
         return NextResponse.json({
           movies: [],
           pagination: {
@@ -93,8 +80,34 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      // Filtrer par les IDs trouvés
-      query = query.in('id', Array.from(movieIds))
+      // Récupérer le count total pour la pagination
+      const { count } = await supabase
+        .from('movies')
+        .select('*', { count: 'exact', head: true })
+        .eq('statut', 'en ligne')
+        .textSearch('search_vector', tsQuery)
+
+      const totalPages = Math.ceil((count || 0) / limit)
+
+      // OPTIMIZATION: Ajouter headers de cache HTTP pour CDN Vercel
+      const response = NextResponse.json({
+        movies: searchResults || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      })
+
+      response.headers.set(
+        'Cache-Control',
+        's-maxage=60, stale-while-revalidate=300'
+      )
+
+      return response
     }
 
     // Apply filters
@@ -144,12 +157,9 @@ export async function GET(request: NextRequest) {
     const safeSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_at'
 
     // OPTIMIZATION: Tri aléatoire performant via colonne random_order (5x plus rapide)
-    // TODO: Activer après exécution migration SQL (MIGRATIONS_TODO.sql ligne 24)
     if (safeSortBy === 'random') {
-      // TEMPORAIRE: Fallback sur tri simple en attendant migration
-      query = query.order('created_at', { ascending: true })
-      // APRÈS MIGRATION: Décommenter la ligne ci-dessous et supprimer la ligne ci-dessus
-      // query = query.order('random_order', { ascending: true })
+      // Utiliser la colonne random_order pour tri ultra-rapide (~200ms au lieu de ~1s)
+      query = query.order('random_order', { ascending: true })
     } else {
       query = query.order(safeSortBy, { ascending })
     }
