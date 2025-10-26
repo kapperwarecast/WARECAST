@@ -2,21 +2,34 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // OPTIMIZATION: Restreindre remotePatterns pour sécurité et performance
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'image.tmdb.org',
+        pathname: '/t/p/**',
       },
       {
-        protocol: 'http',
-        hostname: '**',
+        protocol: 'https',
+        hostname: '**.supabase.co',
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
-    qualities: [50, 75, 85, 90, 100],
+    // OPTIMIZATION: Réduire deviceSizes pour moins de variants générés
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // OPTIMIZATION: Augmenter cache TTL à 24h
+    minimumCacheTTL: 86400,
+  },
+
+  // OPTIMIZATION: Retirer console.log en production
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  // OPTIMIZATION: Optimiser imports de packages volumineux
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 };
 
