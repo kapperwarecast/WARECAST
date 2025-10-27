@@ -140,13 +140,20 @@
 }
 
 @layer components {
-  /* Custom movie grid with max 270px card width - supports up to 5 columns */
+  /* Custom movie grid - 2 columns on mobile, responsive auto-fill on larger screens */
   .movie-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 270px));
-    gap: 1.5rem;
+    /* Mobile: 2 colonnes fixes avec espacement réduit */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem; /* 12px au lieu de 24px */
     justify-content: center;
     max-width: 1500px;
     margin: 0 auto;
+
+    /* Tablette et desktop: comportement auto-fill */
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 270px));
+      gap: 1.5rem;
+    }
   }
 }
