@@ -13,14 +13,14 @@ export interface RealtimeListenerConfig {
 /**
  * Handler pour les changements Realtime
  */
-export type RealtimeChangeHandler<T extends { [key: string]: any } = any> = (
+export type RealtimeChangeHandler<T extends Record<string, unknown> = Record<string, unknown>> = (
   payload: RealtimePostgresChangesPayload<T>
 ) => void
 
 /**
  * Configuration complète pour useRealtimeSubscription
  */
-export interface RealtimeSubscriptionConfig<T extends { [key: string]: any } = any> {
+export interface RealtimeSubscriptionConfig<T extends Record<string, unknown> = Record<string, unknown>> {
   channelName: string
   listeners: Array<{
     config: RealtimeListenerConfig

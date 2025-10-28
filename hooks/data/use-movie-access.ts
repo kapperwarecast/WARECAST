@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { createClient } from '@/lib/supabase/client'
+import type { RentOrAccessMovieResult } from '@/types/rpc'
 
 export type AccessStatus =
   | 'loading'    // Vérification en cours
@@ -41,7 +42,7 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
       const { data, error: rpcError } = await supabase.rpc('rent_or_access_movie', {
         p_movie_id: movieId,
         p_auth_user_id: user.id,
-        p_payment_id: null
+        p_payment_id: undefined
       })
 
       console.log('[RENTAL] RPC response:', { data, error: rpcError })
@@ -55,9 +56,12 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
         return
       }
 
+      // Cast le résultat vers le type RPC
+      const result = data as unknown as RentOrAccessMovieResult
+
       // 4. Vérifier le succès de l'opération
-      if (!data || !data.success) {
-        const errorMsg = data?.error || 'Erreur inconnue'
+      if (!result || !result.success) {
+        const errorMsg = result?.error || 'Erreur inconnue'
         console.error('[RENTAL] Operation failed:', errorMsg)
 
         // Messages d'erreur clairs selon le cas
@@ -76,9 +80,9 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
 
       // 5. Succès ! Accès autorisé
       console.log('[RENTAL] Access granted:', {
-        rentalId: data.emprunt_id,
-        existingRental: data.existing_rental,
-        previousReleased: data.previous_rental_released
+        rentalId: result.emprunt_id,
+        existingRental: result.existing_rental,
+        previousReleased: result.previous_rental_released
       })
 
       setStatus('granted')

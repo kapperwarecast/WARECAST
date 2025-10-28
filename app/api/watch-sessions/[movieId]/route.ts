@@ -95,7 +95,7 @@ export async function GET(
     }
 
     // Calculer la durée en secondes (duree est en minutes dans la DB)
-    const movieData = rental.movies as any
+    const movieData = rental.movies as { duree: number | null } | null
     const durationMinutes = movieData?.duree || 0
     const duration = durationMinutes * 60
 

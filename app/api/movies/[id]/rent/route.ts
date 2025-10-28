@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import type { RentOrAccessMovieResult } from "@/types/rpc"
 
 interface RouteParams {
   params: Promise<{
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { data, error: rpcError } = await supabase.rpc('rent_or_access_movie', {
       p_movie_id: movieId,
       p_auth_user_id: user.id,
-      p_payment_id: null
+      p_payment_id: undefined
     })
 
     if (rpcError) {
@@ -42,8 +43,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Vérifier le résultat de la RPC
-    if (!data || !data.success) {
-      const errorMsg = data?.error || 'Erreur inconnue'
+    const result = data as unknown as RentOrAccessMovieResult
+    if (!result || !result.success) {
+      const errorMsg = result?.error || 'Erreur inconnue'
 
       // Cas spéciaux basés sur l'erreur
       if (errorMsg.includes('copie') || errorMsg.includes('disponible')) {
@@ -53,12 +55,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         }, { status: 409 }) // 409 Conflict
       }
 
-      if (errorMsg.includes('payment') || data?.requires_payment_choice) {
+      if (errorMsg.includes('payment') || result?.requires_payment_choice) {
         // Utilisateur sans abonnement → modal de choix
         return NextResponse.json({
           success: false,
           requires_payment_choice: true,
-          movie_title: data.movie_title || "Film",
+          movie_title: result.movie_title || "Film",
           rental_price: 1.50
         }, { status: 409 })
       }
@@ -72,12 +74,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Succès - emprunt créé ou existant
     return NextResponse.json({
       success: true,
-      existing_rental: data.existing_rental || false,
-      emprunt_id: data.emprunt_id,
-      subscription_access: data.rental_type === 'subscription',
-      previous_rental_released: data.previous_rental_released || false,
-      movie_title: data.movie_title,
-      expires_at: data.expires_at
+      existing_rental: result.existing_rental || false,
+      emprunt_id: result.emprunt_id,
+      subscription_access: result.rental_type === 'subscription',
+      previous_rental_released: result.previous_rental_released || false,
+      movie_title: result.movie_title,
+      expires_at: result.expires_at
     })
 
   } catch (error) {

@@ -19,11 +19,11 @@ export function VideoPlayer({ vimeoUrl, title, startTime = 0, movieId, rentalId 
   // Hook pour sauvegarder automatiquement la position
   const { updatePosition, saveNow } = useVideoPosition(movieId, rentalId)
 
-  if (!videoData.isValid || !videoData.id) {
-    return <VideoPlayerError title={title} />
-  }
-
   useEffect(() => {
+    // Early return if video is invalid
+    if (!videoData.isValid || !videoData.id) {
+      return
+    }
     console.log("🎬 Video player mounted - Starting Vimeo API tracking")
     console.log(`⏩ Start time: ${startTime}s`)
 
@@ -127,10 +127,10 @@ export function VideoPlayer({ vimeoUrl, title, startTime = 0, movieId, rentalId 
       saveNow()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startTime])
+  }, [startTime, videoData.isValid, videoData.id])
 
   // Construire l'URL Vimeo avec le temps de départ
-  const embedUrl = getVimeoEmbedUrl(videoData.id, {
+  const embedUrl = getVimeoEmbedUrl(videoData.id!, {
     autoplay: startTime > 0, // Auto-start si reprise de lecture
     title: false,
     byline: false,
@@ -144,6 +144,11 @@ export function VideoPlayer({ vimeoUrl, title, startTime = 0, movieId, rentalId 
 
   // Debug: Logger l'URL pour vérifier api=1
   console.log('🎬 Embed URL:', embedUrlWithTime)
+
+  // Validation check after all hooks
+  if (!videoData.isValid || !videoData.id) {
+    return <VideoPlayerError title={title} />
+  }
 
   return (
     <div className="w-full">

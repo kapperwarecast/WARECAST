@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRealtimeSubscription } from './use-realtime-subscription'
 import type { UseRealtimeMovieAvailabilityReturn } from '@/types'
+import type { Tables } from '@/lib/supabase/types'
 
 /**
  * Hook pour s'abonner aux changements de disponibilité d'un film en temps réel
@@ -76,8 +77,9 @@ export function useRealtimeMovieAvailability(
         },
         handler: (payload) => {
           console.log(`📡 [Realtime Availability] UPDATE détecté sur movie ${movieId}`)
-          if (payload.new && typeof payload.new.copies_disponibles === 'number') {
-            setCopiesDisponibles(payload.new.copies_disponibles)
+          const newData = payload.new as Tables<'movies'>
+          if (newData && typeof newData.copies_disponibles === 'number') {
+            setCopiesDisponibles(newData.copies_disponibles)
           }
         },
       },
@@ -90,7 +92,8 @@ export function useRealtimeMovieAvailability(
           filter: `movie_id=eq.${movieId}`,
         },
         handler: (payload) => {
-          if (payload.new.statut === 'en_cours') {
+          const newData = payload.new as Tables<'emprunts'>
+          if (newData.statut === 'en_cours') {
             console.log(`📡 [Realtime Availability] Nouvel emprunt détecté pour film ${movieId}`)
             setTotalRentals((prev) => (prev !== null ? prev + 1 : 1))
             // OPTIMIZATION: Supprimer checkInitialState() ici (-90% requêtes inutiles)
@@ -106,8 +109,8 @@ export function useRealtimeMovieAvailability(
           filter: `movie_id=eq.${movieId}`,
         },
         handler: (payload) => {
-          const oldRecord = payload.old as { statut?: string }
-          const newRecord = payload.new as { statut?: string }
+          const oldRecord = payload.old as Tables<'emprunts'>
+          const newRecord = payload.new as Tables<'emprunts'>
           if (oldRecord.statut === 'en_cours' && newRecord.statut !== 'en_cours') {
             console.log(`📡 [Realtime Availability] Film ${movieId} rendu par un utilisateur`)
             setTotalRentals((prev) => (prev !== null && prev > 0 ? prev - 1 : 0))
@@ -124,7 +127,7 @@ export function useRealtimeMovieAvailability(
           filter: `movie_id=eq.${movieId}`,
         },
         handler: (payload) => {
-          const oldRecord = payload.old as { statut?: string }
+          const oldRecord = payload.old as Tables<'emprunts'>
           if (oldRecord.statut === 'en_cours') {
             console.log(`📡 [Realtime Availability] Emprunt supprimé pour film ${movieId}`)
             setTotalRentals((prev) => (prev !== null && prev > 0 ? prev - 1 : 0))

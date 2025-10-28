@@ -8,7 +8,7 @@ function getStripe() {
     throw new Error("STRIPE_SECRET_KEY manquante")
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2024-11-20.acacia",
+    apiVersion: "2025-08-27.basil",
   })
 }
 
@@ -257,8 +257,9 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
+        const subscriptionId = (invoice as {subscription?: string | Stripe.Subscription}).subscription
 
-        if (invoice.subscription) {
+        if (subscriptionId) {
           // Prolonger l'abonnement d'un mois
           const dateExpiration = new Date(invoice.period_end * 1000)
 
@@ -269,7 +270,7 @@ export async function POST(request: NextRequest) {
               statut: 'actif',
               updated_at: new Date().toISOString()
             })
-            .eq('stripe_subscription_id', invoice.subscription as string)
+            .eq('stripe_subscription_id', typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id)
 
           if (renewError) {
             console.error("Erreur renouvellement abonnement:", renewError)
@@ -279,18 +280,19 @@ export async function POST(request: NextRequest) {
           const { data: userAbonnement } = await supabase
             .from('user_abonnements')
             .select('user_id')
-            .eq('stripe_subscription_id', invoice.subscription as string)
+            .eq('stripe_subscription_id', typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id)
             .single()
 
           if (userAbonnement) {
+            const paymentIntentId = (invoice as {payment_intent?: string | Stripe.PaymentIntent}).payment_intent
             const { error: paymentError } = await supabase.from('payments').insert({
               user_id: userAbonnement.user_id,
               payment_type: 'subscription',
               amount: (invoice.amount_paid || 0) / 100,
               currency: invoice.currency || 'eur',
               status: 'completed',
-              external_payment_id: invoice.payment_intent as string,
-              subscription_id: invoice.subscription as string,
+              external_payment_id: typeof paymentIntentId === 'string' ? paymentIntentId : paymentIntentId?.id || null,
+              subscription_id: typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id,
               completed_at: new Date().toISOString(),
               created_at: new Date().toISOString()
             })
@@ -300,7 +302,7 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          console.log('Subscription renewed:', invoice.subscription)
+          console.log('Subscription renewed:', typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id)
         }
 
         break
@@ -308,21 +310,22 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
+        const subscriptionId = (invoice as {subscription?: string | Stripe.Subscription}).subscription
 
-        if (invoice.subscription) {
+        if (subscriptionId) {
           const { error: failError } = await supabase
             .from('user_abonnements')
             .update({
               statut: 'suspendu',
               updated_at: new Date().toISOString()
             })
-            .eq('stripe_subscription_id', invoice.subscription as string)
+            .eq('stripe_subscription_id', typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id)
 
           if (failError) {
             console.error("Erreur suspension abonnement:", failError)
           }
 
-          console.log('Subscription payment failed and suspended:', invoice.subscription)
+          console.log('Subscription payment failed and suspended:', typeof subscriptionId === 'string' ? subscriptionId : subscriptionId.id)
         }
 
         break

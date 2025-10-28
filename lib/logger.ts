@@ -9,7 +9,7 @@ export const logger = {
   /**
    * Log général - uniquement en développement
    */
-  log: (...args: any[]) => {
+  log: (...args: unknown[]) => {
     if (isDevelopment) {
       console.log(...args)
     }
@@ -18,7 +18,7 @@ export const logger = {
   /**
    * Log d'informations - uniquement en développement
    */
-  info: (...args: any[]) => {
+  info: (...args: unknown[]) => {
     if (isDevelopment) {
       console.info(...args)
     }
@@ -27,21 +27,21 @@ export const logger = {
   /**
    * Warning - toujours loggé (important pour debug production)
    */
-  warn: (...args: any[]) => {
+  warn: (...args: unknown[]) => {
     console.warn(...args)
   },
 
   /**
    * Erreur - toujours loggée (critique pour monitoring)
    */
-  error: (...args: any[]) => {
+  error: (...args: unknown[]) => {
     console.error(...args)
   },
 
   /**
    * Debug détaillé - uniquement en développement
    */
-  debug: (...args: any[]) => {
+  debug: (...args: unknown[]) => {
     if (isDevelopment) {
       console.debug(...args)
     }

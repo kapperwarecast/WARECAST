@@ -29,9 +29,9 @@ const envSchema = z.object({
 function validateEnv() {
   try {
     return envSchema.parse(process.env)
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.errors.map(err => `  - ${err.path.join('.')}: ${err.message}`).join('\n')
+      const missingVars = error.issues.map(err => `  - ${err.path.join('.')}: ${err.message}`).join('\n')
 
       console.error('❌ Variables d\'environnement invalides ou manquantes:\n')
       console.error(missingVars)

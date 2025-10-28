@@ -119,9 +119,11 @@ export type Database = {
           date_emprunt: string | null
           date_retour: string
           id: string
+          last_watched_at: string | null
           montant_paye: number | null
           movie_id: string
           payment_id: string | null
+          position_seconds: number | null
           statut: string
           type_emprunt: string
           updated_at: string | null
@@ -132,9 +134,11 @@ export type Database = {
           date_emprunt?: string | null
           date_retour: string
           id?: string
+          last_watched_at?: string | null
           montant_paye?: number | null
           movie_id: string
           payment_id?: string | null
+          position_seconds?: number | null
           statut?: string
           type_emprunt: string
           updated_at?: string | null
@@ -145,9 +149,11 @@ export type Database = {
           date_emprunt?: string | null
           date_retour?: string
           id?: string
+          last_watched_at?: string | null
           montant_paye?: number | null
           movie_id?: string
           payment_id?: string | null
+          position_seconds?: number | null
           statut?: string
           type_emprunt?: string
           updated_at?: string | null
@@ -349,7 +355,6 @@ export type Database = {
           statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
-          titre_francais?: string | null
           titre_original?: string | null
           tmdb_id?: number
           updated_at?: string | null
