@@ -121,6 +121,7 @@ export type Database = {
           id: string
           montant_paye: number | null
           movie_id: string
+          payment_id: string | null
           statut: string
           type_emprunt: string
           updated_at: string | null
@@ -133,6 +134,7 @@ export type Database = {
           id?: string
           montant_paye?: number | null
           movie_id: string
+          payment_id?: string | null
           statut?: string
           type_emprunt: string
           updated_at?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           id?: string
           montant_paye?: number | null
           movie_id?: string
+          payment_id?: string | null
           statut?: string
           type_emprunt?: string
           updated_at?: string | null
@@ -156,6 +159,13 @@ export type Database = {
             columns: ["movie_id"]
             isOneToOne: false
             referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emprunts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
           {
@@ -290,6 +300,8 @@ export type Database = {
           nombre_copies: number
           note_tmdb: number | null
           poster_local_path: string | null
+          random_order: number | null
+          search_vector: unknown
           statut: string | null
           subtitle_path: string | null
           synopsis: string | null
@@ -310,6 +322,8 @@ export type Database = {
           nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
+          random_order?: number | null
+          search_vector?: unknown
           statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
@@ -330,6 +344,8 @@ export type Database = {
           nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
+          random_order?: number | null
+          search_vector?: unknown
           statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
@@ -549,6 +565,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_overdue_rentals: { Args: never; Returns: number }
+      expire_overdue_rentals: { Args: never; Returns: number }
+      refresh_random_order: { Args: never; Returns: undefined }
       rent_movie: {
         Args: { p_auth_user_id: string; p_movie_id: string }
         Returns: Json
@@ -561,10 +580,31 @@ export type Database = {
         }
         Returns: Json
       }
-      update_overdue_emprunts: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      search_movies: {
+        Args: {
+          filter_available_only?: boolean
+          filter_decade?: number
+          filter_genres?: string[]
+          filter_language?: string
+          page_limit?: number
+          page_number?: number
+          search_query: string
+        }
+        Returns: {
+          annee_sortie: number
+          copies_disponibles: number
+          duree: number
+          id: string
+          langue_vo: string
+          poster_local_path: string
+          rank: number
+          titre_francais: string
+          titre_original: string
+        }[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      update_overdue_emprunts: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

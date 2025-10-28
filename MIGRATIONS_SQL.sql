@@ -216,6 +216,198 @@ ON emprunts(date_retour) WHERE statut = 'en_cours';
 
 
 -- ============================================
+-- MIGRATION 5 : Triggers de gestion des copies
+-- Phase 3 - Gestion automatique des copies disponibles
+-- Gain attendu : Intégrité des données, synchronisation copies
+-- ============================================
+
+-- Fonction appelée lors de la création d'un emprunt
+-- Décrémente automatiquement copies_disponibles
+CREATE OR REPLACE FUNCTION handle_rental_created()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Décrémenter les copies disponibles quand un emprunt est créé avec statut 'en_cours'
+  IF NEW.statut = 'en_cours' THEN
+    UPDATE movies
+    SET copies_disponibles = copies_disponibles - 1
+    WHERE id = NEW.movie_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Fonction appelée lors du retour d'un emprunt
+-- Incrémente automatiquement copies_disponibles
+CREATE OR REPLACE FUNCTION handle_rental_return()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Incrémenter les copies disponibles quand le statut passe de 'en_cours' à 'rendu' ou 'expiré'
+  IF OLD.statut = 'en_cours' AND (NEW.statut = 'rendu' OR NEW.statut = 'expiré') THEN
+    UPDATE movies
+    SET copies_disponibles = copies_disponibles + 1
+    WHERE id = OLD.movie_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger pour la création d'emprunts
+DROP TRIGGER IF EXISTS rental_created_trigger ON emprunts;
+CREATE TRIGGER rental_created_trigger
+AFTER INSERT ON emprunts
+FOR EACH ROW
+EXECUTE FUNCTION handle_rental_created();
+
+-- Trigger pour le retour d'emprunts
+DROP TRIGGER IF EXISTS rental_return_trigger ON emprunts;
+CREATE TRIGGER rental_return_trigger
+AFTER UPDATE ON emprunts
+FOR EACH ROW
+EXECUTE FUNCTION handle_rental_return();
+
+-- Vérifier que les triggers fonctionnent
+-- Test : INSERT INTO emprunts (...) - devrait décrémenter copies_disponibles
+-- Test : UPDATE emprunts SET statut='rendu' - devrait incrémenter copies_disponibles
+
+
+-- ============================================
+-- MIGRATION 6 : Expiration automatique des emprunts
+-- Phase 3 - Retour automatique après 48h
+-- Gain attendu : Intégrité des données, libération automatique des copies
+-- ============================================
+
+-- Fonction pour marquer les emprunts expirés automatiquement
+CREATE OR REPLACE FUNCTION expire_overdue_rentals()
+RETURNS INTEGER AS $$
+DECLARE
+  affected_rows INTEGER;
+BEGIN
+  -- Marquer tous les emprunts dont la date de retour est dépassée
+  UPDATE emprunts
+  SET statut = 'expiré',
+      updated_at = NOW()
+  WHERE statut = 'en_cours'
+    AND date_retour < NOW();
+
+  -- Retourner le nombre de lignes affectées (pour logs)
+  GET DIAGNOSTICS affected_rows = ROW_COUNT;
+  RETURN affected_rows;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Fonction helper pour vérifier les emprunts expirés (sans modification)
+CREATE OR REPLACE FUNCTION count_overdue_rentals()
+RETURNS INTEGER AS $$
+DECLARE
+  count_rows INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO count_rows
+  FROM emprunts
+  WHERE statut = 'en_cours'
+    AND date_retour < NOW();
+
+  RETURN count_rows;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Vérifier combien d'emprunts sont actuellement expirés
+-- SELECT count_overdue_rentals();
+
+-- Pour tester manuellement l'expiration
+-- SELECT expire_overdue_rentals();
+
+
+-- ============================================
+-- MIGRATION 7 : Nettoyage des données historiques
+-- Phase 3 - Correction des emprunts expirés existants
+-- IMPORTANT : À exécuter UNE SEULE FOIS après avoir créé les triggers
+-- ============================================
+
+-- ⚠️ ATTENTION : Cette migration va modifier des données existantes
+-- Elle doit être exécutée APRÈS les migrations 5 et 6
+
+-- Étape 1 : Marquer tous les emprunts expirés comme 'expiré'
+-- Les triggers handle_rental_return vont automatiquement incrémenter copies_disponibles
+DO $$
+DECLARE
+  expired_count INTEGER;
+BEGIN
+  -- Compter les emprunts à expirer
+  SELECT COUNT(*) INTO expired_count
+  FROM emprunts
+  WHERE statut = 'en_cours'
+    AND date_retour < NOW();
+
+  RAISE NOTICE 'Nombre d''emprunts à expirer : %', expired_count;
+
+  -- Marquer comme expirés (les triggers vont libérer les copies automatiquement)
+  UPDATE emprunts
+  SET statut = 'expiré',
+      updated_at = NOW()
+  WHERE statut = 'en_cours'
+    AND date_retour < NOW();
+
+  RAISE NOTICE 'Emprunts expirés avec succès : %', expired_count;
+END $$;
+
+-- Étape 2 : Vérification et recalcul des copies disponibles (sécurité)
+-- Cette étape est optionnelle mais recommandée pour vérifier la cohérence
+DO $$
+DECLARE
+  movie_record RECORD;
+  expected_copies INTEGER;
+  current_copies INTEGER;
+BEGIN
+  FOR movie_record IN SELECT id, nombre_copies, copies_disponibles FROM movies
+  LOOP
+    -- Calculer le nombre attendu de copies disponibles
+    SELECT movie_record.nombre_copies - COUNT(*)
+    INTO expected_copies
+    FROM emprunts
+    WHERE movie_id = movie_record.id
+      AND statut = 'en_cours';
+
+    current_copies := movie_record.copies_disponibles;
+
+    -- Si incohérence, corriger
+    IF expected_copies != current_copies THEN
+      RAISE NOTICE 'Film % : Correction % -> %',
+        movie_record.id,
+        current_copies,
+        expected_copies;
+
+      UPDATE movies
+      SET copies_disponibles = expected_copies
+      WHERE id = movie_record.id;
+    END IF;
+  END LOOP;
+
+  RAISE NOTICE 'Vérification et recalcul terminés';
+END $$;
+
+-- Vérifier le résultat
+SELECT
+  COUNT(*) as total_emprunts_expired
+FROM emprunts
+WHERE statut = 'expiré';
+
+SELECT
+  COUNT(*) as total_emprunts_en_cours
+FROM emprunts
+WHERE statut = 'en_cours';
+
+-- Vérifier qu'aucun film n'a de copies négatives
+SELECT
+  id,
+  titre_francais,
+  nombre_copies,
+  copies_disponibles
+FROM movies
+WHERE copies_disponibles < 0 OR copies_disponibles > nombre_copies;
+-- Devrait retourner 0 lignes
+
+
+-- ============================================
 -- VÉRIFICATIONS FINALES
 -- ============================================
 
@@ -246,6 +438,22 @@ SELECT * FROM pg_extension WHERE extname = 'pg_trgm';
 -- Vérifier que la fonction RPC existe
 SELECT proname FROM pg_proc WHERE proname = 'search_movies';
 -- Devrait retourner 1 ligne
+
+-- Vérifier que les fonctions de gestion des emprunts existent
+SELECT proname FROM pg_proc WHERE proname IN (
+  'handle_rental_created',
+  'handle_rental_return',
+  'expire_overdue_rentals',
+  'count_overdue_rentals'
+);
+-- Devrait retourner 4 lignes
+
+-- Vérifier que les triggers existent
+SELECT tgname, tgtype, tgenabled
+FROM pg_trigger
+WHERE tgname IN ('rental_created_trigger', 'rental_return_trigger')
+  AND tgrelid = 'emprunts'::regclass;
+-- Devrait retourner 2 lignes
 
 
 -- ============================================
@@ -287,8 +495,17 @@ DROP FUNCTION IF EXISTS search_movies(TEXT, TEXT[], INT, TEXT, BOOLEAN, INT, INT
 -- Supprimer triggers
 DROP TRIGGER IF EXISTS movies_random_order_trigger ON movies;
 DROP TRIGGER IF EXISTS movies_search_vector_update ON movies;
+DROP TRIGGER IF EXISTS rental_created_trigger ON emprunts;
+DROP TRIGGER IF EXISTS rental_return_trigger ON emprunts;
+
+-- Supprimer fonctions de gestion des emprunts
+DROP FUNCTION IF EXISTS handle_rental_created();
+DROP FUNCTION IF EXISTS handle_rental_return();
+DROP FUNCTION IF EXISTS expire_overdue_rentals();
+DROP FUNCTION IF EXISTS count_overdue_rentals();
 
 -- Note : pg_trgm extension n'est pas supprimée (utilisée potentiellement ailleurs)
+-- Note : La migration 7 (nettoyage) ne peut pas être rollback automatiquement
 */
 
 
@@ -312,9 +529,153 @@ DROP TRIGGER IF EXISTS movies_search_vector_update ON movies;
 
 
 -- ============================================
+-- MIGRATION 8 : Fonction RPC rent_or_access_movie
+-- Pour gestion des locations et emprunts avec abonnement
+-- Appelée par le webhook Stripe et l'API de location
+-- ============================================
+
+CREATE OR REPLACE FUNCTION rent_or_access_movie(
+  p_auth_user_id UUID,
+  p_movie_id UUID,
+  p_payment_id UUID DEFAULT NULL
+)
+RETURNS JSON AS $$
+DECLARE
+  v_copies_disponibles INT;
+  v_type_emprunt TEXT;
+  v_montant_paye NUMERIC;
+  v_existing_rental_id UUID;
+  v_new_rental_id UUID;
+  v_user_has_subscription BOOLEAN;
+BEGIN
+  -- Vérifier si le film a des copies disponibles
+  SELECT copies_disponibles INTO v_copies_disponibles
+  FROM movies
+  WHERE id = p_movie_id;
+
+  -- Si le film n'existe pas
+  IF v_copies_disponibles IS NULL THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Film non trouvé',
+      'code', 'MOVIE_NOT_FOUND'
+    );
+  END IF;
+
+  -- Si aucune copie disponible
+  IF v_copies_disponibles <= 0 THEN
+    RETURN json_build_object(
+      'success', false,
+      'error', 'Aucune copie disponible pour ce film',
+      'code', 'NO_COPIES_AVAILABLE'
+    );
+  END IF;
+
+  -- Vérifier si l'utilisateur a un abonnement actif
+  SELECT EXISTS(
+    SELECT 1 FROM user_abonnements
+    WHERE user_id = p_auth_user_id
+      AND statut = 'actif'
+      AND date_expiration > NOW()
+  ) INTO v_user_has_subscription;
+
+  -- Déterminer le type d'emprunt et le montant
+  IF v_user_has_subscription THEN
+    v_type_emprunt := 'abonnement';
+    v_montant_paye := 0;
+
+    -- Si abonné, libérer l'emprunt en cours (rotation automatique)
+    SELECT id INTO v_existing_rental_id
+    FROM emprunts
+    WHERE user_id = p_auth_user_id
+      AND statut = 'en_cours'
+      AND type_emprunt = 'abonnement'
+    LIMIT 1;
+
+    IF v_existing_rental_id IS NOT NULL THEN
+      -- Marquer l'ancien emprunt comme rendu
+      -- Le trigger handle_rental_return va automatiquement incrémenter copies_disponibles
+      UPDATE emprunts
+      SET statut = 'rendu',
+          updated_at = NOW()
+      WHERE id = v_existing_rental_id;
+    END IF;
+  ELSE
+    v_type_emprunt := 'location';
+    -- Récupérer le montant depuis le payment si disponible
+    IF p_payment_id IS NOT NULL THEN
+      SELECT amount INTO v_montant_paye
+      FROM payments
+      WHERE id = p_payment_id;
+    ELSE
+      v_montant_paye := 1.5; -- Valeur par défaut
+    END IF;
+  END IF;
+
+  -- Créer le nouvel emprunt
+  -- Le trigger handle_rental_created va automatiquement décrémenter copies_disponibles
+  INSERT INTO emprunts (
+    user_id,
+    movie_id,
+    statut,
+    type_emprunt,
+    montant_paye,
+    date_emprunt,
+    date_retour,
+    payment_id,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    p_auth_user_id,
+    p_movie_id,
+    'en_cours',
+    v_type_emprunt,
+    v_montant_paye,
+    NOW(),
+    NOW() + INTERVAL '48 hours',
+    p_payment_id,
+    NOW(),
+    NOW()
+  )
+  RETURNING id INTO v_new_rental_id;
+
+  -- Retourner succès
+  RETURN json_build_object(
+    'success', true,
+    'rental_id', v_new_rental_id,
+    'type', v_type_emprunt,
+    'date_retour', NOW() + INTERVAL '48 hours',
+    'previous_rental_returned', v_existing_rental_id
+  );
+
+EXCEPTION
+  WHEN OTHERS THEN
+    -- En cas d'erreur, retourner les détails
+    RETURN json_build_object(
+      'success', false,
+      'error', SQLERRM,
+      'code', 'INTERNAL_ERROR'
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Vérifier que la fonction existe
+-- SELECT proname FROM pg_proc WHERE proname = 'rent_or_access_movie';
+-- Devrait retourner 1 ligne
+
+-- Test de la fonction (à décommenter pour tester)
+-- SELECT rent_or_access_movie(
+--   'user-uuid-here'::UUID,
+--   'movie-uuid-here'::UUID,
+--   'payment-uuid-here'::UUID
+-- );
+
+
+-- ============================================
 -- FIN DES MIGRATIONS
 -- ============================================
 -- Date de création : 26 octobre 2025
--- Version : 1.0
--- Auteur : Claude (Optimisation performance Warecast)
+-- Version : 1.1
+-- Auteur : Claude (Optimisation performance Warecast + Webhook Stripe fix)
 -- ============================================

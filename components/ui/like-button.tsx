@@ -124,7 +124,7 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
         isAnimating && "scale-110",
         props.className
       )}
-      aria-label={ariaLabel}
+      aria-label={isHydrated ? ariaLabel : "Toggle favorite"}
     >
       <Heart
         size={ICON_SIZES.COMPACT}

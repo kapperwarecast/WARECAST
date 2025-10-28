@@ -90,7 +90,7 @@ function getPersonPhotoUrl(path: string | null): string | null {
   }
   
   if (path.startsWith('/')) {
-    return `https://image.tmdb.org/t/p/w300${path}`
+    return `https://image.tmdb.org/t/p/w185${path}`
   }
   
   return path
@@ -136,11 +136,11 @@ export default async function PersonnePage({ params }: Props) {
           </Button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex flex-row gap-8 items-start">
           {/* Photo */}
-          <div className="flex-shrink-0 lg:w-[300px] w-full">
-            <Card className="overflow-hidden bg-zinc-900 border-zinc-800 py-0 lg:mx-0 mx-auto w-full max-w-[300px]">
-              <div className="relative aspect-[2/3] w-full lg:h-[450px]">
+          <div className="flex-shrink-0">
+            <Card className="overflow-hidden bg-zinc-900 border-zinc-800 py-0 w-[150px]">
+              <div className="relative aspect-[2/3] w-full h-[225px]">
                 {photoUrl ? (
                   <Image
                     src={photoUrl}
@@ -173,7 +173,7 @@ export default async function PersonnePage({ params }: Props) {
             {/* Bio information */}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold">Informations</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div className="flex flex-col gap-3 text-sm">
                 {person.prenom && (
                   <div>
                     <span className="text-zinc-400">Prénom: </span>
@@ -186,10 +186,6 @@ export default async function PersonnePage({ params }: Props) {
                     <span>{person.nom}</span>
                   </div>
                 )}
-                <div>
-                  <span className="text-zinc-400">ID TMDB: </span>
-                  <span>{person.tmdb_id || 'Non disponible'}</span>
-                </div>
                 <div>
                   <span className="text-zinc-400">Nombre de {filmCountLabel}: </span>
                   <span>{movies.length}</span>

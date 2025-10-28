@@ -59,6 +59,7 @@ export function getVimeoEmbedUrl(
   } = {}
 ): string {
   const params = new URLSearchParams({
+    api: "1",
     autoplay: options.autoplay ? "1" : "0",
     loop: options.loop ? "1" : "0",
     title: options.title ? "1" : "0",

@@ -33,18 +33,6 @@ export function MovieAccessGuard({ movieId, children }: MovieAccessGuardProps) {
     )
   }
 
-  // État de création d'emprunt pour abonné
-  if (status === 'creating_rental') {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-white mx-auto" />
-          <p className="text-white text-lg">Préparation de la lecture...</p>
-        </div>
-      </div>
-    )
-  }
-
   // Redirection en cours - affichage minimal
   if (status === 'redirect') {
     return (

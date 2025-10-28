@@ -2,18 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
-import { useSubscription } from '@/hooks/use-subscription'
+import { createClient } from '@/lib/supabase/client'
 
 export type AccessStatus =
-  | 'loading'           // Vérification en cours
-  | 'creating_rental'   // Création d'emprunt pour abonné
-  | 'granted'           // Accès autorisé
-  | 'redirect'          // Redirection nécessaire
+  | 'loading'    // Vérification en cours
+  | 'granted'    // Accès autorisé
+  | 'redirect'   // Redirection nécessaire
 
 interface UseMovieAccessReturn {
   status: AccessStatus
-  shouldRedirect: string | null // URL de redirection si nécessaire
-  error: string | null // Erreur éventuelle
+  shouldRedirect: string | null
+  error: string | null
 }
 
 export function useMovieAccess(movieId: string): UseMovieAccessReturn {
@@ -21,7 +20,6 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
   const [shouldRedirect, setShouldRedirect] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
-  const { hasActiveSubscription, loadingUserSubscription } = useSubscription(user)
 
   const checkAccess = useCallback(async () => {
     try {
@@ -32,94 +30,66 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
         return
       }
 
-      // 2. Attendre le chargement de l'abonnement
-      if (loadingUserSubscription) {
-        setStatus('loading')
+      // 2. APPEL RPC DIRECT - Fait TOUT en une seule opération atomique :
+      //    ✅ Vérifie abonnement actif
+      //    ✅ Vérifie copies disponibles
+      //    ✅ Libère ancien emprunt si existe (abonnés)
+      //    ✅ Crée nouvel emprunt
+      //    ✅ Triggers gèrent copies_disponibles automatiquement
+      const supabase = createClient()
+
+      const { data, error: rpcError } = await supabase.rpc('rent_or_access_movie', {
+        p_movie_id: movieId,
+        p_auth_user_id: user.id,
+        p_payment_id: null
+      })
+
+      console.log('[RENTAL] RPC response:', { data, error: rpcError })
+
+      // 3. Gérer les erreurs RPC
+      if (rpcError) {
+        console.error('[RENTAL] RPC error:', rpcError)
+        setError('Erreur technique lors de la vérification')
+        setShouldRedirect('/')
+        setStatus('redirect')
         return
       }
 
-      // 3. User abonné -> vérifier d'abord si emprunt existe déjà
-      if (hasActiveSubscription) {
-        try {
-          // Vérifier d'abord si l'utilisateur a déjà un emprunt actif sur ce film
-          const rentalCheckResponse = await fetch(`/api/movie-rental-status/${movieId}`)
+      // 4. Vérifier le succès de l'opération
+      if (!data || !data.success) {
+        const errorMsg = data?.error || 'Erreur inconnue'
+        console.error('[RENTAL] Operation failed:', errorMsg)
 
-          if (rentalCheckResponse.ok) {
-            const rentalData = await rentalCheckResponse.json()
-
-            // Si déjà emprunté, accès direct sans créer de nouvel emprunt
-            if (rentalData.isCurrentlyRented) {
-              setStatus('granted')
-              return
-            }
-          }
-
-          // Pas d'emprunt existant -> créer un nouvel emprunt
-          setStatus('creating_rental')
-
-          const response = await fetch('/api/rentals/create-subscription-borrow', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ movieId })
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-
-            // Si aucune copie disponible, rediriger vers catalogue avec message
-            if (response.status === 409) {
-              setError('Aucune copie disponible pour ce film')
-              setShouldRedirect('/')
-              setStatus('redirect')
-              return
-            }
-
-            throw new Error(errorData.error || 'Erreur lors de la création de l\'emprunt')
-          }
-
-          // Emprunt créé avec succès -> accès autorisé
-          setStatus('granted')
-          return
-
-        } catch (err) {
-          console.error('Erreur création emprunt abonné:', err)
-          setError(err instanceof Error ? err.message : 'Erreur inconnue')
-          setShouldRedirect('/')
-          setStatus('redirect')
-          return
+        // Messages d'erreur clairs selon le cas
+        if (errorMsg.includes('copie') || errorMsg.includes('disponible')) {
+          setError('Aucune copie disponible pour ce film')
+        } else if (errorMsg.includes('abonnement') || errorMsg.includes('payment')) {
+          setError('Abonnement requis ou paiement manquant')
+        } else {
+          setError(errorMsg)
         }
-      }
 
-      // 4. Vérification rapide des locations pour users non abonnés
-      const response = await fetch(`/api/movie-rental-status/${movieId}`)
-
-      if (!response.ok) {
-        // En cas d'erreur, redirection vers catalogue
         setShouldRedirect('/')
         setStatus('redirect')
         return
       }
 
-      const data = await response.json()
+      // 5. Succès ! Accès autorisé
+      console.log('[RENTAL] Access granted:', {
+        rentalId: data.emprunt_id,
+        existingRental: data.existing_rental,
+        previousReleased: data.previous_rental_released
+      })
 
-      if (data.isCurrentlyRented) {
-        setStatus('granted')
-      } else {
-        // Pas de location -> retour catalogue
-        setShouldRedirect('/')
-        setStatus('redirect')
-      }
+      setStatus('granted')
 
     } catch (err) {
-      console.error('Movie access check failed:', err)
-      // En cas d'erreur, redirection sécurisée vers catalogue
+      console.error('[RENTAL] Unexpected error:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       setShouldRedirect('/')
       setStatus('redirect')
     }
-  }, [movieId, user, hasActiveSubscription, loadingUserSubscription])
+  }, [movieId, user])
 
   useEffect(() => {
     checkAccess()

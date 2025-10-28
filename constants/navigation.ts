@@ -63,13 +63,6 @@ export const NAV_ITEMS: NavItem[] = [
     requiresAuth: true
   },
   {
-    id: 'to-watch',
-    label: 'À voir',
-    href: ROUTES.TO_WATCH,
-    icon: Clock,
-    requiresAuth: true
-  },
-  {
     id: 'subscription',
     label: 'Formules',
     href: ROUTES.FORMULES,
@@ -120,8 +113,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'collections',
     items: [
       NAV_ITEMS.find(item => item.id === 'favorites')!,
-      NAV_ITEMS.find(item => item.id === 'watched')!,
-      NAV_ITEMS.find(item => item.id === 'to-watch')!
+      NAV_ITEMS.find(item => item.id === 'watched')!
     ],
     requiresAuth: true,
     showSeparatorAfter: true

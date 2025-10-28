@@ -3,7 +3,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { VideoPlayer } from "@/components/movie-player/video-player"
+import { MoviePlayerClient } from "@/components/movie-player/movie-player-client"
 import { MovieInfo } from "@/components/movie-player/movie-info"
 import { MovieAccessGuard } from "@/components/movie-player/movie-access-guard"
 import type { MovieWithPlayer } from "@/types/player"
@@ -79,7 +79,9 @@ export default async function MoviePlayerPage({ params }: PageProps) {
           <div className="max-w-6xl mx-auto space-y-8">
             {/* Video Player Section */}
             <div className="w-full">
-              <VideoPlayer
+              {/* Le MoviePlayerClient va récupérer le rental ID lui-même */}
+              <MoviePlayerClient
+                movieId={id}
                 vimeoUrl={movie.lien_vimeo}
                 title={title}
               />

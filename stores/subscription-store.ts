@@ -152,7 +152,7 @@ export const useSubscriptionFromStore = () => {
     if (shouldFetch) {
       const timer = setTimeout(() => {
         fetchUserSubscription(userId)
-      }, 100)
+      }, 0)
 
       return () => clearTimeout(timer)
     }

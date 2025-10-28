@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, CreditCard, Sparkles, AlertCircle, Film } from "lucide-react"
+import { Check, CreditCard, Sparkles, AlertCircle, Film, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useSubscription } from "@/hooks/use-subscription"
 import { getSubscriptionDisplayStatus } from "@/lib/utils/subscription"
@@ -120,8 +120,8 @@ export default function AbonnementPage() {
       if (!response.ok) {
         setMessage({ type: 'error', text: data.error || 'Erreur lors de la résiliation' })
       } else {
-        setMessage({ type: 'success', text: data.message || 'Votre abonnement a été résilié. Vous pouvez continuer à profiter de vos avantages jusqu\'à la date d\'expiration.' })
-        // Rafraîchir l'abonnement utilisateur
+        // Invalider le cache du store avant reload pour forcer refresh
+        localStorage.removeItem('warecast-subscription')
         window.location.reload()
       }
     } catch (error) {
@@ -154,8 +154,8 @@ export default function AbonnementPage() {
       if (!response.ok) {
         setMessage({ type: 'error', text: data.error || 'Erreur lors de la réactivation' })
       } else {
-        setMessage({ type: 'success', text: data.message || 'Votre abonnement a été réactivé avec succès.' })
-        // Rafraîchir l'abonnement utilisateur
+        // Invalider le cache du store avant reload pour forcer refresh
+        localStorage.removeItem('warecast-subscription')
         window.location.reload()
       }
     } catch (error) {
@@ -197,11 +197,35 @@ export default function AbonnementPage() {
 
   return (
     <div className="min-h-screen bg-black text-white pt-20">
+      {/* Spinner overlay pendant le traitement */}
+      {cancelling && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-zinc-900 p-8 rounded-lg border border-zinc-800 flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+            <p className="text-lg font-medium">Traitement en cours...</p>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold">Formules Warecast</h1>
         </div>
+
+        {/* Message de feedback */}
+        {message && !cancelling && (
+          <div className={`max-w-4xl mx-auto mb-8 p-4 rounded-lg border animate-in fade-in slide-in-from-top-2 duration-300 ${
+            message.type === 'success'
+              ? 'bg-green-900/20 border-green-500 text-green-400'
+              : 'bg-red-900/20 border-red-500 text-red-400'
+          }`}>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>{message.text}</span>
+            </div>
+          </div>
+        )}
 
         {/* Pricing Cards */}
         <div className="max-w-4xl mx-auto">

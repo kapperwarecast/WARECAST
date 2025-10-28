@@ -1,56 +1,59 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server"
+import { NextRequest, NextResponse } from "next/server"
 
+/**
+ * GET /api/movie-rental-status/[id]
+ * Vérifie si l'utilisateur authentifié a un emprunt actif pour un film spécifique
+ * Utilisé par le polling après paiement Stripe pour détecter quand l'emprunt est créé par le webhook
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient()
     const { id: movieId } = await params
+    const supabase = await createClient()
 
     // Vérifier l'authentification
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: "Non authentifié" },
         { status: 401 }
       )
     }
 
-    // Vérifier si l'utilisateur a ce film en cours de location
+    // Vérifier si l'utilisateur a un emprunt actif pour ce film
     const { data: rental, error: rentalError } = await supabase
-      .from('emprunts')
-      .select('id, statut, date_retour')
-      .eq('user_id', user.id)
-      .eq('movie_id', movieId)
-      .eq('statut', 'en_cours')
-      .gt('date_retour', new Date().toISOString()) // Vérifier que la location n'est pas expirée
-      .single()
+      .from("emprunts")
+      .select("id, date_retour")
+      .eq("user_id", user.id)
+      .eq("movie_id", movieId)
+      .eq("statut", "en_cours")
+      .maybeSingle()
 
-    if (rentalError && rentalError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned, ce qui est normal si pas de location
-      console.error('Error checking movie rental status:', rentalError)
+    if (rentalError) {
+      console.error("[movie-rental-status] Error checking rental:", rentalError)
       return NextResponse.json(
-        { error: 'Failed to check rental status' },
+        { error: "Erreur lors de la vérification de la location" },
         { status: 500 }
       )
     }
 
     // Retourner le statut de location
-    const isCurrentlyRented = !!rental
-
     return NextResponse.json({
-      movieId,
-      isCurrentlyRented,
-      rentalId: rental?.id || null
+      isCurrentlyRented: !!rental,
+      rentalId: rental?.id || null,
+      movieId: movieId,
     })
-
   } catch (error) {
-    console.error('Unexpected error in movie-rental-status API:', error)
+    console.error("[movie-rental-status] Unexpected error:", error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Erreur serveur" },
       { status: 500 }
     )
   }

@@ -119,7 +119,7 @@ export function useSubscription(user: User | null): UseSubscriptionReturn {
 
   return {
     availableSubscriptions,
-    loadingSubscriptions: false, // Handled by store
+    loadingSubscriptions: loading, // Expose actual store loading state
     userSubscription,
     loadingUserSubscription: loading,
     hasActiveSubscription,

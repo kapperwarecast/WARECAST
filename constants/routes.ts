@@ -7,7 +7,6 @@ export const ROUTES = {
   SEND_MOVIE: '/send-movie',
   FAVORITES: '/favorites',
   WATCHED: '/watched',
-  TO_WATCH: '/to-watch',
   FILMS_EN_COURS: '/films-en-cours',
   BUY_MOVIE: '/buy-movie',
   FORMULES: '/formules',

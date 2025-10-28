@@ -7,6 +7,12 @@ export interface MoviePlayerProps {
 export interface VideoPlayerProps {
   vimeoUrl: string | null
   title: string
+  /** Position de départ en secondes (pour la reprise) */
+  startTime?: number
+  /** ID du film pour le tracking de position */
+  movieId: string
+  /** ID de l'emprunt actif */
+  rentalId: string
 }
 
 export interface MovieInfoProps {

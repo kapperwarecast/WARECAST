@@ -46,11 +46,12 @@ warecast-app/
 │   │   ├── auth/            # Login, signup, forgot-password
 │   │   └── admin/           # Admin (import films, posters)
 │   └── api/                 # API Routes
-│       ├── movies/          # CRUD films, location
+│       ├── movies/          # CRUD films
 │       ├── subscriptions/   # Stripe checkout, annulation
-│       ├── rentals/         # create-subscription-borrow
+│       ├── rentals/         # GET liste emprunts utilisateur
+│       ├── movie-rental-status/[id]/ # Vérification statut location (polling post-paiement)
 │       ├── user-subscription/ # Status abonnement
-│       └── movie-access/    # Vérification accès film
+│       └── stripe/webhook/  # Webhooks Stripe (paiements, abonnements)
 │
 ├── components/              # Composants React réutilisables
 │   ├── ui/                  # shadcn/ui + composants custom
@@ -143,16 +144,18 @@ SINON
   ERREUR "Aucune copie disponible pour ce film"
 ```
 
-### Gestion automatique par triggers
+### Gestion automatique par triggers PostgreSQL
 
-Les triggers PostgreSQL gèrent automatiquement les copies :
+⚠️ **CRITIQUE** : Il existe **exactement 2 triggers** sur la table `emprunts`. Ne JAMAIS créer de duplicats.
 
-**`handle_rental_created`**
-- Déclenché : INSERT sur table `emprunts` avec statut 'en_cours'
+**Trigger `on_rental_created`** (AFTER INSERT)
+- Appelle la fonction `handle_rental_created()`
+- Décrémente automatiquement `copies_disponibles` quand un emprunt est créé
 - Action : `UPDATE movies SET copies_disponibles = copies_disponibles - 1`
 
-**`handle_rental_return`**
-- Déclenché : UPDATE sur table `emprunts` quand statut passe à 'rendu' ou 'expiré'
+**Trigger `on_rental_return`** (AFTER UPDATE)
+- Appelle la fonction `handle_rental_return()`
+- Incrémente automatiquement `copies_disponibles` quand statut → 'rendu' ou 'expiré'
 - Action : `UPDATE movies SET copies_disponibles = copies_disponibles + 1`
 
 ### Synchronisation temps réel
@@ -188,17 +191,16 @@ Les **abonnés** ont un comportement particulier :
 1. Abonné a Film A en cours (emprunté il y a 24h)
 2. Veut regarder Film B
 3. Clique "Play" sur Film B
-4. API vérifie :
-   - Abonnement actif ✅
-   - Copies Film B disponibles ?
-5. Si Film B disponible :
-   a. Ancien emprunt Film A marqué 'rendu' automatiquement
-   b. Trigger incrémente copies_disponibles pour Film A
-   c. Création nouvel emprunt Film B
-   d. Trigger décrémente copies_disponibles pour Film B
-6. Si Film B indisponible :
-   a. Erreur 409 "Aucune copie disponible"
-   b. Film A reste emprunté (pas de changement)
+4. RPC rent_or_access_movie exécute atomiquement :
+   - Vérifie abonnement actif ✅
+   - Vérifie copies Film B disponibles ✅
+   - Libère ancien emprunt Film A → statut 'rendu'
+   - Trigger incrémente copies_disponibles pour Film A
+   - Crée nouvel emprunt Film B
+   - Trigger décrémente copies_disponibles pour Film B
+5. Si Film B indisponible :
+   - Erreur "Aucune copie disponible"
+   - Film A reste emprunté (aucun changement)
 ```
 
 ### Scénario 3 : Expiration 48h
@@ -209,6 +211,101 @@ Les **abonnés** ont un comportement particulier :
 4. Trigger incrémente copies_disponibles pour Film A
 5. Abonné peut emprunter un nouveau film
 ```
+
+## Architecture de location (Simplifiée)
+
+### Principe fondamental
+Toute location (abonné ou payante) passe par **1 seul point d'entrée** : la fonction RPC PostgreSQL `rent_or_access_movie`.
+
+Cette approche garantit :
+- ✅ Opération atomique (transaction PostgreSQL)
+- ✅ Validation centralisée (abonnement, copies, paiement)
+- ✅ Gestion automatique de la rotation (abonnés)
+- ✅ Pas de race conditions
+
+### Flux location abonné
+```
+User clique "Play"
+  ↓
+MovieAccessGuard (client component)
+  ↓
+supabase.rpc('rent_or_access_movie', {
+  p_movie_id: movieId,
+  p_auth_user_id: user.id,
+  p_payment_id: null
+})
+  ↓
+RPC vérifie + crée/libère emprunts (atomique)
+  ↓
+Triggers gèrent copies_disponibles automatiquement
+  ↓
+MoviePlayerClient fetch rental_id
+  ↓
+Player affiche le film
+```
+
+### Flux location payante (1.5€)
+```
+User clique "Louer"
+  ↓
+Stripe Checkout (paiement 1.5€)
+  ↓
+Webhook reçoit payment_intent.succeeded
+  ↓
+Webhook appelle supabase.rpc('rent_or_access_movie', {
+  p_movie_id: movieId,
+  p_auth_user_id: userId,
+  p_payment_id: paymentId
+})
+  ↓
+RPC crée l'emprunt (atomique)
+  ↓
+Frontend polling sur /api/movie-rental-status/[id]
+  ↓
+Détecte emprunt créé (< 3 secondes)
+  ↓
+Redirection automatique vers /movie-player/[id]
+```
+
+### Fonction RPC `rent_or_access_movie`
+
+**Caractéristiques :**
+- Type : `SECURITY DEFINER` (bypass RLS pour opérations critiques)
+- Transaction PostgreSQL atomique
+- Gère abonnés ET locations payantes en 1 seul code path
+
+**Paramètres :**
+```sql
+rent_or_access_movie(
+  p_movie_id uuid,
+  p_auth_user_id uuid,
+  p_payment_id uuid DEFAULT NULL
+)
+```
+
+**Retour :**
+```json
+{
+  "success": true,
+  "emprunt_id": "uuid",
+  "existing_rental": false,
+  "previous_rental_released": true,
+  "previous_rental_id": "uuid",
+  "rental_type": "subscription" | "paid",
+  "amount_charged": 0 | 1.50,
+  "movie_title": "Titre du film",
+  "expires_at": "2025-10-30T12:00:00Z"
+}
+```
+
+**Ce que fait la RPC (ordre d'exécution) :**
+1. Vérifie que l'utilisateur existe
+2. Vérifie si emprunt actif pour ce film → retourne existing_rental: true
+3. Vérifie abonnement actif OU paiement valide
+4. Libère ancien emprunt si existe (abonnés uniquement)
+5. **Vérifie copies_disponibles > 0** (CRITIQUE)
+6. INSERT nouvel emprunt → Trigger décrémente copies automatiquement
+7. Associe payment_id si fourni
 
 ## Conventions de code importantes
 
@@ -281,6 +378,15 @@ Les **abonnés** ont un comportement particulier :
      fetchData: async (userId) => { /* ... */ }
    })
    ```
+
+5. **Hydratation SSR/Client - Éviter les mismatches**
+   ```tsx
+   // ✅ BON - Évite mismatch serveur/client pour attributs dynamiques
+   const { isHydrated } = useHydration()
+
+   <button aria-label={isHydrated ? dynamicLabel : "Static label"}>
+   ```
+   **Problème résolu** : Attributs comme `aria-label` qui changent selon l'état client (likes, etc.) causent des mismatches d'hydratation si rendus dynamiquement au SSR.
 
 ## Organisation des hooks
 
@@ -366,9 +472,18 @@ interface BaseCachedStore<T> {
 | `abonnements` | Types abonnements | `nom`, `prix`, `duree_mois`, `emprunts_illimites`, `stripe_price_id` |
 | `likes` | Favoris utilisateurs | `user_id`, `movie_id` |
 
-**Triggers** :
-- `handle_rental_created` - Décrémente `copies_disponibles` à la création d'emprunt
-- `handle_rental_return` - Incrémente `copies_disponibles` au retour
+**Triggers** (⚠️ Exactement 2, ne pas dupliquer) :
+- `on_rental_created` → Appelle `handle_rental_created()` → Décrémente `copies_disponibles`
+- `on_rental_return` → Appelle `handle_rental_return()` → Incrémente `copies_disponibles`
+
+**RPC Functions** :
+- `rent_or_access_movie(p_movie_id, p_auth_user_id, p_payment_id)` - Point d'entrée unique pour toutes les locations (SECURITY DEFINER)
+
+**RLS Policies** (Row Level Security) :
+- `emprunts` - Users lisent uniquement leurs emprunts, INSERT/UPDATE/DELETE via RPC uniquement
+- `user_abonnements` - Users lisent uniquement leur abonnement, modifications via webhook Stripe uniquement
+- `payments` - Users lisent/créent uniquement leurs paiements, UPDATE via webhook uniquement
+- `likes` - Users gèrent uniquement leurs likes, lecture publique pour comptage
 
 **Realtime Channels** :
 - `rentals` - Locations (INSERT, UPDATE, DELETE sur emprunts)
@@ -424,10 +539,12 @@ interface BaseCachedStore<T> {
 
 ### Supabase
 
-1. **RLS (Row Level Security)** → Activé sur toutes les tables
+1. **RLS (Row Level Security)** → ✅ Activé sur toutes les tables critiques avec policies strictes
 2. **Realtime** → Vérifier les policies pour channels
 3. **Storage** → Buckets publics pour posters/videos
-4. **Triggers** → `handle_rental_created` et `handle_rental_return` gèrent les copies
+4. **Triggers** → ✅ Exactement 2 triggers (`on_rental_created`, `on_rental_return`). Ne JAMAIS dupliquer.
+5. **RPC rent_or_access_movie** → ✅ Point d'entrée unique pour locations. Ne pas créer d'API routes alternatives.
+6. **Webhook retry** → ✅ Retry logic 5×1s pour race conditions paiements
 
 ### Stripe
 
@@ -638,8 +755,13 @@ User A veut regarder "Interstellar"
 ### Pièges à éviter
 
 - ❌ Ne pas oublier Suspense pour useSearchParams
-- ❌ Ne pas créer de barrel exports
-- ❌ Ne pas supposer qu'un abonné a un accès illimité
-- ❌ Ne pas manipuler copies_disponibles sans trigger
+- ❌ Ne pas créer de barrel exports (`hooks/index.ts`)
+- ❌ Ne pas supposer qu'un abonné a un accès illimité (vérifier copies)
+- ❌ Ne pas manipuler `copies_disponibles` manuellement (laisser les triggers)
+- ❌ Ne pas dupliquer les triggers sur table `emprunts`
 - ❌ Ne pas permettre 2 films simultanés pour un abonné
-- ❌ Ne pas oublier la validation côté serveur (copies)
+- ❌ Ne pas oublier la validation côté serveur (toujours dans RPC)
+- ✅ Toutes les API routes utilisent la RPC (pas de bypass)
+- ✅ Variables d'environnement validées avec Zod (lib/env.ts)
+- ✅ Logger conditionnel en production (lib/logger.ts)
+- ✅ Types RPC définis (types/rpc.ts)
