@@ -6,6 +6,7 @@ import { FiltersProvider } from "@/contexts/filters-context";
 import { SidebarProvider } from "@/contexts/sidebar-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { MainContent } from "@/components/main-content";
+import { Footer } from "@/components/footer";
 
 // OPTIMIZATION: Optimiser next/font pour -100ms First Contentful Paint
 const inter = Inter({
@@ -44,6 +45,7 @@ export default function RootLayout({
             <FiltersProvider>
               <Navbar />
               <MainContent>{children}</MainContent>
+              <Footer />
             </FiltersProvider>
           </SidebarProvider>
         </AuthProvider>

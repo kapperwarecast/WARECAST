@@ -10,6 +10,7 @@ import {
   Clock,
   CreditCard,
   UserPlus,
+  Video,
   type LucideIcon
 } from "lucide-react"
 import { ROUTES } from "./routes"
@@ -38,6 +39,14 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Catalogue',
     href: ROUTES.HOME,
     icon: Film,
+    requiresAuth: false,
+    alwaysVisible: true
+  },
+  {
+    id: 'realisateurs',
+    label: 'Réalisateurs',
+    href: ROUTES.REALISATEURS,
+    icon: Video,
     requiresAuth: false,
     alwaysVisible: true
   },
@@ -78,7 +87,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'send-movie',
-    label: 'Envoyer un film',
+    label: 'Déposer un film',
     href: ROUTES.SEND_MOVIE,
     icon: Upload,
     requiresAuth: true
@@ -105,6 +114,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'main',
     items: [
       NAV_ITEMS.find(item => item.id === 'catalog')!,
+      NAV_ITEMS.find(item => item.id === 'realisateurs')!,
       NAV_ITEMS.find(item => item.id === 'films-en-cours')!
     ],
     requiresAuth: false

@@ -8,8 +8,12 @@ export const ROUTES = {
   FAVORITES: '/favorites',
   WATCHED: '/watched',
   FILMS_EN_COURS: '/films-en-cours',
+  REALISATEURS: '/realisateurs',
   BUY_MOVIE: '/buy-movie',
   FORMULES: '/formules',
+  CONTACT: '/contact',
+  CGU_CGV: '/cgu-cgv',
+  MENTIONS_LEGALES: '/mentions-legales',
   AUTH: {
     LOGIN: '/auth/login',
     SIGNUP: '/auth/signup',
