@@ -9,13 +9,21 @@ import type { MovieWithDirector } from "@/types/movie"
 import { getDirectorName } from "@/types/movie"
 import { formatDuration, getLanguageName } from "@/lib/utils/format"
 
+export interface Referrer {
+  type: 'director' | 'actor'
+  id: string
+  name: string
+  from?: string  // Original context (e.g., 'directors-list', 'actors-list')
+}
+
 interface MovieCardProps {
   movie: MovieWithDirector
   priority?: boolean
+  referrer?: Referrer
 }
 
 // OPTIMIZATION: Supprimer Intersection Observer custom (double lazy loading avec Next.js Image)
-export function MovieCard({ movie, priority = false }: MovieCardProps) {
+export function MovieCard({ movie, priority = false, referrer }: MovieCardProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
 
@@ -25,28 +33,49 @@ export function MovieCard({ movie, priority = false }: MovieCardProps) {
   const director = getDirectorName(movie)
   const duration = formatDuration(movie.duree)
   const language = movie.langue_vo
-  
+
+  // Build movie URL with optional referrer context
+  const buildMovieUrl = (): string => {
+    const baseUrl = `/film/${movie.id}`
+    if (!referrer) return baseUrl
+
+    const params = new URLSearchParams({
+      from: referrer.type,
+      [`${referrer.type}Id`]: referrer.id,
+      [`${referrer.type}Name`]: referrer.name
+    })
+
+    // Pass original context if available (e.g., from directors-list)
+    if (referrer.from) {
+      params.append(`${referrer.type}From`, referrer.from)
+    }
+
+    return `${baseUrl}?${params.toString()}`
+  }
+
+  const movieUrl = buildMovieUrl()
+
   // Handle both TMDB paths and full URLs
   const getPosterUrl = (path: string | null): string | null => {
     if (!path) return null
-    
+
     // If it's already a full URL (Supabase storage or other), use it directly
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path
     }
-    
+
     // If it's a TMDB path (starts with /), convert to TMDB URL
     if (path.startsWith('/')) {
       return `https://image.tmdb.org/t/p/w500${path}`
     }
-    
+
     return path
   }
-  
+
   const posterUrl = getPosterUrl(movie.poster_local_path)
 
   return (
-    <Link href={`/film/${movie.id}`}>
+    <Link href={movieUrl}>
       <Card
         className="relative overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer py-0">
       <div className="relative aspect-[2/3] w-full bg-zinc-800">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { usePathname } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ import { SortAscIcon, SortDescIcon } from "@/components/icons/sort-icons"
 import type { Filters, Sort } from "@/contexts/filters-context"
 import { getLanguageName } from "@/lib/utils/format"
 
+type PageType = 'movies' | 'directors'
+
 interface FiltersModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -30,6 +33,7 @@ interface FiltersModalProps {
   sort: Sort
   onApplyFilters: (filters: Filters, sort: Sort) => void
   onResetFilters: () => void
+  pageType?: PageType
 }
 
 const AVAILABLE_GENRES = [
@@ -60,14 +64,20 @@ const SORT_OPTIONS = [
   { value: 'note_tmdb', label: 'Note TMDB' }
 ]
 
-export function FiltersModal({ 
-  open, 
-  onOpenChange, 
-  filters, 
-  sort, 
-  onApplyFilters, 
-  onResetFilters 
+export function FiltersModal({
+  open,
+  onOpenChange,
+  filters,
+  sort,
+  onApplyFilters,
+  onResetFilters,
+  pageType
 }: FiltersModalProps) {
+  const pathname = usePathname()
+
+  // Auto-detect page type if not provided
+  const currentPageType: PageType = pageType || (pathname === '/realisateurs' ? 'directors' : 'movies')
+
   const [localFilters, setLocalFilters] = useState<Filters>(filters)
   const [localSort, setLocalSort] = useState<Sort>(sort)
   const [previewCount, setPreviewCount] = useState<number | null>(null)
@@ -80,28 +90,35 @@ export function FiltersModal({
       preview: 'true'
     })
 
-    if (currentFilters.genres.length > 0) {
-      params.append('genres', currentFilters.genres.join(','))
+    // For movies: include all filters
+    // For directors: only decade and language (no genres or availableOnly)
+    if (currentPageType === 'movies') {
+      if (currentFilters.genres.length > 0) {
+        params.append('genres', currentFilters.genres.join(','))
+      }
+      if (currentFilters.availableOnly) {
+        params.append('availableOnly', 'true')
+      }
     }
+
+    // Common filters for both
     if (currentFilters.decade) {
       params.append('decade', currentFilters.decade)
     }
     if (currentFilters.language) {
       params.append('language', currentFilters.language)
     }
-    if (currentFilters.availableOnly) {
-      params.append('availableOnly', 'true')
-    }
 
     return params.toString()
-  }, [])
+  }, [currentPageType])
 
   // Fonction de prévisualisation
   const fetchPreviewCount = useCallback(async (currentFilters: Filters) => {
     setPreviewLoading(true)
     try {
       const queryParams = buildPreviewParams(currentFilters)
-      const response = await fetch(`/api/movies?${queryParams}`)
+      const apiEndpoint = currentPageType === 'directors' ? '/api/directors' : '/api/movies'
+      const response = await fetch(`${apiEndpoint}?${queryParams}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -198,49 +215,51 @@ export function FiltersModal({
               Filtres
             </h3>
 
-            {/* Genres - Dropdown multiselect */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Genres</Label>
-              <div className="relative">
-                <Select
-                  value=""
-                  onValueChange={(value) => handleGenreToggle(value)}
-                >
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                    <SelectValue placeholder="Sélectionner des genres" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
-                    {AVAILABLE_GENRES.map(genre => (
-                      <SelectItem key={genre} value={genre} className="text-white hover:bg-zinc-700">
-                        <div className="flex items-center gap-2">
-                          {localFilters.genres.includes(genre) && (
-                            <Check className="h-4 w-4 text-orange-500" />
-                          )}
+            {/* Genres - Dropdown multiselect (Movies only) */}
+            {currentPageType === 'movies' && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Genres</Label>
+                <div className="relative">
+                  <Select
+                    value=""
+                    onValueChange={(value) => handleGenreToggle(value)}
+                  >
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                      <SelectValue placeholder="Sélectionner des genres" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      {AVAILABLE_GENRES.map(genre => (
+                        <SelectItem key={genre} value={genre} className="text-white hover:bg-zinc-700">
+                          <div className="flex items-center gap-2">
+                            {localFilters.genres.includes(genre) && (
+                              <Check className="h-4 w-4 text-orange-500" />
+                            )}
+                            {genre}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Genres sélectionnés */}
+                  {localFilters.genres.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {localFilters.genres.map(genre => (
+                        <Badge
+                          key={genre}
+                          variant="secondary"
+                          className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
+                          onClick={() => handleGenreToggle(genre)}
+                        >
                           {genre}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {/* Genres sélectionnés */}
-                {localFilters.genres.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {localFilters.genres.map(genre => (
-                      <Badge
-                        key={genre}
-                        variant="secondary"
-                        className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer"
-                        onClick={() => handleGenreToggle(genre)}
-                      >
-                        {genre}
-                        <X className="h-3 w-3 ml-1" />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                          <X className="h-3 w-3 ml-1" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Décennie */}
             <div className="space-y-2">
@@ -292,26 +311,28 @@ export function FiltersModal({
               </Select>
             </div>
 
-            {/* Disponibilité */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Disponibilité</Label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="availableOnly"
-                  checked={localFilters.availableOnly}
-                  onChange={(e) => {
-                    const newFilters = { ...localFilters, availableOnly: e.target.checked }
-                    setLocalFilters(newFilters)
-                    debouncedPreview(newFilters)
-                  }}
-                  className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-orange-600 focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                />
-                <Label htmlFor="availableOnly" className="text-sm font-normal cursor-pointer">
-                  Films disponibles uniquement
-                </Label>
+            {/* Disponibilité (Movies only) */}
+            {currentPageType === 'movies' && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Disponibilité</Label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="availableOnly"
+                    checked={localFilters.availableOnly}
+                    onChange={(e) => {
+                      const newFilters = { ...localFilters, availableOnly: e.target.checked }
+                      setLocalFilters(newFilters)
+                      debouncedPreview(newFilters)
+                    }}
+                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-orange-600 focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  />
+                  <Label htmlFor="availableOnly" className="text-sm font-normal cursor-pointer">
+                    Films disponibles uniquement
+                  </Label>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Section Tri */}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useFiltersModal } from "@/contexts/filters-context"
 import { useSidebar } from "@/contexts/sidebar-context"
 import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import Image from "next/image"
 import Link from "next/link"
@@ -16,8 +16,15 @@ export function Navbar() {
   const { openFiltersModal, hasActiveFilters, searchQuery, setSearchQuery, searchBarOpen, toggleSearchBar } = useFiltersModal()
   const { sidebarOpen, openSidebar, closeSidebar } = useSidebar()
   const router = useRouter()
+  const pathname = usePathname()
   const [inputValue, setInputValue] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Detect if on directors page to adapt search placeholder
+  const isDirectorsPage = pathname === '/realisateurs'
+  const searchPlaceholder = isDirectorsPage
+    ? "Rechercher un réalisateur..."
+    : "Rechercher un film, acteur, réalisateur..."
 
   const handleCloseAndGoHome = () => {
     closeSidebar()
@@ -102,7 +109,7 @@ export function Navbar() {
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Rechercher un film, acteur, réalisateur..."
+                    placeholder={searchPlaceholder}
                     className="w-full h-9 px-3 pr-8 bg-zinc-800 border border-zinc-700 rounded-full text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-orange-500"
                   />
                   {inputValue && (

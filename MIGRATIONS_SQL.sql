@@ -673,9 +673,46 @@ $$ LANGUAGE plpgsql;
 
 
 -- ============================================
+-- MIGRATION : Fonction RPC pour filtrage réalisateurs
+-- Date : 31 octobre 2025
+-- Objectif : Corriger le filtre décennie/langue pour les réalisateurs
+-- ============================================
+
+-- Fonction pour filtrer les réalisateurs par films (décennie et/ou langue)
+CREATE OR REPLACE FUNCTION filter_directors_by_movies(
+  p_decade_start INT DEFAULT NULL,
+  p_decade_end INT DEFAULT NULL,
+  p_language TEXT DEFAULT NULL
+)
+RETURNS TABLE (director_id UUID)
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT DISTINCT md.director_id
+  FROM movie_directors md
+  INNER JOIN movies m ON md.movie_id = m.id
+  WHERE
+    -- Filtre par décennie (optionnel)
+    (p_decade_start IS NULL OR (m.annee_sortie >= p_decade_start AND m.annee_sortie <= p_decade_end))
+    -- Filtre par langue (optionnel)
+    AND (p_language IS NULL OR m.langue_vo = p_language);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Vérifier que la fonction existe
+-- SELECT proname FROM pg_proc WHERE proname = 'filter_directors_by_movies';
+
+-- Test de la fonction
+-- SELECT * FROM filter_directors_by_movies(2020, 2029, NULL); -- Réalisateurs avec films 2020s
+-- SELECT * FROM filter_directors_by_movies(NULL, NULL, 'fr'); -- Réalisateurs avec films français
+-- SELECT * FROM filter_directors_by_movies(2010, 2019, 'en'); -- Réalisateurs avec films anglais 2010s
+
+
+-- ============================================
 -- FIN DES MIGRATIONS
 -- ============================================
 -- Date de création : 26 octobre 2025
--- Version : 1.1
--- Auteur : Claude (Optimisation performance Warecast + Webhook Stripe fix)
+-- Version : 1.2
+-- Auteur : Claude (Optimisation performance Warecast + Webhook Stripe fix + Directors filter fix)
 -- ============================================

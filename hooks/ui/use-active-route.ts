@@ -28,6 +28,7 @@ export function useActiveRoute() {
     isProfile: pathname === '/profile',
     isAdmin: pathname.startsWith('/admin'),
     isAuth: pathname.startsWith('/auth'),
-    isHelp: pathname === '/help'
+    isHelp: pathname === '/help',
+    isDirectors: pathname === '/realisateurs'
   }
 }

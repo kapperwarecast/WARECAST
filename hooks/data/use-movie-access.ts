@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { createClient } from '@/lib/supabase/client'
-import type { RentOrAccessMovieResult } from '@/types/rpc'
 
 export type AccessStatus =
   | 'loading'    // Vérification en cours
@@ -31,64 +30,36 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
         return
       }
 
-      // 2. APPEL RPC DIRECT - Fait TOUT en une seule opération atomique :
-      //    ✅ Vérifie abonnement actif
-      //    ✅ Vérifie copies disponibles
-      //    ✅ Libère ancien emprunt si existe (abonnés)
-      //    ✅ Crée nouvel emprunt
-      //    ✅ Triggers gèrent copies_disponibles automatiquement
+      // 2. VÉRIFIER L'EXISTENCE d'un emprunt en cours (sans créer)
+      //    Le player ne fait QUE vérifier que l'user a accès
+      //    La création de l'emprunt se fait AVANT (dans le bouton Play)
       const supabase = createClient()
 
-      const { data, error: rpcError } = await supabase.rpc('rent_or_access_movie', {
-        p_movie_id: movieId,
-        p_auth_user_id: user.id,
-        p_payment_id: undefined
-      })
+      const { data: rental, error: rentalError } = await supabase
+        .from('emprunts')
+        .select('id, date_retour')
+        .eq('user_id', user.id)
+        .eq('movie_id', movieId)
+        .eq('statut', 'en_cours')
+        .single()
 
-      console.log('[RENTAL] RPC response:', { data, error: rpcError })
+      console.log('[MOVIE ACCESS] Rental check:', { rental, error: rentalError })
 
-      // 3. Gérer les erreurs RPC
-      if (rpcError) {
-        console.error('[RENTAL] RPC error:', rpcError)
-        setError('Erreur technique lors de la vérification')
+      // 3. Gérer l'absence d'emprunt
+      if (rentalError || !rental) {
+        console.error('[MOVIE ACCESS] No active rental found for this movie')
+        setError('Vous n\'avez pas loué ce film')
         setShouldRedirect('/')
         setStatus('redirect')
         return
       }
 
-      // Cast le résultat vers le type RPC
-      const result = data as unknown as RentOrAccessMovieResult
-
-      // 4. Vérifier le succès de l'opération
-      if (!result || !result.success) {
-        const errorMsg = result?.error || 'Erreur inconnue'
-        console.error('[RENTAL] Operation failed:', errorMsg)
-
-        // Messages d'erreur clairs selon le cas
-        if (errorMsg.includes('copie') || errorMsg.includes('disponible')) {
-          setError('Aucune copie disponible pour ce film')
-        } else if (errorMsg.includes('abonnement') || errorMsg.includes('payment')) {
-          setError('Abonnement requis ou paiement manquant')
-        } else {
-          setError(errorMsg)
-        }
-
-        setShouldRedirect('/')
-        setStatus('redirect')
-        return
-      }
-
-      // 5. Succès ! Accès autorisé
-      console.log('[RENTAL] Access granted:', {
-        rentalId: result.emprunt_id,
-        existingRental: result.existing_rental,
-        previousReleased: result.previous_rental_released
-      })
-
+      // 4. Succès ! L'user a bien un emprunt en cours
+      console.log('[MOVIE ACCESS] Access granted - Rental ID:', rental.id)
       setStatus('granted')
 
     } catch (err) {
-      console.error('[RENTAL] Unexpected error:', err)
+      console.error('[MOVIE ACCESS] Unexpected error:', err)
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
       setShouldRedirect('/')
       setStatus('redirect')

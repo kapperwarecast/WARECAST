@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/ui/nav-link"
 import { useUserDisplay } from "@/hooks/ui"
+import { useIsAdmin } from "@/hooks/use-is-admin"
 import { type NavSection } from "@/constants/navigation"
 import { CSS_CLASSES } from "@/constants/theme"
 
@@ -10,6 +11,7 @@ interface MenuSectionProps {
 
 export function MenuSection({ section, onClose }: MenuSectionProps) {
   const { isAuthenticated } = useUserDisplay()
+  const isAdmin = useIsAdmin()
 
   // Ne pas afficher la section si l'authentification est requise mais l'utilisateur n'est pas connecté
   if (section.requiresAuth && !isAuthenticated) {
@@ -21,6 +23,11 @@ export function MenuSection({ section, onClose }: MenuSectionProps) {
       {section.items.map(item => {
         // Ne pas afficher l'item si l'authentification est requise mais l'utilisateur n'est pas connecté
         if (item.requiresAuth && !isAuthenticated) {
+          return null
+        }
+
+        // Ne pas afficher l'item si les droits admin sont requis mais l'utilisateur n'est pas admin
+        if (item.requiresAdmin && !isAdmin) {
           return null
         }
 

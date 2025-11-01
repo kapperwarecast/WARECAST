@@ -13,6 +13,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   isSigningOut: boolean
+  isAdmin: boolean
   signIn: (email: string, password: string) => Promise<{ error?: string }>
   signUp: (email: string, password: string, metadata?: { nom?: string; prenom?: string }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
@@ -200,6 +201,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     session,
     loading,
     isSigningOut,
+    isAdmin: profile?.is_admin ?? false,
     signIn,
     signUp,
     signOut,

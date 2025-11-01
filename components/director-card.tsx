@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useState } from "react"
 import { User } from "lucide-react"
@@ -22,10 +21,10 @@ export function DirectorCard({ director, priority = false }: DirectorCardProps) 
   const movieCount = director.movie_count || 0
 
   return (
-    <Link href={`/personne/directeur/${director.id}`}>
-      <Card className="overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all duration-300 group cursor-pointer">
+    <Link href={`/personne/directeur/${director.id}?from=directors-list`}>
+      <div className="overflow-hidden transition-all duration-300 group cursor-pointer border-[0.75px] border-transparent hover:border-white">
         {/* Photo du réalisateur */}
-        <div className="relative aspect-[2/3] w-full bg-zinc-800">
+        <div className="relative aspect-[2/3] w-full">
           {imageLoading && photoUrl && (
             <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 via-zinc-700 to-zinc-800 animate-pulse" />
           )}
@@ -48,14 +47,14 @@ export function DirectorCard({ director, priority = false }: DirectorCardProps) 
               onLoad={() => setImageLoading(false)}
             />
           ) : (
-            <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center">
               <User className="w-16 h-16 text-zinc-600" strokeWidth={1.5} />
             </div>
           )}
         </div>
 
         {/* Nom et nombre de films */}
-        <div className="p-3 bg-zinc-900">
+        <div className="p-3">
           <p className="text-white font-medium text-sm line-clamp-2 text-center mb-1">
             {director.nom_complet}
           </p>
@@ -65,18 +64,18 @@ export function DirectorCard({ director, priority = false }: DirectorCardProps) 
             </p>
           )}
         </div>
-      </Card>
+      </div>
     </Link>
   )
 }
 
 export function DirectorCardSkeleton() {
   return (
-    <Card className="overflow-hidden bg-zinc-900 border-zinc-800">
-      <Skeleton className="aspect-[2/3] w-full bg-zinc-800" />
+    <div className="overflow-hidden">
+      <Skeleton className="aspect-[2/3] w-full" />
       <div className="p-3">
-        <Skeleton className="h-4 w-3/4 mx-auto bg-zinc-800" />
+        <Skeleton className="h-4 w-3/4 mx-auto" />
       </div>
-    </Card>
+    </div>
   )
 }

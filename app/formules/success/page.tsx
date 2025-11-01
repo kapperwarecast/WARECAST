@@ -29,19 +29,27 @@ function FormuleSuccessContent() {
   const [countdown, setCountdown] = useState(5)
 
   useEffect(() => {
-    // Redirection automatique après 5 secondes
+    // Décompte de 5 à 0
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          router.push("/")
-          return 0
-        }
-        return prev - 1
-      })
+      setCountdown((prev) => prev - 1)
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [router])
+  }, [])
+
+  // Effet séparé pour la navigation quand le countdown atteint 0
+  useEffect(() => {
+    if (countdown === 0) {
+      router.push("/")
+    }
+  }, [countdown, router])
+
+  // Invalider le cache de l'abonnement pour forcer le refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('warecast-subscription')
+    }
+  }, [])
 
   const sessionId = searchParams.get("session_id")
 

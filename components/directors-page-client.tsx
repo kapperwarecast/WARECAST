@@ -1,41 +1,34 @@
 'use client'
 
 import { DirectorGrid } from '@/components/director-grid'
+import { FiltersModal } from '@/components/filters-modal'
 import { useInfiniteDirectors } from '@/hooks/data/use-infinite-directors'
 import { useInfiniteScroll } from '@/hooks/ui'
-import { Search, SlidersHorizontal } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { useState, useCallback } from 'react'
-import { debounce } from '@/lib/utils/debounce'
+import { useFiltersModal } from '@/contexts/filters-context'
+import { useEffect } from 'react'
 
 export function DirectorsPageClient() {
+  const { searchQuery, setSearchQuery, isFiltersModalOpen, setFiltersModalOpen } = useFiltersModal()
+
   const {
     directors,
     loading,
     loadingMore,
     error,
     pagination,
-    searchQuery,
-    setSearchQuery,
+    filters,
+    sort,
     loadMore,
-  } = useInfiniteDirectors(20)
+    applyFilters,
+    resetFilters,
+  } = useInfiniteDirectors(20, searchQuery)
 
-  const [inputValue, setInputValue] = useState('')
-
-  // Debounced search
-  const debouncedSetSearch = useCallback(
-    debounce((value: string) => {
-      setSearchQuery(value)
-    }, 500),
-    [setSearchQuery]
-  )
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setInputValue(value)
-    debouncedSetSearch(value)
-  }
+  // Clear search when component unmounts (user leaves directors page)
+  useEffect(() => {
+    return () => {
+      setSearchQuery('')
+    }
+  }, [setSearchQuery])
 
   const { sentinelRef } = useInfiniteScroll({
     onLoadMore: loadMore,
@@ -58,29 +51,6 @@ export function DirectorsPageClient() {
 
   return (
     <>
-      {/* Barre de recherche et filtres */}
-      <div className="mb-6 flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-          <Input
-            type="text"
-            placeholder="Rechercher un réalisateur..."
-            value={inputValue}
-            onChange={handleSearchChange}
-            className="pl-9 bg-zinc-900 border-zinc-800 focus:border-zinc-700 text-white placeholder:text-zinc-500"
-          />
-        </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
-          title="Filtres et tri (à venir)"
-          disabled
-        >
-          <SlidersHorizontal className="w-4 h-4 text-zinc-400" />
-        </Button>
-      </div>
-
       {/* Message si aucun résultat pour la recherche */}
       {!loading && searchQuery && directors.length === 0 && (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -129,6 +99,17 @@ export function DirectorsPageClient() {
           )}
         </div>
       )}
+
+      {/* Modal de filtres */}
+      <FiltersModal
+        open={isFiltersModalOpen}
+        onOpenChange={setFiltersModalOpen}
+        filters={filters}
+        sort={sort}
+        onApplyFilters={applyFilters}
+        onResetFilters={resetFilters}
+        pageType="directors"
+      />
     </>
   )
 }

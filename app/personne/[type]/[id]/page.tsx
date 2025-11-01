@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, User } from "lucide-react"
-import { MovieCard } from "@/components/movie-card"
+import { MovieCard, type Referrer } from "@/components/movie-card"
 import type { Tables } from "@/lib/supabase/types"
 
 type Actor = Tables<"actors">
@@ -30,6 +30,11 @@ interface Props {
   params: Promise<{
     type: 'acteur' | 'directeur'
     id: string
+  }>
+  searchParams: Promise<{
+    from?: string
+    filmId?: string
+    filmTitle?: string
   }>
 }
 
@@ -96,9 +101,10 @@ function getPersonPhotoUrl(path: string | null): string | null {
   return path
 }
 
-export default async function PersonnePage({ params }: Props) {
+export default async function PersonnePage({ params, searchParams }: Props) {
   const { type, id } = await params
-  
+  const search = await searchParams
+
   if (type !== 'acteur' && type !== 'directeur') {
     notFound()
   }
@@ -110,9 +116,9 @@ export default async function PersonnePage({ params }: Props) {
   }
 
   const photoUrl = getPersonPhotoUrl(person.photo_path)
-  
+
   // Get movies
-  const movies = type === 'acteur' 
+  const movies = type === 'acteur'
     ? (person as ActorWithMovies).movie_actors
         ?.map(ma => ma.movies)
         .sort((a, b) => (b.annee_sortie || 0) - (a.annee_sortie || 0)) || []
@@ -123,15 +129,37 @@ export default async function PersonnePage({ params }: Props) {
   const typeLabel = type === 'acteur' ? 'Acteur' : 'Réalisateur'
   const filmCountLabel = movies.length === 1 ? 'film' : 'films'
 
+  // Build referrer context for navigation
+  const referrer: Referrer = {
+    type: type === 'acteur' ? 'actor' : 'director',
+    id: id,
+    name: person.nom_complet,
+    from: search.from  // Pass original context to preserve navigation chain
+  }
+
+  // Build contextual back button
+  let backHref = '/'
+  let backLabel = "Retour à l'accueil"
+
+  if (search.from === 'film' && search.filmId) {
+    backHref = `/film/${search.filmId}`
+    backLabel = search.filmTitle
+      ? `Retour vers ${search.filmTitle}`
+      : "Retour vers le film"
+  } else if (search.from === 'directors-list' && type === 'directeur') {
+    backHref = '/realisateurs'
+    backLabel = "Retour vers réalisateurs"
+  }
+
   return (
     <div className="min-h-screen bg-black text-white pt-24 pb-12 px-6">
       <div className="max-w-[1200px] mx-auto">
         {/* Back button */}
         <div className="mb-8">
           <Button asChild variant="ghost" className="text-zinc-400 hover:text-white">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={backHref} className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Retour à l&apos;accueil
+              {backLabel}
             </Link>
           </Button>
         </div>
@@ -203,7 +231,7 @@ export default async function PersonnePage({ params }: Props) {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {movies.map((movie) => (
-                <MovieCard key={movie.id} movie={movie} />
+                <MovieCard key={movie.id} movie={movie} referrer={referrer} />
               ))}
             </div>
           </div>

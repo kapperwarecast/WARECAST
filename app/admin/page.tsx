@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Download, ImageIcon } from "lucide-react"
+import { Download, ImageIcon, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -79,6 +79,39 @@ export default function AdminPage() {
                   <Link href="/admin/posters">
                     <ImageIcon className="h-4 w-4 mr-2" />
                     Importer des affiches
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* User Management */}
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors group">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-3">
+                <div className="p-2 bg-emerald-600 rounded-lg group-hover:bg-emerald-500 transition-colors">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                Gestion des utilisateurs
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Gérez les comptes utilisateurs, leurs abonnements et leurs statistiques d'emprunts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-zinc-500">
+                  <p>• Liste complète des utilisateurs</p>
+                  <p>• Statistiques d'emprunts et paiements</p>
+                  <p>• Gestion des droits administrateur</p>
+                </div>
+                <Button
+                  asChild
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <Link href="/admin/users">
+                    <Users className="h-4 w-4 mr-2" />
+                    Gérer les utilisateurs
                   </Link>
                 </Button>
               </div>

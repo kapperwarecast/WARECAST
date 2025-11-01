@@ -31,6 +31,15 @@ interface Props {
   params: Promise<{
     id: string
   }>
+  searchParams: Promise<{
+    from?: 'director' | 'actor'
+    directorId?: string
+    directorName?: string
+    directorFrom?: string
+    actorId?: string
+    actorName?: string
+    actorFrom?: string
+  }>
 }
 
 
@@ -102,11 +111,11 @@ function getPersonPhotoUrl(path: string | null): string | null {
   return path
 }
 
-function DirectorCard({ director }: { director: Director }) {
+function DirectorCard({ director, filmId, filmTitle }: { director: Director; filmId: string; filmTitle: string }) {
   const photoUrl = getPersonPhotoUrl(director.photo_path)
-  
+
   return (
-    <Link href={`/personne/directeur/${director.id}`}>
+    <Link href={`/personne/directeur/${director.id}?from=film&filmId=${filmId}&filmTitle=${encodeURIComponent(filmTitle)}`}>
       <div className="flex items-start gap-3 p-3 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
       <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-zinc-800">
         {photoUrl ? (
@@ -131,11 +140,11 @@ function DirectorCard({ director }: { director: Director }) {
   )
 }
 
-function ActorCard({ actor, role }: { actor: Actor; role: string | null }) {
+function ActorCard({ actor, role, filmId, filmTitle }: { actor: Actor; role: string | null; filmId: string; filmTitle: string }) {
   const photoUrl = getPersonPhotoUrl(actor.photo_path)
-  
+
   return (
-    <Link href={`/personne/acteur/${actor.id}`}>
+    <Link href={`/personne/acteur/${actor.id}?from=film&filmId=${filmId}&filmTitle=${encodeURIComponent(filmTitle)}`}>
       <div className="flex-shrink-0 w-32 hover:scale-105 transition-transform cursor-pointer">
       <div className="relative w-32 h-48 rounded-lg overflow-hidden bg-zinc-800 mb-2">
         {photoUrl ? (
@@ -162,8 +171,9 @@ function ActorCard({ actor, role }: { actor: Actor; role: string | null }) {
   )
 }
 
-export default async function FilmPage({ params }: Props) {
+export default async function FilmPage({ params, searchParams }: Props) {
   const { id } = await params
+  const search = await searchParams
   const movie = await getMovie(id)
 
   if (!movie) {
@@ -186,15 +196,43 @@ export default async function FilmPage({ params }: Props) {
     .slice(0, 12) // Limit to first 12 actors
     || []
 
+  // Build contextual back button
+  let backHref = '/'
+  let backLabel = "Retour à l'accueil"
+
+  if (search.from === 'director' && search.directorId) {
+    backHref = `/personne/directeur/${search.directorId}`
+
+    // Restore original context if available
+    if (search.directorFrom) {
+      backHref += `?from=${search.directorFrom}`
+    }
+
+    backLabel = search.directorName
+      ? `Retour vers ${search.directorName}`
+      : "Retour vers le réalisateur"
+  } else if (search.from === 'actor' && search.actorId) {
+    backHref = `/personne/acteur/${search.actorId}`
+
+    // Restore original context if available
+    if (search.actorFrom) {
+      backHref += `?from=${search.actorFrom}`
+    }
+
+    backLabel = search.actorName
+      ? `Retour vers ${search.actorName}`
+      : "Retour vers l'acteur"
+  }
+
   return (
     <div className="min-h-screen bg-black text-white pt-24 pb-12 px-6">
       <div className="max-w-[1200px] mx-auto">
         {/* Back button */}
         <div className="mb-8">
           <Button asChild variant="ghost" className="text-zinc-400 hover:text-white">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={backHref} className="flex items-center gap-2">
               <ArrowLeft className="w-4 h-4" />
-              Retour à l&apos;accueil
+              {backLabel}
             </Link>
           </Button>
         </div>
@@ -275,7 +313,7 @@ export default async function FilmPage({ params }: Props) {
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {directors.map((director) => (
-                    <DirectorCard key={director.id} director={director} />
+                    <DirectorCard key={director.id} director={director} filmId={id} filmTitle={title} />
                   ))}
                 </div>
               </div>
@@ -314,10 +352,12 @@ export default async function FilmPage({ params }: Props) {
             <div className="overflow-x-auto">
               <div className="flex gap-4 pb-2">
                 {actors.map((movieActor) => (
-                  <ActorCard 
-                    key={movieActor.id} 
-                    actor={movieActor.actors} 
-                    role={movieActor.role_personnage} 
+                  <ActorCard
+                    key={movieActor.id}
+                    actor={movieActor.actors}
+                    role={movieActor.role_personnage}
+                    filmId={id}
+                    filmTitle={title}
                   />
                 ))}
               </div>

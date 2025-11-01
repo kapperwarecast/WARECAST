@@ -493,6 +493,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           id: string
+          is_admin: boolean
           nom: string | null
           prenom: string | null
           stripe_customer_id: string | null
@@ -503,6 +504,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id: string
+          is_admin?: boolean
           nom?: string | null
           prenom?: string | null
           stripe_customer_id?: string | null
@@ -513,6 +515,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
+          is_admin?: boolean
           nom?: string | null
           prenom?: string | null
           stripe_customer_id?: string | null

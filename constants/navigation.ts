@@ -6,7 +6,6 @@ import {
   Upload,
   Heart,
   Check,
-  ShoppingCart,
   Clock,
   CreditCard,
   UserPlus,
@@ -21,6 +20,7 @@ export interface NavItem {
   href: string
   icon: LucideIcon
   requiresAuth: boolean
+  requiresAdmin?: boolean
   alwaysVisible?: boolean
 }
 
@@ -93,18 +93,12 @@ export const NAV_ITEMS: NavItem[] = [
     requiresAuth: true
   },
   {
-    id: 'buy-movie',
-    label: 'Acheter un film',
-    href: ROUTES.BUY_MOVIE,
-    icon: ShoppingCart,
-    requiresAuth: true
-  },
-  {
     id: 'admin',
     label: 'Administration',
     href: ROUTES.ADMIN,
     icon: Settings,
-    requiresAuth: true
+    requiresAuth: true,
+    requiresAdmin: true
   }
 ]
 
@@ -133,8 +127,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       NAV_ITEMS.find(item => item.id === 'subscription')!,
       NAV_ITEMS.find(item => item.id === 'help')!,
-      NAV_ITEMS.find(item => item.id === 'send-movie')!,
-      NAV_ITEMS.find(item => item.id === 'buy-movie')!
+      NAV_ITEMS.find(item => item.id === 'send-movie')!
     ],
     requiresAuth: false,
     showSeparatorAfter: true
