@@ -82,7 +82,7 @@ export function ToggleAdminDialog({
                 <ul className="mt-2 space-y-1 list-disc list-inside">
                   <li>La gestion des films et imports</li>
                   <li>La gestion des utilisateurs</li>
-                  <li>Toutes les fonctionnalités d'administration</li>
+                  <li>Toutes les fonctionnalités d&apos;administration</li>
                 </ul>
               </>
             ) : (
@@ -90,11 +90,11 @@ export function ToggleAdminDialog({
                 Êtes-vous sûr de vouloir retirer les droits administrateur à <strong className="text-white">{userName}</strong> ?
                 <br />
                 <br />
-                Cette personne perdra l'accès à :
+                Cette personne perdra l&apos;accès à :
                 <ul className="mt-2 space-y-1 list-disc list-inside">
                   <li>La gestion des films et imports</li>
                   <li>La gestion des utilisateurs</li>
-                  <li>Toutes les fonctionnalités d'administration</li>
+                  <li>Toutes les fonctionnalités d&apos;administration</li>
                 </ul>
               </>
             )}

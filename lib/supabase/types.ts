@@ -575,6 +575,14 @@ export type Database = {
     Functions: {
       count_overdue_rentals: { Args: never; Returns: number }
       expire_overdue_rentals: { Args: never; Returns: number }
+      filter_directors_by_movies: {
+        Args: {
+          p_decade_start: number | null
+          p_decade_end: number | null
+          p_language: string | null
+        }
+        Returns: { director_id: string }[]
+      }
       refresh_random_order: { Args: never; Returns: undefined }
       rent_movie: {
         Args: { p_auth_user_id: string; p_movie_id: string }

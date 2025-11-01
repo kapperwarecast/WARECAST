@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getServerStripe } from '@/lib/stripe'
 
 /**
  * POST /api/admin/users/[id]/cancel-subscription
@@ -57,6 +57,7 @@ export async function POST(
     // Annuler l'abonnement Stripe si stripe_subscription_id existe
     if (subscription.stripe_subscription_id) {
       try {
+        const stripe = getServerStripe()
         await stripe.subscriptions.cancel(subscription.stripe_subscription_id)
         console.log('[POST /api/admin/users/[id]/cancel-subscription] Stripe subscription cancelled:', subscription.stripe_subscription_id)
       } catch (stripeError) {

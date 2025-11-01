@@ -68,18 +68,18 @@ export function CancelSubscriptionDialog({
       <AlertDialogContent className="bg-zinc-900 border-zinc-800">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-white">
-            Résilier l'abonnement ?
+            Résilier l&apos;abonnement ?
           </AlertDialogTitle>
           <AlertDialogDescription className="text-zinc-400">
-            Êtes-vous sûr de vouloir résilier l'abonnement de <strong className="text-white">{userName}</strong> ?
+            Êtes-vous sûr de vouloir résilier l&apos;abonnement de <strong className="text-white">{userName}</strong> ?
             <br />
             <br />
             Conséquences :
             <ul className="mt-2 space-y-1 list-disc list-inside">
-              <li>L'abonnement sera marqué comme "résilié"</li>
-              <li>L'utilisateur pourra continuer à emprunter jusqu'à la date d'expiration</li>
+              <li>L&apos;abonnement sera marqué comme &quot;résilié&quot;</li>
+              <li>L&apos;utilisateur pourra continuer à emprunter jusqu&apos;à la date d&apos;expiration</li>
               <li>Aucun renouvellement automatique ne sera effectué</li>
-              <li>L'abonnement Stripe sera annulé</li>
+              <li>L&apos;abonnement Stripe sera annulé</li>
             </ul>
           </AlertDialogDescription>
           {error && (

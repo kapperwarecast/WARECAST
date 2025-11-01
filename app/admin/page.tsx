@@ -95,14 +95,14 @@ export default function AdminPage() {
                 Gestion des utilisateurs
               </CardTitle>
               <CardDescription className="text-zinc-400">
-                Gérez les comptes utilisateurs, leurs abonnements et leurs statistiques d'emprunts
+                Gérez les comptes utilisateurs, leurs abonnements et leurs statistiques d&apos;emprunts
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="text-sm text-zinc-500">
                   <p>• Liste complète des utilisateurs</p>
-                  <p>• Statistiques d'emprunts et paiements</p>
+                  <p>• Statistiques d&apos;emprunts et paiements</p>
                   <p>• Gestion des droits administrateur</p>
                 </div>
                 <Button

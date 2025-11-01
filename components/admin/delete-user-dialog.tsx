@@ -68,7 +68,7 @@ export function DeleteUserDialog({
       <AlertDialogContent className="bg-zinc-900 border-zinc-800">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-white">
-            Supprimer l'utilisateur ?
+            Supprimer l&apos;utilisateur ?
           </AlertDialogTitle>
           <AlertDialogDescription className="text-zinc-400">
             Êtes-vous sûr de vouloir supprimer <strong className="text-white">{userName}</strong> ?
@@ -77,8 +77,8 @@ export function DeleteUserDialog({
             Cette action est <strong className="text-red-400">irréversible</strong> et supprimera :
             <ul className="mt-2 space-y-1 list-disc list-inside">
               <li>Le profil utilisateur</li>
-              <li>L'historique des emprunts</li>
-              <li>L'historique des paiements</li>
+              <li>L&apos;historique des emprunts</li>
+              <li>L&apos;historique des paiements</li>
               <li>Les favoris</li>
             </ul>
           </AlertDialogDescription>
