@@ -112,7 +112,7 @@ function ConfirmContent() {
                 </h2>
                 <p className="text-gray-600 mb-4">{message}</p>
                 <p className="text-sm text-gray-500">
-                  Redirection vers la page d'erreur...
+                  Redirection vers la page d&apos;erreur...
                 </p>
               </>
             )}

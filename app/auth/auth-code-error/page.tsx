@@ -41,7 +41,7 @@ export default function AuthCodeErrorPage() {
               <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
                 <li>Demandez un nouveau lien de confirmation</li>
                 <li>Vérifiez que vous avez cliqué sur le bon lien</li>
-                <li>Assurez-vous que le lien n'a pas été tronqué par votre client email</li>
+                <li>Assurez-vous que le lien n&apos;a pas été tronqué par votre client email</li>
               </ul>
             </div>
 
@@ -77,7 +77,7 @@ export default function AuthCodeErrorPage() {
           {/* Support */}
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-sm text-center text-gray-600">
-              Besoin d'aide ?{" "}
+              Besoin d&apos;aide ?{" "}
               <Link
                 href="/contact"
                 className="text-black hover:underline font-medium"
