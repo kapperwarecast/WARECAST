@@ -73,15 +73,28 @@ export class MovieImportService {
 
   private async importMovieData(movieData: TMDBMovie): Promise<string> {
     const supabase = await this.getSupabase()
-    
+
+    const annee_sortie = movieData.release_date ? new Date(movieData.release_date).getFullYear() : null
+
+    // Import slug generation utilities
+    const { generateFilmSlug } = await import('@/lib/utils/slug')
+
+    // Generate slug
+    const slug = generateFilmSlug({
+      titre_francais: movieData.title,
+      titre_original: movieData.original_title,
+      annee_sortie
+    })
+
     const movieInsert: TablesInsert<"movies"> = {
       tmdb_id: movieData.id,
+      slug,
       titre_francais: movieData.title,
       titre_original: movieData.original_title,
       duree: movieData.runtime,
       genres: movieData.genres.map(g => g.name),
       langue_vo: movieData.original_language,
-      annee_sortie: movieData.release_date ? new Date(movieData.release_date).getFullYear() : null,
+      annee_sortie,
       synopsis: movieData.overview || null,
       note_tmdb: movieData.vote_average,
       poster_local_path: null // Will be set later when posters are provided
@@ -139,8 +152,19 @@ export class MovieImportService {
           const parsedName = parseName(castMember.name)
           console.log(`Parsing actor name: "${castMember.name}" → prénom: "${parsedName.prenom}", nom: "${parsedName.nom}"`)
 
+          // Import slug generation utilities
+          const { generatePersonSlug } = await import('@/lib/utils/slug')
+
+          // Generate slug for actor
+          const actorSlug = generatePersonSlug({
+            prenom: parsedName.prenom || null,
+            nom: parsedName.nom || null,
+            nom_complet: castMember.name
+          })
+
           const actorInsert: TablesInsert<"actors"> = {
             tmdb_id: castMember.id,
+            slug: actorSlug,
             nom_complet: castMember.name,
             prenom: parsedName.prenom || null,
             nom: parsedName.nom || null,
@@ -219,8 +243,19 @@ export class MovieImportService {
           const parsedName = parseName(director.name)
           console.log(`Parsing director name: "${director.name}" → prénom: "${parsedName.prenom}", nom: "${parsedName.nom}"`)
 
+          // Import slug generation utilities
+          const { generatePersonSlug } = await import('@/lib/utils/slug')
+
+          // Generate slug for director
+          const directorSlug = generatePersonSlug({
+            prenom: parsedName.prenom || null,
+            nom: parsedName.nom || null,
+            nom_complet: director.name
+          })
+
           const directorInsert: TablesInsert<"directors"> = {
             tmdb_id: director.id,
+            slug: directorSlug,
             nom_complet: director.name,
             prenom: parsedName.prenom || null,
             nom: parsedName.nom || null,

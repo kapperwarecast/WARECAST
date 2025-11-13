@@ -29,23 +29,23 @@ interface MovieWithCast extends Movie {
 
 interface Props {
   params: Promise<{
-    id: string
+    slug: string
   }>
   searchParams: Promise<{
     from?: 'director' | 'actor'
-    directorId?: string
+    directorSlug?: string
     directorName?: string
     directorFrom?: string
-    actorId?: string
+    actorSlug?: string
     actorName?: string
     actorFrom?: string
   }>
 }
 
 
-async function getMovie(id: string): Promise<MovieWithCast | null> {
+async function getMovie(slug: string): Promise<MovieWithCast | null> {
   const supabase = await createClient()
-  
+
   const { data, error } = await supabase
     .from("movies")
     .select(`
@@ -55,6 +55,7 @@ async function getMovie(id: string): Promise<MovieWithCast | null> {
         job,
         directors (
           id,
+          slug,
           nom_complet,
           photo_path,
           tmdb_id
@@ -66,13 +67,14 @@ async function getMovie(id: string): Promise<MovieWithCast | null> {
         role_personnage,
         actors (
           id,
+          slug,
           nom_complet,
           photo_path,
           tmdb_id
         )
       )
     `)
-    .eq("id", id)
+    .eq("slug", slug)
     .single()
 
   if (error) {
@@ -111,11 +113,11 @@ function getPersonPhotoUrl(path: string | null): string | null {
   return path
 }
 
-function DirectorCard({ director, filmId, filmTitle }: { director: Director; filmId: string; filmTitle: string }) {
+function DirectorCard({ director, filmSlug, filmTitle }: { director: Director & { slug: string }; filmSlug: string; filmTitle: string }) {
   const photoUrl = getPersonPhotoUrl(director.photo_path)
 
   return (
-    <Link href={`/personne/directeur/${director.id}?from=film&filmId=${filmId}&filmTitle=${encodeURIComponent(filmTitle)}`}>
+    <Link href={`/personne/directeur/${director.slug}?from=film&filmSlug=${filmSlug}&filmTitle=${encodeURIComponent(filmTitle)}`}>
       <div className="flex items-start gap-3 p-3 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer">
       <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-zinc-800">
         {photoUrl ? (
@@ -140,11 +142,11 @@ function DirectorCard({ director, filmId, filmTitle }: { director: Director; fil
   )
 }
 
-function ActorCard({ actor, role, filmId, filmTitle }: { actor: Actor; role: string | null; filmId: string; filmTitle: string }) {
+function ActorCard({ actor, role, filmSlug, filmTitle }: { actor: Actor & { slug: string }; role: string | null; filmSlug: string; filmTitle: string }) {
   const photoUrl = getPersonPhotoUrl(actor.photo_path)
 
   return (
-    <Link href={`/personne/acteur/${actor.id}?from=film&filmId=${filmId}&filmTitle=${encodeURIComponent(filmTitle)}`}>
+    <Link href={`/personne/acteur/${actor.slug}?from=film&filmSlug=${filmSlug}&filmTitle=${encodeURIComponent(filmTitle)}`}>
       <div className="flex-shrink-0 w-32 hover:scale-105 transition-transform cursor-pointer">
       <div className="relative w-32 h-48 rounded-lg overflow-hidden bg-zinc-800 mb-2">
         {photoUrl ? (
@@ -172,16 +174,16 @@ function ActorCard({ actor, role, filmId, filmTitle }: { actor: Actor; role: str
 }
 
 export default async function FilmPage({ params, searchParams }: Props) {
-  const { id } = await params
+  const { slug } = await params
   const search = await searchParams
-  const movie = await getMovie(id)
+  const movie = await getMovie(slug)
 
   if (!movie) {
     notFound()
   }
 
   // Charger les données du bouton Play côté serveur (SSR)
-  const playData = await getMoviePlayData(id)
+  const playData = await getMoviePlayData(movie.id)
 
   const title = movie.titre_francais || movie.titre_original || "Sans titre"
   const originalTitle = movie.titre_original !== movie.titre_francais ? movie.titre_original : null
@@ -200,8 +202,8 @@ export default async function FilmPage({ params, searchParams }: Props) {
   let backHref = '/'
   let backLabel = "Retour à l'accueil"
 
-  if (search.from === 'director' && search.directorId) {
-    backHref = `/personne/directeur/${search.directorId}`
+  if (search.from === 'director' && search.directorSlug) {
+    backHref = `/personne/directeur/${search.directorSlug}`
 
     // Restore original context if available
     if (search.directorFrom) {
@@ -211,8 +213,8 @@ export default async function FilmPage({ params, searchParams }: Props) {
     backLabel = search.directorName
       ? `Retour vers ${search.directorName}`
       : "Retour vers le réalisateur"
-  } else if (search.from === 'actor' && search.actorId) {
-    backHref = `/personne/acteur/${search.actorId}`
+  } else if (search.from === 'actor' && search.actorSlug) {
+    backHref = `/personne/acteur/${search.actorSlug}`
 
     // Restore original context if available
     if (search.actorFrom) {
@@ -313,7 +315,7 @@ export default async function FilmPage({ params, searchParams }: Props) {
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {directors.map((director) => (
-                    <DirectorCard key={director.id} director={director} filmId={id} filmTitle={title} />
+                    <DirectorCard key={director.id} director={director} filmSlug={slug} filmTitle={title} />
                   ))}
                 </div>
               </div>
@@ -356,7 +358,7 @@ export default async function FilmPage({ params, searchParams }: Props) {
                     key={movieActor.id}
                     actor={movieActor.actors}
                     role={movieActor.role_personnage}
-                    filmId={id}
+                    filmSlug={slug}
                     filmTitle={title}
                   />
                 ))}

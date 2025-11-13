@@ -29,18 +29,18 @@ interface DirectorWithMovies extends Director {
 interface Props {
   params: Promise<{
     type: 'acteur' | 'directeur'
-    id: string
+    slug: string
   }>
   searchParams: Promise<{
     from?: string
-    filmId?: string
+    filmSlug?: string
     filmTitle?: string
   }>
 }
 
-async function getActor(id: string): Promise<ActorWithMovies | null> {
+async function getActor(slug: string): Promise<ActorWithMovies | null> {
   const supabase = await createClient()
-  
+
   const { data, error } = await supabase
     .from("actors")
     .select(`
@@ -52,7 +52,7 @@ async function getActor(id: string): Promise<ActorWithMovies | null> {
         movies (*)
       )
     `)
-    .eq("id", id)
+    .eq("slug", slug)
     .single()
 
   if (error) {
@@ -63,9 +63,9 @@ async function getActor(id: string): Promise<ActorWithMovies | null> {
   return data as ActorWithMovies
 }
 
-async function getDirector(id: string): Promise<DirectorWithMovies | null> {
+async function getDirector(slug: string): Promise<DirectorWithMovies | null> {
   const supabase = await createClient()
-  
+
   const { data, error } = await supabase
     .from("directors")
     .select(`
@@ -76,7 +76,7 @@ async function getDirector(id: string): Promise<DirectorWithMovies | null> {
         movies (*)
       )
     `)
-    .eq("id", id)
+    .eq("slug", slug)
     .single()
 
   if (error) {
@@ -102,14 +102,14 @@ function getPersonPhotoUrl(path: string | null): string | null {
 }
 
 export default async function PersonnePage({ params, searchParams }: Props) {
-  const { type, id } = await params
+  const { type, slug } = await params
   const search = await searchParams
 
   if (type !== 'acteur' && type !== 'directeur') {
     notFound()
   }
 
-  const person = type === 'acteur' ? await getActor(id) : await getDirector(id)
+  const person = type === 'acteur' ? await getActor(slug) : await getDirector(slug)
 
   if (!person) {
     notFound()
@@ -132,7 +132,7 @@ export default async function PersonnePage({ params, searchParams }: Props) {
   // Build referrer context for navigation
   const referrer: Referrer = {
     type: type === 'acteur' ? 'actor' : 'director',
-    id: id,
+    slug: slug,
     name: person.nom_complet,
     from: search.from  // Pass original context to preserve navigation chain
   }
@@ -141,8 +141,8 @@ export default async function PersonnePage({ params, searchParams }: Props) {
   let backHref = '/'
   let backLabel = "Retour à l'accueil"
 
-  if (search.from === 'film' && search.filmId) {
-    backHref = `/film/${search.filmId}`
+  if (search.from === 'film' && search.filmSlug) {
+    backHref = `/film/${search.filmSlug}`
     backLabel = search.filmTitle
       ? `Retour vers ${search.filmTitle}`
       : "Retour vers le film"

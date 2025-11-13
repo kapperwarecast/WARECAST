@@ -11,7 +11,7 @@ import { formatDuration, getLanguageName } from "@/lib/utils/format"
 
 export interface Referrer {
   type: 'director' | 'actor'
-  id: string
+  slug: string
   name: string
   from?: string  // Original context (e.g., 'directors-list', 'actors-list')
 }
@@ -36,12 +36,12 @@ export function MovieCard({ movie, priority = false, referrer }: MovieCardProps)
 
   // Build movie URL with optional referrer context
   const buildMovieUrl = (): string => {
-    const baseUrl = `/film/${movie.id}`
+    const baseUrl = `/film/${movie.slug}`
     if (!referrer) return baseUrl
 
     const params = new URLSearchParams({
       from: referrer.type,
-      [`${referrer.type}Id`]: referrer.id,
+      [`${referrer.type}Slug`]: referrer.slug,
       [`${referrer.type}Name`]: referrer.name
     })
 

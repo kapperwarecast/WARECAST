@@ -9,10 +9,10 @@ import { MovieAccessGuard } from "@/components/movie-player/movie-access-guard"
 import type { MovieWithPlayer } from "@/types/player"
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
-async function getMovie(id: string): Promise<MovieWithPlayer | null> {
+async function getMovie(slug: string): Promise<MovieWithPlayer | null> {
   const supabase = await createClient()
 
   try {
@@ -26,7 +26,7 @@ async function getMovie(id: string): Promise<MovieWithPlayer | null> {
           )
         )
       `)
-      .eq("id", id)
+      .eq("slug", slug)
       .single()
 
     if (error) {
@@ -42,8 +42,8 @@ async function getMovie(id: string): Promise<MovieWithPlayer | null> {
 }
 
 export default async function MoviePlayerPage({ params }: PageProps) {
-  const { id } = await params
-  const movie = await getMovie(id)
+  const { slug } = await params
+  const movie = await getMovie(slug)
 
   if (!movie) {
     notFound()
@@ -52,7 +52,7 @@ export default async function MoviePlayerPage({ params }: PageProps) {
   const title = movie.titre_francais || movie.titre_original || "Film sans titre"
 
   return (
-    <MovieAccessGuard movieId={id}>
+    <MovieAccessGuard movieId={movie.id}>
       <div className="min-h-screen bg-zinc-950">
         {/* Header */}
         <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
@@ -81,7 +81,7 @@ export default async function MoviePlayerPage({ params }: PageProps) {
             <div className="w-full">
               {/* Le MoviePlayerClient va récupérer le rental ID lui-même */}
               <MoviePlayerClient
-                movieId={id}
+                movieId={movie.id}
                 vimeoUrl={movie.lien_vimeo}
                 title={title}
               />
@@ -103,8 +103,8 @@ export default async function MoviePlayerPage({ params }: PageProps) {
 
 // Generate metadata for the page
 export async function generateMetadata({ params }: PageProps) {
-  const { id } = await params
-  const movie = await getMovie(id)
+  const { slug } = await params
+  const movie = await getMovie(slug)
 
   if (!movie) {
     return {

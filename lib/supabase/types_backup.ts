@@ -51,7 +51,6 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          slug: string
           nom: string | null
           nom_complet: string
           photo_path: string | null
@@ -62,7 +61,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
-          slug: string
           nom?: string | null
           nom_complet: string
           photo_path?: string | null
@@ -73,7 +71,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
-          slug?: string
           nom?: string | null
           nom_complet?: string
           photo_path?: string | null
@@ -87,7 +84,6 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          slug: string
           nom: string | null
           nom_complet: string
           photo_path: string | null
@@ -98,7 +94,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
-          slug: string
           nom?: string | null
           nom_complet: string
           photo_path?: string | null
@@ -109,7 +104,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
-          slug?: string
           nom?: string | null
           nom_complet?: string
           photo_path?: string | null
@@ -307,7 +301,6 @@ export type Database = {
           duree: number | null
           genres: string[] | null
           id: string
-          slug: string
           langue_vo: string | null
           lien_vimeo: string | null
           nombre_copies: number
@@ -330,7 +323,6 @@ export type Database = {
           duree?: number | null
           genres?: string[] | null
           id?: string
-          slug: string
           langue_vo?: string | null
           lien_vimeo?: string | null
           nombre_copies?: number
@@ -353,7 +345,6 @@ export type Database = {
           duree?: number | null
           genres?: string[] | null
           id?: string
-          slug?: string
           langue_vo?: string | null
           lien_vimeo?: string | null
           nombre_copies?: number

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isUUID } from '@/lib/utils/slug'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -26,6 +27,96 @@ export async function middleware(request: NextRequest) {
       },
     }
   )
+
+  // Handle UUID → slug redirections for SEO-friendly URLs
+  const pathname = request.nextUrl.pathname
+
+  // Check for film routes with UUID
+  const filmMatch = pathname.match(/^\/film\/([^\/]+)/)
+  if (filmMatch && isUUID(filmMatch[1])) {
+    const uuid = filmMatch[1]
+    try {
+      const { data: movie } = await supabase
+        .from('movies')
+        .select('slug')
+        .eq('id', uuid)
+        .single()
+
+      if (movie?.slug) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/film/${movie.slug}`
+        return NextResponse.redirect(url, { status: 301 })
+      }
+    } catch (error) {
+      console.error('Error redirecting film UUID:', error)
+    }
+  }
+
+  // Check for movie-player routes with UUID
+  const playerMatch = pathname.match(/^\/movie-player\/([^\/]+)/)
+  if (playerMatch && isUUID(playerMatch[1])) {
+    const uuid = playerMatch[1]
+    try {
+      const { data: movie } = await supabase
+        .from('movies')
+        .select('slug')
+        .eq('id', uuid)
+        .single()
+
+      if (movie?.slug) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/movie-player/${movie.slug}`
+        return NextResponse.redirect(url, { status: 301 })
+      }
+    } catch (error) {
+      console.error('Error redirecting movie-player UUID:', error)
+    }
+  }
+
+  // Check for payment routes with UUID
+  const paymentMatch = pathname.match(/^\/payment\/([^\/]+)/)
+  if (paymentMatch && isUUID(paymentMatch[1])) {
+    const uuid = paymentMatch[1]
+    try {
+      const { data: movie } = await supabase
+        .from('movies')
+        .select('slug')
+        .eq('id', uuid)
+        .single()
+
+      if (movie?.slug) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/payment/${movie.slug}`
+        return NextResponse.redirect(url, { status: 301 })
+      }
+    } catch (error) {
+      console.error('Error redirecting payment UUID:', error)
+    }
+  }
+
+  // Check for personne routes with UUID (acteur or directeur)
+  const personneMatch = pathname.match(/^\/personne\/(acteur|directeur)\/([^\/]+)/)
+  if (personneMatch && isUUID(personneMatch[2])) {
+    const type = personneMatch[1]
+    const uuid = personneMatch[2]
+    const table = type === 'acteur' ? 'actors' : 'directors'
+
+    try {
+      const { data: person } = await supabase
+        .from(table)
+        .select('slug')
+        .eq('id', uuid)
+        .single()
+
+      if (person?.slug) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/personne/${type}/${person.slug}`
+        return NextResponse.redirect(url, { status: 301 })
+      }
+    } catch (error) {
+      console.error(`Error redirecting ${type} UUID:`, error)
+    }
+  }
 
   // This will refresh session if expired - required for Server Components
   const { data: { user } } = await supabase.auth.getUser()

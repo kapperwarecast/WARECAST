@@ -179,7 +179,7 @@ export default function PaymentPage() {
   const router = useRouter()
   const params = useParams()
   const { user } = useAuth()
-  const movieId = params.movieId as string
+  const slug = params.slug as string
 
   const [movieData, setMovieData] = useState<MovieData | null>(null)
   const [stripe, setStripe] = useState<Stripe | null>(null)
@@ -204,7 +204,7 @@ export default function PaymentPage() {
     const loadMovieData = async () => {
       try {
         setIsLoadingMovie(true)
-        const response = await fetch(`/api/movies/${movieId}`)
+        const response = await fetch(`/api/movies/by-slug/${slug}`)
 
         if (!response.ok) {
           throw new Error("Film non trouvé")
@@ -220,10 +220,10 @@ export default function PaymentPage() {
       }
     }
 
-    if (movieId) {
+    if (slug) {
       loadMovieData()
     }
-  }, [movieId])
+  }, [slug])
 
   // Charger Stripe
   const loadStripeInstance = async (retry = false) => {
@@ -250,6 +250,8 @@ export default function PaymentPage() {
   }, [])
 
   const handlePaymentSuccess = async () => {
+    if (!movieData) return
+
     setIsProcessing(true)
     setProcessingMessage("Paiement confirmé !")
 
@@ -261,7 +263,7 @@ export default function PaymentPage() {
       attempts++
 
       try {
-        const response = await fetch(`/api/movie-rental-status/${movieId}`)
+        const response = await fetch(`/api/movie-rental-status/${movieData.id}`)
 
         if (response.ok) {
           const data = await response.json()
@@ -270,7 +272,7 @@ export default function PaymentPage() {
             // Emprunt créé avec succès !
             setProcessingMessage("Location confirmée ! Redirection...")
             await new Promise(r => setTimeout(r, 500))
-            router.push(`/movie-player/${movieId}`)
+            router.push(`/movie-player/${slug}`)
             return
           }
         }
