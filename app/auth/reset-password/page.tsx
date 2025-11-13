@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react"
+import { Loader2, CheckCircle2, Eye, EyeOff, AlertCircle } from "lucide-react"
 
 const resetPasswordSchema = z
   .object({
@@ -81,23 +81,23 @@ export default function ResetPasswordPage() {
     return (
       <main className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-xl p-8">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-black">Warecast</h1>
-              <p className="text-sm text-gray-600 mt-2">
+              <h1 className="text-3xl font-bold text-white">Warecast</h1>
+              <p className="text-sm text-zinc-400 mt-2">
                 Votre plateforme de location de films
               </p>
             </div>
 
             <div className="text-center">
-              <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-600" />
-              <h2 className="text-xl font-semibold text-black mb-2">
+              <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-400" />
+              <h2 className="text-xl font-semibold text-white mb-2">
                 Mot de passe mis à jour !
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-zinc-400 mb-4">
                 Votre mot de passe a été modifié avec succès.
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-zinc-500">
                 Redirection vers la page de connexion...
               </p>
             </div>
@@ -110,31 +110,31 @@ export default function ResetPasswordPage() {
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-black">Warecast</h1>
-            <p className="text-sm text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-white">Warecast</h1>
+            <p className="text-sm text-zinc-400 mt-2">
               Votre plateforme de location de films
             </p>
           </div>
 
-          <h2 className="text-2xl font-bold text-black mb-6">
+          <h2 className="text-2xl font-bold text-white mb-6">
             Nouveau mot de passe
           </h2>
 
           {/* Formulaire */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Nouveau mot de passe */}
-            <div>
-              <Label htmlFor="password" className="text-black">
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-zinc-300">
                 Nouveau mot de passe
               </Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className="pr-10"
+                  className="pr-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-600"
                   placeholder="Minimum 8 caractères"
                   {...register("password")}
                   disabled={isLoading}
@@ -142,7 +142,8 @@ export default function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300"
+                  tabIndex={-1}
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -152,22 +153,23 @@ export default function ResetPasswordPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.password.message}
                 </p>
               )}
             </div>
 
             {/* Confirmation mot de passe */}
-            <div>
-              <Label htmlFor="confirmPassword" className="text-black">
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-zinc-300">
                 Confirmer le mot de passe
               </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
-                  className="pr-10"
+                  className="pr-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-600"
                   placeholder="Retapez votre mot de passe"
                   {...register("confirmPassword")}
                   disabled={isLoading}
@@ -175,7 +177,8 @@ export default function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300"
+                  tabIndex={-1}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -185,7 +188,8 @@ export default function ResetPasswordPage() {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.confirmPassword.message}
                 </p>
               )}
@@ -193,28 +197,31 @@ export default function ResetPasswordPage() {
 
             {/* Message d'erreur global */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="bg-red-900/20 border border-red-800 rounded-lg p-3">
+                <p className="text-sm text-red-400 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </p>
               </div>
             )}
 
             {/* Conseils de sécurité */}
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <p className="text-sm text-blue-900 font-medium mb-1">
+            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3">
+              <p className="text-sm text-blue-400 font-medium mb-2">
                 Conseils pour un mot de passe sécurisé :
               </p>
-              <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
-                <li>Minimum 8 caractères</li>
-                <li>Mélangez lettres et chiffres</li>
-                <li>Évitez les mots du dictionnaire</li>
-                <li>Utilisez un mot de passe unique</li>
+              <ul className="text-sm text-blue-400/80 space-y-1">
+                <li>• Minimum 8 caractères</li>
+                <li>• Mélangez lettres et chiffres</li>
+                <li>• Évitez les mots du dictionnaire</li>
+                <li>• Utilisez un mot de passe unique</li>
               </ul>
             </div>
 
             {/* Bouton submit */}
             <Button
               type="submit"
-              className="w-full bg-black hover:bg-gray-800"
+              className="w-full bg-white text-black hover:bg-zinc-200"
               disabled={isLoading}
             >
               {isLoading ? (
