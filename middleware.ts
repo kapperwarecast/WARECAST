@@ -122,10 +122,17 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protect auth routes - redirect if already logged in
+  // EXCEPT for password reset flow (confirm + reset-password)
   if (request.nextUrl.pathname.startsWith('/auth/') && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
+    const isPasswordResetFlow =
+      request.nextUrl.pathname === '/auth/reset-password' ||
+      request.nextUrl.pathname === '/auth/confirm'
+
+    if (!isPasswordResetFlow) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
   }
 
   // Protect app routes - redirect if not logged in

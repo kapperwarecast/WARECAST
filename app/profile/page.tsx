@@ -4,7 +4,9 @@ import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/contexts/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { User } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { User, Lock } from "lucide-react"
+import Link from "next/link"
 
 function ProfileContent() {
   const { user, profile } = useAuth()
@@ -75,6 +77,20 @@ function ProfileContent() {
               ) : (
                 <p className="text-yellow-400 text-sm mt-1">⚠ Email non vérifié</p>
               )}
+            </div>
+
+            <div className="pt-6 border-t border-zinc-800">
+              <h3 className="text-zinc-300 font-medium mb-3">Sécurité</h3>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full justify-start bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700 hover:text-white"
+              >
+                <Link href="/settings/security">
+                  <Lock className="h-4 w-4 mr-2" />
+                  Changer le mot de passe
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
