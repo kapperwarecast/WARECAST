@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { getErrorMessage } from "@/lib/utils/type-guards"
 
 export const dynamic = "force-dynamic"
+
+interface CreateFilmDepositResult {
+  deposit_id: string
+  tracking_number: string
+  message: string
+}
 
 /**
  * POST /api/deposits/create
@@ -69,18 +76,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: rpcError.message || "Erreur lors de la création du dépôt",
+          error: getErrorMessage(rpcError, "Erreur lors de la création du dépôt"),
         },
         { status: 500 }
       )
     }
 
+    // Type-safe data access
+    const result = data as CreateFilmDepositResult
+
     // Succès
     return NextResponse.json({
       success: true,
-      deposit_id: data.deposit_id,
-      tracking_number: data.tracking_number,
-      message: data.message,
+      deposit_id: result.deposit_id,
+      tracking_number: result.tracking_number,
+      message: result.message,
     })
   } catch (error) {
     console.error("Erreur API create deposit:", error)

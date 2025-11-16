@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { getErrorMessage } from "@/lib/utils/type-guards"
 
 export const dynamic = "force-dynamic"
 
@@ -7,6 +8,11 @@ interface RouteParams {
   params: Promise<{
     id: string
   }>
+}
+
+interface AdminRejectDepositResult {
+  deposit_id: string
+  message: string
 }
 
 /**
@@ -84,17 +90,20 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: rpcError.message || "Erreur lors du rejet du dépôt",
+          error: getErrorMessage(rpcError, "Erreur lors du rejet du dépôt"),
         },
         { status: 500 }
       )
     }
 
+    // Type-safe data access
+    const result = data as AdminRejectDepositResult
+
     // Succès
     return NextResponse.json({
       success: true,
-      deposit_id: data.deposit_id,
-      message: data.message,
+      deposit_id: result.deposit_id,
+      message: result.message,
     })
   } catch (error) {
     console.error("Erreur API admin reject deposit:", error)

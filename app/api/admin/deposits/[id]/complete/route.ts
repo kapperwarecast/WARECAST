@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { getErrorMessage } from "@/lib/utils/type-guards"
 
 export const dynamic = "force-dynamic"
 
@@ -7,6 +8,12 @@ interface RouteParams {
   params: Promise<{
     id: string
   }>
+}
+
+interface AdminCompleteDepositResult {
+  deposit_id: string
+  registry_id: string
+  message: string
 }
 
 /**
@@ -84,18 +91,21 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: rpcError.message || "Erreur lors de la finalisation du dépôt",
+          error: getErrorMessage(rpcError, "Erreur lors de la finalisation du dépôt"),
         },
         { status: 500 }
       )
     }
 
+    // Type-safe data access
+    const result = data as AdminCompleteDepositResult
+
     // Succès
     return NextResponse.json({
       success: true,
-      deposit_id: data.deposit_id,
-      registry_id: data.registry_id,
-      message: data.message,
+      deposit_id: result.deposit_id,
+      registry_id: result.registry_id,
+      message: result.message,
     })
   } catch (error) {
     console.error("Erreur API admin complete deposit:", error)
