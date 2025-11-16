@@ -60,7 +60,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Appeler la RPC pour créer le dépôt
-    const { data, error: rpcError } = await supabase.rpc(
+    // Type cast needed: create_film_deposit RPC exists in DB but not in generated types yet
+    const { data, error: rpcError } = await (supabase.rpc as unknown as (
+      name: string,
+      params: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: unknown }>)(
       "create_film_deposit",
       {
         p_user_id: user.id,

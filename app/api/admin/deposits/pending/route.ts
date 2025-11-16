@@ -1,7 +1,20 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { getErrorMessage } from "@/lib/utils/type-guards"
 
 export const dynamic = "force-dynamic"
+
+interface PendingDeposit {
+  id: string
+  user_id: string
+  film_title: string
+  support_type: string
+  tracking_number: string
+  status: string
+  created_at: string
+  tmdb_id?: number
+  additional_notes?: string
+}
 
 /**
  * GET /api/admin/deposits/pending
@@ -47,7 +60,11 @@ export async function GET() {
     }
 
     // Appeler la RPC pour récupérer les dépôts en attente
-    const { data, error: rpcError } = await supabase.rpc(
+    // Type cast needed: admin_get_pending_deposits RPC exists in DB but not in generated types yet
+    const { data, error: rpcError } = await (supabase.rpc as unknown as (
+      name: string,
+      params?: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: unknown }>)(
       "admin_get_pending_deposits"
     )
 
@@ -56,18 +73,21 @@ export async function GET() {
       return NextResponse.json(
         {
           success: false,
-          error: "Erreur lors de la récupération des dépôts",
+          error: getErrorMessage(rpcError, "Erreur lors de la récupération des dépôts"),
           deposits: [],
         },
         { status: 500 }
       )
     }
 
+    // Type-safe data access
+    const deposits = (data as PendingDeposit[]) || []
+
     // Succès
     return NextResponse.json({
       success: true,
-      deposits: data || [],
-      count: data?.length || 0,
+      deposits,
+      count: deposits.length,
     })
   } catch (error) {
     console.error("Erreur API admin get pending deposits:", error)
