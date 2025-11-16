@@ -17,12 +17,12 @@ const LIFETIME_EXPIRATION_DATE = '2099-12-31T23:59:59.999Z'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Utiliser createClient() pour vérifier l'authentification
     const supabase = await createClient()
-    const userId = params.id
+    const { id: userId } = await params
 
     // Vérifier que l'utilisateur connecté est admin
     const { data: { user } } = await supabase.auth.getUser()
