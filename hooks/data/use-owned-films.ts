@@ -43,8 +43,10 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
       const supabase = createClient()
 
       // Récupérer les films possédés par l'utilisateur avec métadonnées complètes
-      const { data: registryData, error: registryError } = await supabase
-        .from("films_registry")
+      // Type cast needed: films_registry table exists in DB but not in generated types yet
+      const { data: registryData, error: registryError } = await (
+        supabase.from as unknown as (table: string) => ReturnType<typeof supabase.from<any>>
+      )("films_registry")
         .select(
           `
           id,

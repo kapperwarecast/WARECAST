@@ -41,8 +41,8 @@ export async function getMoviePlayData(movieId: string): Promise<MoviePlayData |
         .maybeSingle(),
 
       // Vérifier si l'utilisateur possède ce film
-      supabase
-        .from("films_registry")
+      // Type cast needed: films_registry table exists in DB but not in generated types yet
+      (supabase.from as unknown as (table: string) => ReturnType<typeof supabase.from<any>>)("films_registry")
         .select("id, acquisition_date")
         .eq("current_owner_id", user.id)
         .eq("movie_id", movieId)

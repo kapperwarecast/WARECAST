@@ -27,8 +27,10 @@ export function useFilmAvailability(movieId: string): UseFilmAvailabilityReturn 
         const supabase = createClient()
 
         // Récupérer le propriétaire du film
-        const { data: registryData, error: registryError } = await supabase
-          .from("films_registry")
+        // Type cast needed: films_registry table exists in DB but not in generated types yet
+        const { data: registryData, error: registryError } = await (
+          supabase.from as unknown as (table: string) => ReturnType<typeof supabase.from<any>>
+        )("films_registry")
           .select("id, current_owner_id")
           .eq("movie_id", movieId)
           .single()

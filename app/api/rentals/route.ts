@@ -27,8 +27,10 @@ export async function GET() {
     }
 
     // Récupérer les films possédés depuis films_registry
-    const { data: ownedFilms, error: ownershipError } = await supabase
-      .from('films_registry')
+    // Type cast needed: films_registry table exists in DB but not in generated types yet
+    const { data: ownedFilms, error: ownershipError } = await (
+      supabase.from as unknown as (table: string) => ReturnType<typeof supabase.from<any>>
+    )('films_registry')
       .select('id, movie_id, acquisition_date')
       .eq('current_owner_id', user.id)
 
