@@ -56,7 +56,7 @@ export async function POST(
 
     // Appeler la RPC pour marquer comme reçu
     // Type cast needed: admin_mark_deposit_received RPC exists in DB but not in generated types yet
-    const { data, error: rpcError } = await (supabase.rpc as (name: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)(
+    const { data, error: rpcError } = await (supabase.rpc as unknown as (name: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)(
       "admin_mark_deposit_received",
       {
         p_deposit_id: depositId,

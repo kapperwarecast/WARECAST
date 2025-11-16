@@ -70,7 +70,7 @@ export async function POST(
 
     // Appeler la RPC pour compléter
     // Type cast needed: admin_complete_deposit RPC exists in DB but not in generated types yet
-    const { data, error: rpcError } = await (supabase.rpc as (name: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)(
+    const { data, error: rpcError } = await (supabase.rpc as unknown as (name: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)(
       "admin_complete_deposit",
       {
         p_deposit_id: depositId,
