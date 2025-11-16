@@ -150,7 +150,7 @@ export default function MesFilmsPage() {
                 Aucun film dans votre collection
               </h2>
               <p className="text-zinc-500 mb-6">
-                Échangez des films avec d'autres collectionneurs pour agrandir votre collection.
+                Échangez des films avec d&apos;autres collectionneurs pour agrandir votre collection.
               </p>
               <Link href="/">
                 <Button className="bg-orange-500 hover:bg-orange-600">

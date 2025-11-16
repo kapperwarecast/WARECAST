@@ -78,7 +78,7 @@ export function GrantLifetimeDialog({
             Attribuer un abonnement à vie
           </DialogTitle>
           <DialogDescription className="text-zinc-400">
-            Cette action attribuera un abonnement permanent à l'utilisateur.
+            Cette action attribuera un abonnement permanent à l&apos;utilisateur.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,7 +108,7 @@ export function GrantLifetimeDialog({
                   Attention : Abonnement actif détecté
                 </p>
                 <p className="text-xs text-orange-300/80">
-                  L'abonnement Stripe actuel sera annulé automatiquement. L'utilisateur
+                  L&apos;abonnement Stripe actuel sera annulé automatiquement. L&apos;utilisateur
                   ne sera plus facturé.
                 </p>
               </div>
@@ -118,13 +118,13 @@ export function GrantLifetimeDialog({
           {/* Informations de l'abonnement à vie */}
           <div className="bg-purple-950/30 border border-purple-800/30 rounded-lg p-4 space-y-2">
             <p className="text-sm font-medium text-purple-400">
-              Avantages de l'abonnement à vie :
+              Avantages de l&apos;abonnement à vie :
             </p>
             <ul className="text-xs text-purple-300/80 space-y-1 list-disc list-inside">
               <li>Échanges illimités et gratuits</li>
-              <li>Aucune date d'expiration</li>
+              <li>Aucune date d&apos;expiration</li>
               <li>Aucune facturation Stripe</li>
-              <li>Visible dans l'admin avec badge violet "À vie"</li>
+              <li>Visible dans l&apos;admin avec badge violet &ldquo;À vie&rdquo;</li>
             </ul>
           </div>
 
@@ -158,7 +158,7 @@ export function GrantLifetimeDialog({
             ) : (
               <>
                 <Crown className="w-4 h-4 mr-2" />
-                Confirmer l'attribution
+                Confirmer l&apos;attribution
               </>
             )}
           </Button>
