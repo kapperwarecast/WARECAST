@@ -4,11 +4,12 @@ export * from "./like-button"
 export * from "./movie"
 export * from "./player"
 export * from "./subscription"
-export * from "./rental"
+export * from "./rental" // Legacy - sera progressivement remplacé
 export * from "./playback"
 export * from "./realtime"
 
-// Add future types here
-// export * from "./api"
-// export * from "./user"
-// etc.
+// Nouveaux types pour le système de propriété et d'échange
+export * from "./ownership"
+export * from "./sponsorship"
+export * from "./exchange"
+export * from "./deposit"

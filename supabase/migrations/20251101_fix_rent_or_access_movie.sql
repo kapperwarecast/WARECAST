@@ -75,7 +75,7 @@ BEGIN
       WHERE id = v_existing_rental_id;
     END IF;
   ELSE
-    v_type_emprunt := 'location';
+    v_type_emprunt := 'unitaire';
     -- Récupérer le montant depuis le payment si disponible
     IF p_payment_id IS NOT NULL THEN
       SELECT amount INTO v_montant_paye
@@ -120,7 +120,7 @@ BEGIN
     'emprunt_id', v_new_rental_id,                           -- ✅ rental_id → emprunt_id
     'rental_type', CASE
       WHEN v_type_emprunt = 'abonnement' THEN 'subscription'
-      WHEN v_type_emprunt = 'location' THEN 'paid'
+      WHEN v_type_emprunt = 'unitaire' THEN 'paid'
       ELSE v_type_emprunt
     END,                                                     -- ✅ type → rental_type (valeurs anglaises)
     'amount_charged', v_montant_paye,                        -- ✅ Ajout du montant

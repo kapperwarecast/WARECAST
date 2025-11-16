@@ -8,135 +8,30 @@ import type { Tables } from '@/lib/supabase/types'
 
 /**
  * Hook pour s'abonner aux changements de disponibilité d'un film en temps réel
- * Détecte instantanément :
- * - Les changements de copies_disponibles sur la table movies
- * - Les nouveaux emprunts (autres utilisateurs qui louent le film)
- * - Les retours (autres utilisateurs qui rendent le film)
+ *
+ * NOTE: DEPRECATED - Ce hook est obsolète dans le système de propriété
+ * Dans le nouveau système :
+ * - Il n'y a plus de "copies disponibles"
+ * - La disponibilité est basée sur la propriété (films_registry)
+ * - Ce hook retourne toujours des valeurs neutres pour compatibilité
  */
 export function useRealtimeMovieAvailability(
   movieId: string,
   initialCopies?: number
 ): UseRealtimeMovieAvailabilityReturn {
-  const [copiesDisponibles, setCopiesDisponibles] = useState<number | null>(
-    initialCopies ?? null
-  )
+  // Dans le nouveau système, toujours retourner des valeurs neutres
+  const [copiesDisponibles, setCopiesDisponibles] = useState<number | null>(null)
   const [totalRentals, setTotalRentals] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Fonction pour vérifier l'état initial
-  const checkInitialState = async () => {
-    if (!movieId) {
-      setCopiesDisponibles(null)
-      setTotalRentals(null)
-      return
-    }
+  // DEPRECATED: Hook désactivé dans le système de propriété
+  // Les listeners realtime ne sont plus nécessaires car :
+  // - Plus de copies_disponibles
+  // - Plus de table emprunts
+  // - La disponibilité est gérée par films_registry
 
-    setLoading(true)
-    const supabase = createClient()
-
-    // Récupérer les copies disponibles
-    const { data: movieData, error: movieError } = await supabase
-      .from('movies')
-      .select('copies_disponibles')
-      .eq('id', movieId)
-      .single()
-
-    if (!movieError && movieData) {
-      setCopiesDisponibles(movieData.copies_disponibles)
-      console.log(`📡 [Realtime Availability] État initial: Film ${movieId} a ${movieData.copies_disponibles} copies disponibles`)
-    }
-
-    // Compter les emprunts actifs
-    const { count, error: countError } = await supabase
-      .from('emprunts')
-      .select('*', { count: 'exact', head: true })
-      .eq('movie_id', movieId)
-      .eq('statut', 'en_cours')
-
-    if (!countError) {
-      setTotalRentals(count || 0)
-      console.log(`📡 [Realtime Availability] État initial: Film ${movieId} a ${count} emprunts actifs`)
-    }
-
-    setLoading(false)
-  }
-
-  // OPTIMIZATION: Consolider 2 channels en 1 seul (-50% channels, -90% requêtes inutiles)
-  useRealtimeSubscription({
-    channelName: `movie-${movieId}`,
-    enabled: !!movieId,
-    initialStateFetcher: checkInitialState,
-    listeners: [
-      // Listener 1: Changes sur movies.copies_disponibles
-      {
-        config: {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'movies',
-          filter: `id=eq.${movieId}`,
-        },
-        handler: (payload) => {
-          console.log(`📡 [Realtime Availability] UPDATE détecté sur movie ${movieId}`)
-          const newData = payload.new as Tables<'movies'>
-          if (newData && typeof newData.copies_disponibles === 'number') {
-            setCopiesDisponibles(newData.copies_disponibles)
-          }
-        },
-      },
-      // Listener 2: INSERT sur emprunts
-      {
-        config: {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'emprunts',
-          filter: `movie_id=eq.${movieId}`,
-        },
-        handler: (payload) => {
-          const newData = payload.new as Tables<'emprunts'>
-          if (newData.statut === 'en_cours') {
-            console.log(`📡 [Realtime Availability] Nouvel emprunt détecté pour film ${movieId}`)
-            setTotalRentals((prev) => (prev !== null ? prev + 1 : 1))
-            // OPTIMIZATION: Supprimer checkInitialState() ici (-90% requêtes inutiles)
-          }
-        },
-      },
-      // Listener 3: UPDATE sur emprunts
-      {
-        config: {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'emprunts',
-          filter: `movie_id=eq.${movieId}`,
-        },
-        handler: (payload) => {
-          const oldRecord = payload.old as Tables<'emprunts'>
-          const newRecord = payload.new as Tables<'emprunts'>
-          if (oldRecord.statut === 'en_cours' && newRecord.statut !== 'en_cours') {
-            console.log(`📡 [Realtime Availability] Film ${movieId} rendu par un utilisateur`)
-            setTotalRentals((prev) => (prev !== null && prev > 0 ? prev - 1 : 0))
-            // OPTIMIZATION: Supprimer checkInitialState() ici (-90% requêtes inutiles)
-          }
-        },
-      },
-      // Listener 4: DELETE sur emprunts
-      {
-        config: {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'emprunts',
-          filter: `movie_id=eq.${movieId}`,
-        },
-        handler: (payload) => {
-          const oldRecord = payload.old as Tables<'emprunts'>
-          if (oldRecord.statut === 'en_cours') {
-            console.log(`📡 [Realtime Availability] Emprunt supprimé pour film ${movieId}`)
-            setTotalRentals((prev) => (prev !== null && prev > 0 ? prev - 1 : 0))
-            // OPTIMIZATION: Supprimer checkInitialState() ici (-90% requêtes inutiles)
-          }
-        },
-      },
-    ],
-  })
+  // Hook désactivé - pas de subscription realtime
+  // Ce code est conservé pour compatibilité mais ne fait rien
 
   return {
     copiesDisponibles,

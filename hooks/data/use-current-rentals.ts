@@ -3,6 +3,20 @@
 import React, { useState, useCallback } from 'react'
 import type { MovieWithDirector } from '@/types/movie'
 
+/**
+ * DEPRECATED: Ce hook est obsolète dans le système de propriété
+ *
+ * L'ancien système de location (emprunts) a été remplacé par le système de propriété.
+ * La page /films-en-cours redirige maintenant vers /ma-collection
+ *
+ * Pour obtenir les films possédés, utilisez:
+ * - useUserFilms() pour la page Ma Collection
+ * - useRentalStore() pour vérifier la propriété d'un film spécifique
+ *
+ * Ce hook est conservé pour compatibilité mais retourne des données vides.
+ * L'API /api/current-rentals retourne également des données vides.
+ */
+
 interface RentalInfo {
   id: string
   date_emprunt: string
@@ -28,6 +42,8 @@ interface PaginationInfo {
 interface CurrentRentalsResponse {
   movies: MovieWithRental[]
   pagination: PaginationInfo
+  deprecated?: boolean
+  message?: string
 }
 
 interface UseCurrentRentalsReturn {
@@ -40,6 +56,9 @@ interface UseCurrentRentalsReturn {
   refresh: () => Promise<void>
 }
 
+/**
+ * @deprecated Utilisez useUserFilms() à la place. Ce hook retourne des données vides.
+ */
 export function useCurrentRentals(initialLimit = 20): UseCurrentRentalsReturn {
   const [movies, setMovies] = useState<MovieWithRental[]>([])
   const [loading, setLoading] = useState(true)

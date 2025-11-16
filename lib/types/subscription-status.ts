@@ -41,6 +41,12 @@ export function getSubscriptionStatusMessage(
   dateExpiration: string | Date
 ): string {
   const expirationDate = new Date(dateExpiration)
+
+  // Détection abonnement à vie (expire après 2099)
+  if (expirationDate > new Date('2099-01-01')) {
+    return 'Abonnement à vie - Aucune date d\'expiration'
+  }
+
   const formattedDate = expirationDate.toLocaleDateString('fr-FR')
 
   switch (statut) {

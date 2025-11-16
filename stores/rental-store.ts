@@ -4,11 +4,24 @@ import React from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { createCachedStore, BaseCachedStore } from "./create-cached-store"
 
+/**
+ * NOTE: MIGRATED - Ce store a été migré vers le système de propriété
+ *
+ * Anciennement "rental-store" pour le système de location (emprunts)
+ * Maintenant utilisé pour le système de propriété (films_registry)
+ *
+ * Terminologie conservée pour compatibilité:
+ * - "isRented" signifie maintenant "isOwned"
+ * - "rentalId" est maintenant l'ID de l'entrée dans films_registry
+ * - "expiresAt" est toujours null (propriété permanente)
+ *
+ * Les données proviennent de /api/rentals qui interroge films_registry
+ */
 interface RentalData {
   movieId: string
-  isRented: boolean
-  rentalId: string | null
-  expiresAt: string | null
+  isRented: boolean // Conservé pour compatibilité - signifie "isOwned" dans le nouveau système
+  rentalId: string | null // ID de l'entrée dans films_registry
+  expiresAt: string | null // Toujours null dans le système de propriété
   lastSync: number
 }
 
@@ -29,7 +42,10 @@ const defaultRentalData: RentalData = {
   lastSync: 0,
 }
 
-// Fetch user rentals from API
+/**
+ * Récupère les films possédés par l'utilisateur depuis films_registry
+ * Note: Le nom "fetchUserRentals" est conservé pour compatibilité
+ */
 async function fetchUserRentals(userId: string | null): Promise<Record<string, RentalData>> {
   if (!userId) return {}
 

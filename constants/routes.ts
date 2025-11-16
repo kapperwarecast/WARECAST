@@ -7,7 +7,9 @@ export const ROUTES = {
   SEND_MOVIE: '/send-movie',
   FAVORITES: '/favorites',
   WATCHED: '/watched',
-  FILMS_EN_COURS: '/films-en-cours',
+  FILMS_EN_COURS: '/films-en-cours', // Legacy - deprecated
+  MA_COLLECTION: '/mes-films', // Renommé de /ma-collection en /mes-films
+  ECHANGES: '/echanges',
   REALISATEURS: '/realisateurs',
   FORMULES: '/formules',
   CONTACT: '/contact',
