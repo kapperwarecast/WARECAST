@@ -42,6 +42,7 @@ export async function getMoviePlayData(movieId: string): Promise<MoviePlayData |
 
       // Vérifier si l'utilisateur possède ce film
       // Type cast needed: films_registry table exists in DB but not in generated types yet
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase.from as unknown as (table: string) => ReturnType<typeof supabase.from<any>>)("films_registry")
         .select("id, acquisition_date")
         .eq("current_owner_id", user.id)

@@ -28,6 +28,7 @@ export async function GET() {
 
     // Récupérer les films possédés depuis films_registry
     // Type cast needed: films_registry table exists in DB but not in generated types yet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: ownedFilms, error: ownershipError } = await (
       supabase.from as unknown as (table: string) => ReturnType<typeof supabase.from<any>>
     )('films_registry')
