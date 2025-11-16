@@ -20,12 +20,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import { MoreHorizontal, Search, Shield, ShieldOff } from 'lucide-react'
+import { MoreHorizontal, Search, Shield, ShieldOff, Crown } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ToggleAdminDialog } from './toggle-admin-dialog'
 import { DeleteUserDialog } from './delete-user-dialog'
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog'
+import { GrantLifetimeDialog } from './grant-lifetime-dialog'
 
 export interface AdminUser {
   id: string
@@ -55,6 +56,7 @@ export function UsersTable() {
   const [toggleAdminDialogOpen, setToggleAdminDialogOpen] = useState(false)
   const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false)
   const [cancelSubscriptionDialogOpen, setCancelSubscriptionDialogOpen] = useState(false)
+  const [grantLifetimeDialogOpen, setGrantLifetimeDialogOpen] = useState(false)
 
   // Fetch users from API (extracted for reusability)
   const fetchUsers = useCallback(async () => {
@@ -97,6 +99,10 @@ export function UsersTable() {
     fetchUsers()
   }, [fetchUsers])
 
+  const handleGrantLifetime = useCallback(() => {
+    fetchUsers()
+  }, [fetchUsers])
+
   // Filter users based on search query
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users
@@ -113,7 +119,15 @@ export function UsersTable() {
   }, [users, searchQuery])
 
   // Get subscription badge variant and label
-  const getSubscriptionBadge = (status: AdminUser['subscription_status']) => {
+  const getSubscriptionBadge = (
+    status: AdminUser['subscription_status'],
+    expiresAt: string | null
+  ) => {
+    // Détection abonnement à vie (expire après 2099)
+    if (expiresAt && new Date(expiresAt) > new Date('2099-01-01')) {
+      return { variant: 'default' as const, label: 'À vie', className: 'bg-purple-600' }
+    }
+
     switch (status) {
       case 'active':
         return { variant: 'default' as const, label: 'Abonné actif', className: 'bg-green-600' }
@@ -213,7 +227,10 @@ export function UsersTable() {
               </TableRow>
             ) : (
               filteredUsers.map((user) => {
-                const subscriptionBadge = getSubscriptionBadge(user.subscription_status)
+                const subscriptionBadge = getSubscriptionBadge(
+                  user.subscription_status,
+                  user.subscription_expires_at
+                )
 
                 return (
                   <TableRow
@@ -315,6 +332,16 @@ export function UsersTable() {
                               </>
                             )}
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="cursor-pointer text-purple-400"
+                            onClick={() => {
+                              setSelectedUser(user)
+                              setGrantLifetimeDialogOpen(true)
+                            }}
+                          >
+                            <Crown className="h-4 w-4 mr-2" />
+                            Attribuer abonnement à vie
+                          </DropdownMenuItem>
                           {user.subscription_status === 'active' && (
                             <DropdownMenuItem
                               className="cursor-pointer text-orange-400"
@@ -366,6 +393,13 @@ export function UsersTable() {
         open={cancelSubscriptionDialogOpen}
         onOpenChange={setCancelSubscriptionDialogOpen}
         onCancelled={handleCancelSubscription}
+      />
+
+      <GrantLifetimeDialog
+        user={selectedUser}
+        isOpen={grantLifetimeDialogOpen}
+        onClose={() => setGrantLifetimeDialogOpen(false)}
+        onSuccess={handleGrantLifetime}
       />
     </div>
   )

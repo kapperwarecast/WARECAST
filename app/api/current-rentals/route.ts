@@ -5,6 +5,16 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 30 // Revalider toutes les 30 secondes
 
+/**
+ * GET /api/current-rentals
+ * DEPRECATED: Cet endpoint est obsolète dans le système de propriété
+ *
+ * L'ancien système de location a été remplacé par un système de propriété.
+ * Les utilisateurs doivent maintenant utiliser /ma-collection au lieu de /films-en-cours
+ *
+ * Cet endpoint est conservé pour compatibilité mais retourne une liste vide.
+ * Pour obtenir les films possédés, utilisez /api/rentals (qui a été migré vers films_registry)
+ */
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -19,85 +29,25 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Récupérer les paramètres de pagination
+    // Récupérer les paramètres de pagination pour compatibilité
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = (page - 1) * limit
 
-    // Requête optimisée : récupérer les films et le count en une seule requête
-    const { data: rentals, error: rentalsError, count } = await supabase
-      .from('emprunts')
-      .select(`
-        id,
-        date_emprunt,
-        date_retour,
-        statut,
-        montant_paye,
-        type_emprunt,
-        movies (
-          id,
-          tmdb_id,
-          titre_francais,
-          titre_original,
-          duree,
-          genres,
-          langue_vo,
-          annee_sortie,
-          synopsis,
-          note_tmdb,
-          poster_local_path,
-          statut,
-          movie_directors (
-            directors (
-              id,
-              nom_complet,
-              prenom,
-              nom
-            )
-          )
-        )
-      `, { count: 'exact' })
-      .eq('user_id', user.id)
-      .eq('statut', 'en_cours')
-      .order('date_emprunt', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (rentalsError) {
-      console.error('Error fetching current rentals:', rentalsError)
-      return NextResponse.json(
-        { error: 'Failed to fetch current rentals' },
-        { status: 500 }
-      )
-    }
-
-    const total = count || 0
-    const totalPages = Math.ceil(total / limit)
-
-    // Transformer les données pour correspondre au format attendu
-    const transformedMovies = rentals?.map((rental) => ({
-      ...rental.movies,
-      directors: rental.movies?.movie_directors?.map((md) => md.directors) || [],
-      rental: {
-        id: rental.id,
-        date_emprunt: rental.date_emprunt,
-        date_retour: rental.date_retour,
-        statut: rental.statut,
-        montant_paye: rental.montant_paye,
-        type_emprunt: rental.type_emprunt
-      }
-    })) || []
-
+    // DEPRECATED: Retourner une réponse vide mais au bon format
+    // Les clients doivent migrer vers /api/rentals ou utiliser directement Ma Collection
     const response = {
-      movies: transformedMovies,
+      movies: [],
       pagination: {
         page,
         limit,
-        total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      }
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false
+      },
+      deprecated: true,
+      message: 'This endpoint is deprecated. Please use /ma-collection page or /api/rentals endpoint.'
     }
 
     return NextResponse.json(response)

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         const { error: updateError } = await supabase
           .from('payments')
           .update({
-            status: 'completed',
+            status: 'succeeded',
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -66,67 +66,69 @@ export async function POST(request: NextRequest) {
         }
 
         // Récupérer les métadonnées du paiement
-        const movieId = paymentIntent.metadata.movie_id
         const userId = paymentIntent.metadata.user_id
+        const movieId = paymentIntent.metadata.movie_id
 
-        if (movieId && userId) {
-          // Récupérer le payment_id depuis notre base avec retry logic (race condition)
-          let payment = null
-          let paymentFetchError = null
-
-          // Retry jusqu'à 5 fois avec délai de 1s (max 5s d'attente)
-          for (let attempt = 0; attempt < 5; attempt++) {
-            const { data, error } = await supabase
-              .from('payments')
-              .select('id')
-              .eq('external_payment_id', paymentIntent.id)
-              .maybeSingle()
-
-            if (data) {
-              payment = data
-              break
-            }
-
-            if (attempt < 4) {
-              // Attendre 1s avant retry (sauf dernier essai)
-              await new Promise(resolve => setTimeout(resolve, 1000))
-            } else {
-              paymentFetchError = error
-            }
-          }
-
-          // Si toujours pas trouvé après 5 essais
-          if (!payment) {
-            console.error("Payment not found after retries:", {
-              external_payment_id: paymentIntent.id,
-              error: paymentFetchError
-            })
-            // Retourner 409 (Conflict) pour que Stripe retry
-            return NextResponse.json({
-              error: 'Payment not ready yet',
-              details: `Payment Intent ${paymentIntent.id} not found in database after 5s. Stripe will retry.`,
-              retry: true
-            }, { status: 409 })
-          }
-
-          // Appeler notre RPC pour créer l'emprunt
-          const { data: result, error: rpcError } = await supabase
-            .rpc('rent_or_access_movie', {
-              p_movie_id: movieId,
-              p_auth_user_id: userId,
-              p_payment_id: payment.id
-            })
-
-          if (rpcError) {
-            console.error("Erreur RPC rent_or_access_movie:", rpcError)
-            return NextResponse.json({ error: 'Failed to create rental' }, { status: 500 })
-          }
-
-          console.log('Payment intent succeeded and rental created:', result)
-        } else {
-          console.error("Missing movieId or userId in payment metadata")
+        if (!userId || !movieId) {
+          console.error("Missing userId or movieId in payment metadata")
           return NextResponse.json({ error: 'Invalid payment metadata' }, { status: 500 })
         }
+
+        // Récupérer le payment_id depuis notre base avec retry logic (race condition)
+        let payment = null
+        let paymentFetchError = null
+
+        // Retry jusqu'à 5 fois avec délai de 1s (max 5s d'attente)
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { data, error } = await supabase
+            .from('payments')
+            .select('id')
+            .eq('external_payment_id', paymentIntent.id)
+            .maybeSingle()
+
+          if (data) {
+            payment = data
+            break
+          }
+
+          if (attempt < 4) {
+            // Attendre 1s avant retry (sauf dernier essai)
+            await new Promise(resolve => setTimeout(resolve, 1000))
+          } else {
+            paymentFetchError = error
+          }
+        }
+
+        // Si toujours pas trouvé après 5 essais
+        if (!payment) {
+          console.error("Payment not found after retries:", {
+            external_payment_id: paymentIntent.id,
+            error: paymentFetchError
+          })
+          // Retourner 409 (Conflict) pour que Stripe retry
+          return NextResponse.json({
+            error: 'Payment not ready yet',
+            details: `Payment Intent ${paymentIntent.id} not found in database after 5s. Stripe will retry.`,
+            retry: true
+          }, { status: 409 })
+        }
+
+        // Appeler le RPC rent_or_access_movie qui gère automatiquement :
+        // - Sessions de lecture pour films possédés (gratuit)
+        // - Échanges automatiques + sessions pour films non possédés (1.50€)
+        const { data: result, error: rpcError } = await supabase
+          .rpc('rent_or_access_movie', {
+            p_movie_id: movieId,
+            p_auth_user_id: userId,
+            p_payment_id: payment.id
+          })
+
+        if (rpcError) {
+          console.error("Erreur RPC rent_or_access_movie:", rpcError)
+          return NextResponse.json({ error: 'Failed to process payment' }, { status: 500 })
+        }
+
+        console.log('Payment succeeded and processed:', result)
 
         break
       }

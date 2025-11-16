@@ -127,8 +127,12 @@ export async function GET(request: NextRequest) {
       query = query.eq('langue_vo', language)
     }
 
+    // DEPRECATED: copies_disponibles filter removed in ownership system
+    // All films are always "available" since availability is based on ownership, not copies
+    // Keeping the parameter for backward compatibility but ignoring it
     if (availableOnly) {
-      query = query.gt('copies_disponibles', 0)
+      // No-op: Dans le nouveau système de propriété, tous les films sont "disponibles"
+      // car la disponibilité dépend de la propriété individuelle, pas des copies
     }
 
     // For preview mode, we only need the count

@@ -3,6 +3,7 @@
 import { Package, CheckCircle2, Film, Mail, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
+import { DepositForm } from "@/components/deposit-form"
 
 export default function SendMoviePage() {
   const { user } = useAuth()
@@ -108,6 +109,15 @@ export default function SendMoviePage() {
           </div>
         </div>
       </section>
+
+      {/* Deposit Form Section (only for logged-in users) */}
+      {user && (
+        <section className="relative bg-zinc-900 py-24 px-6">
+          <div className="max-w-4xl mx-auto">
+            <DepositForm />
+          </div>
+        </section>
+      )}
 
       {/* Shipping Address Section */}
       <section className="relative bg-black py-24 px-6">

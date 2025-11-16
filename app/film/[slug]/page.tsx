@@ -246,7 +246,6 @@ export default async function FilmPage({ params, searchParams }: Props) {
             <div className="flex justify-end mb-4">
               <MovieActionButtons
                 movieId={movie.id}
-                copiesDisponibles={movie.copies_disponibles}
                 initialPlayData={playData || undefined}
               />
             </div>

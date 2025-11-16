@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from "next/server"
 
 /**
  * GET /api/movie-rental-status/[id]
- * Vérifie si l'utilisateur authentifié a un emprunt actif pour un film spécifique
- * Utilisé par le polling après paiement Stripe pour détecter quand l'emprunt est créé par le webhook
+ * UPDATED: Vérifie si l'utilisateur authentifié possède un film spécifique
+ * Migré du système de location (emprunts) vers le système de propriété (films_registry)
+ * Utilisé par le polling après paiement Stripe pour détecter quand le film est ajouté à la collection
+ * Note: Le nom "rental-status" est conservé pour compatibilité, mais vérifie maintenant la propriété
  */
 export async function GET(
   request: NextRequest,
@@ -27,27 +29,26 @@ export async function GET(
       )
     }
 
-    // Vérifier si l'utilisateur a un emprunt actif pour ce film
-    const { data: rental, error: rentalError } = await supabase
-      .from("emprunts")
-      .select("id, date_retour")
-      .eq("user_id", user.id)
+    // Vérifier si l'utilisateur possède ce film dans films_registry
+    const { data: ownership, error: ownershipError } = await supabase
+      .from("films_registry")
+      .select("id, acquisition_date")
+      .eq("current_owner_id", user.id)
       .eq("movie_id", movieId)
-      .eq("statut", "en_cours")
       .maybeSingle()
 
-    if (rentalError) {
-      console.error("[movie-rental-status] Error checking rental:", rentalError)
+    if (ownershipError) {
+      console.error("[movie-rental-status] Error checking ownership:", ownershipError)
       return NextResponse.json(
-        { error: "Erreur lors de la vérification de la location" },
+        { error: "Erreur lors de la vérification de la propriété" },
         { status: 500 }
       )
     }
 
-    // Retourner le statut de location
+    // Retourner le statut de propriété (format compatible avec l'ancien système)
     return NextResponse.json({
-      isCurrentlyRented: !!rental,
-      rentalId: rental?.id || null,
+      isCurrentlyRented: !!ownership, // Conservé pour compatibilité - signifie "isOwned" maintenant
+      rentalId: ownership?.id || null, // ID de l'entrée dans films_registry
       movieId: movieId,
     })
   } catch (error) {

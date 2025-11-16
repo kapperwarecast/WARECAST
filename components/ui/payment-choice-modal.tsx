@@ -69,8 +69,7 @@ export function PaymentChoiceModal({
                       <CreditCard className="h-5 w-5 text-white" />
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <div className="font-bold text-base text-white truncate">Location 48h</div>
-                      <div className="text-xs text-blue-100 leading-tight">Accès immédiat pendant 48 heures</div>
+                      <div className="font-bold text-base text-white truncate">Film à l&apos;unité</div>
                     </div>
                   </div>
                   <div className="text-xl font-bold text-white bg-white/10 px-3 py-1 rounded-lg flex-shrink-0 ml-2">
@@ -92,13 +91,12 @@ export function PaymentChoiceModal({
                       <Star className="h-5 w-5 text-primary fill-primary/20" />
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <div className="font-bold text-base text-primary truncate">Abonnement Premium</div>
-                      <div className="text-xs text-muted-foreground leading-tight">Films illimités • Annulation libre</div>
+                      <div className="font-bold text-base text-primary truncate">Abonnement</div>
+                      <div className="text-xs text-muted-foreground leading-tight">Accès illimité</div>
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0 ml-2">
-                    <div className="text-lg font-bold text-primary">5€</div>
-                    <div className="text-xs text-muted-foreground">/mois</div>
+                  <div className="text-xl font-bold text-primary border-2 border-primary/30 px-3 py-1 rounded-lg flex-shrink-0 ml-2">
+                    5€/mois
                   </div>
                 </Button>
               </div>

@@ -9,6 +9,7 @@ import { useMovieRentalStore } from "@/stores/rental-store"
 import { useRealtimeUserRental, useRealtimeMovieAvailability } from "@/hooks/realtime"
 import { useAuth } from "@/contexts/auth-context"
 import { useSubscription } from "@/hooks/use-subscription"
+import { useFilmAvailability } from "@/hooks/data/use-film-availability"
 import { PaymentChoiceModal } from "@/components/ui/payment-choice-modal"
 import { ICON_SIZES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
 import type { MoviePlayData } from "@/types"
@@ -17,11 +18,10 @@ interface PlayButtonProps {
   movieId: string
   className?: string
   disabled?: boolean
-  copiesDisponibles?: number
   initialPlayData?: MoviePlayData
 }
 
-export function PlayButtonCompact({ movieId, className, disabled = false, copiesDisponibles, initialPlayData }: PlayButtonProps) {
+export function PlayButtonCompact({ movieId, className, disabled = false, initialPlayData }: PlayButtonProps) {
   const { isHydrated } = useHydration()
   const { handleClick, getAction } = usePlayButton()
   const { user } = useAuth()
@@ -31,12 +31,6 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
   // Utiliser Realtime pour les emprunts de l'utilisateur (instantané) avec fallback sur le store
   const { isCurrentlyRented: realtimeRented } = useRealtimeUserRental(movieId)
   const { isCurrentlyRented: storeRented, loading } = useMovieRentalStore(movieId)
-
-  // Utiliser Realtime pour la disponibilité du film (détecte quand d'autres users louent/rendent)
-  const { copiesDisponibles: realtimeCopies } = useRealtimeMovieAvailability(
-    movieId,
-    initialPlayData?.copiesDisponibles ?? copiesDisponibles
-  )
 
   // Priorité : SSR (initial) > Realtime (updates) > Store (cache)
   const isCurrentlyRented = initialPlayData && !isHydrated
@@ -50,17 +44,13 @@ export function PlayButtonCompact({ movieId, className, disabled = false, copies
     ? initialPlayData.hasActiveSubscription
     : hasActiveSubscription
 
-  // Vérifier la disponibilité en temps réel : Priorité Realtime > SSR > Props
-  const effectiveCopiesDisponibles = realtimeCopies !== null
-    ? realtimeCopies
-    : initialPlayData && !isHydrated
-      ? initialPlayData.copiesDisponibles
-      : copiesDisponibles ?? 0
-
-  const isUnavailable = !isCurrentlyRented && effectiveCopiesDisponibles === 0
+  // Vérifier la disponibilité du film via le hook
+  // Un film est disponible si son propriétaire n'a PAS de session active (48h)
+  const { isAvailable, loading: loadingAvailability } = useFilmAvailability(movieId)
+  const isUnavailable = !isAvailable
 
   // Déterminer si on est en chargement (seulement si pas de données SSR)
-  const isLoading = !initialPlayData && (loading || loadingUserSubscription)
+  const isLoading = !initialPlayData && (loading || loadingUserSubscription || loadingAvailability)
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault()
