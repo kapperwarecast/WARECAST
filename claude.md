@@ -841,6 +841,65 @@ vercel                   # Deploy preview
 vercel --prod            # Deploy production
 ```
 
+## Workflow de développement recommandé
+
+### Tester avant de commiter (IMPORTANT)
+
+⚠️ **TOUJOURS exécuter `npm run build` avant de commiter et pusher** vers GitHub/Vercel.
+
+#### Pourquoi ?
+- Vercel déploie automatiquement chaque push sur `master`
+- Un build qui échoue bloque le déploiement en production
+- Les erreurs TypeScript ne sont détectées qu'au build (pas en dev mode)
+- Économise du temps et évite les commits de "fix"
+
+#### Workflow recommandé
+
+```bash
+# 1. Développement local
+npm run dev
+
+# 2. Vérifications avant commit
+npm run build           # ✅ OBLIGATOIRE - Vérifie TypeScript + génère pages
+npm run lint            # ⚠️ Optionnel - Vérifie ESLint
+
+# 3. Si le build passe ✅
+git add .
+git commit -m "..."
+git push
+
+# 4. Si le build échoue ❌
+# → Corriger les erreurs TypeScript
+# → Re-tester avec npm run build
+# → Ne PAS commiter tant que le build échoue
+```
+
+#### Erreurs courantes détectées au build
+- Types incomplets ou manquants (ex: Movie, UserFilm)
+- RPC functions inexistantes dans les types générés
+- Imports manquants ou obsolètes
+- Problèmes de null/undefined
+- Type casts `as any` invalides
+
+#### Vérification rapide
+```bash
+# Build complet avec logs
+npm run build 2>&1 | tee build.log
+
+# Build réussi si :
+# ✓ Compiled successfully
+# ✓ Generating static pages (N/N)
+# ✓ Pas d'erreurs TypeScript (warnings ESLint OK)
+```
+
+### En cas d'échec du build
+
+1. **Lire attentivement l'erreur** - TypeScript indique le fichier et la ligne exacte
+2. **Vérifier les types Supabase** - Régénérer si nécessaire avec `npx supabase gen types`
+3. **Vérifier les RPC functions** - S'assurer qu'elles existent en base de données
+4. **Type casting** - Ajouter des casts appropriés pour les enums (BadgeLevel, PhysicalSupportType, etc.)
+5. **Tester à nouveau** - `npm run build` jusqu'à succès
+
 ## Variables d'environnement
 
 ```bash
