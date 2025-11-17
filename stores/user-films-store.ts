@@ -1,7 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { UserFilm } from "@/types/ownership"
+import { UserFilm, PhysicalSupportType, AcquisitionMethod } from "@/types/ownership"
 import { createCachedStore, BaseCachedStore } from "./create-cached-store"
 
 // ============================================================================
@@ -38,7 +38,14 @@ async function fetchUserFilms(userId: string | null): Promise<UserFilm[]> {
     throw error
   }
 
-  return data || []
+  // Type cast des champs enums de string vers types appropriés
+  const typedFilms: UserFilm[] = (data || []).map((film) => ({
+    ...film,
+    physical_support_type: film.physical_support_type as PhysicalSupportType,
+    acquisition_method: film.acquisition_method as AcquisitionMethod,
+  }))
+
+  return typedFilms
 }
 
 // ============================================================================

@@ -41,9 +41,9 @@ function getSupportColor(supportType: "Blu-ray" | "DVD") {
 }
 
 export function MovieCardOwnership({ film }: MovieCardOwnershipProps) {
-  const title = film.titre_francais || film.titre_original || "Sans titre"
-  const posterUrl = getPosterUrl(film.poster_local_path)
-  const slug = film.slug || film.movie_id
+  const title = film.movie_title || "Sans titre"
+  const posterUrl = getPosterUrl(null) // UserFilm n'a pas poster_local_path
+  const slug = film.movie_id
 
   return (
     <Link href={`/film/${slug}`}>
@@ -88,10 +88,6 @@ export function MovieCardOwnership({ film }: MovieCardOwnershipProps) {
           <h3 className="font-semibold text-white line-clamp-2 text-sm min-h-[2.5rem]">
             {title}
           </h3>
-
-          {film.annee_sortie && (
-            <p className="text-xs text-zinc-500">{film.annee_sortie}</p>
-          )}
 
           {/* Acquisition info */}
           <div className="flex items-center gap-2 text-xs text-zinc-500">

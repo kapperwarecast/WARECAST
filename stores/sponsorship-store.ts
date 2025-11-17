@@ -75,10 +75,25 @@ async function fetchSponsorshipData(
     console.error("Error fetching highest badge:", highestBadgeResult.error)
   }
 
+  // Type cast sponsor data badge_awarded de string vers BadgeLevel
+  const rawSponsor = sponsorResult.data?.[0]
+  const sponsor: MySponsor | null = rawSponsor
+    ? {
+        ...rawSponsor,
+        badge_awarded: (rawSponsor.badge_awarded as BadgeLevel) || null,
+      }
+    : null
+
+  // Type cast badges badge_level de string vers BadgeLevel
+  const badges: UserBadge[] = (badgesResult.data || []).map((badge) => ({
+    ...badge,
+    badge_level: badge.badge_level as BadgeLevel,
+  }))
+
   return {
-    sponsor: sponsorResult.data?.[0] || null,
+    sponsor,
     sponsoredUsers: sponsoredUsersResult.data || [],
-    badges: badgesResult.data || [],
+    badges,
     highestBadge: (highestBadgeResult.data as BadgeLevel) || null,
   }
 }

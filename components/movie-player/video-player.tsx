@@ -91,8 +91,8 @@ export function VideoPlayer({ vimeoUrl, title, startTime = 0, movieId, rentalId 
             console.log(`⏱️ Position réelle: ${Math.floor(position)}s / ${Math.floor(duration)}s`)
           }
         }
-      } catch (error) {
-        // Ignorer les messages non-JSON
+      } catch {
+        // Ignorer les messages non-JSON de Vimeo
       }
     }
 

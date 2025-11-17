@@ -10,7 +10,6 @@ import type { Tables } from "@/lib/supabase/types"
 import { MovieActionButtons } from "@/components/movie-action-buttons"
 import { formatDuration } from "@/lib/utils/format"
 import { getMoviePlayData } from "@/lib/server/movie-play-data"
-import type { MoviePlayData } from "@/types"
 
 type Movie = Tables<"movies">
 type Actor = Tables<"actors">

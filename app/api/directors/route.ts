@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
       const { data: directorIds, error: filterError } = await supabase.rpc(
         'filter_directors_by_movies',
         {
-          p_decade_start: range?.start ?? null,
-          p_decade_end: range?.end ?? null,
-          p_language: language || null
+          p_decade_start: range?.start ?? undefined,
+          p_decade_end: range?.end ?? undefined,
+          p_language: language || undefined
         }
       )
 

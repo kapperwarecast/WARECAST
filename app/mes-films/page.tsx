@@ -92,7 +92,7 @@ export default function MesFilmsPage() {
                   <div className="relative w-32 h-48 flex-shrink-0 rounded-lg overflow-hidden">
                     <Image
                       src={getPosterUrl(currentFilm.movie.poster_local_path) || ''}
-                      alt={currentFilm.movie.titre_francais}
+                      alt={currentFilm.movie.titre_francais || ''}
                       fill
                       className="object-cover"
                       sizes="128px"

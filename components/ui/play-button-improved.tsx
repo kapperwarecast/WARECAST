@@ -121,7 +121,7 @@ export function PlayButtonCompact({ movieId, className, disabled = false, initia
     )
   }
 
-  const { ariaLabel, iconClass, tooltipMessage, bgClass } = getButtonProps()
+  const { ariaLabel, iconClass, bgClass } = getButtonProps()
   const isActionLoading = action === 'loading'
 
   const buttonContent = (

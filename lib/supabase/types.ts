@@ -55,6 +55,7 @@ export type Database = {
           nom_complet: string
           photo_path: string | null
           prenom: string | null
+          slug: string
           tmdb_id: number | null
           updated_at: string | null
         }
@@ -65,6 +66,7 @@ export type Database = {
           nom_complet: string
           photo_path?: string | null
           prenom?: string | null
+          slug: string
           tmdb_id?: number | null
           updated_at?: string | null
         }
@@ -75,6 +77,7 @@ export type Database = {
           nom_complet?: string
           photo_path?: string | null
           prenom?: string | null
+          slug?: string
           tmdb_id?: number | null
           updated_at?: string | null
         }
@@ -88,6 +91,7 @@ export type Database = {
           nom_complet: string
           photo_path: string | null
           prenom: string | null
+          slug: string
           tmdb_id: number | null
           updated_at: string | null
         }
@@ -98,6 +102,7 @@ export type Database = {
           nom_complet: string
           photo_path?: string | null
           prenom?: string | null
+          slug: string
           tmdb_id?: number | null
           updated_at?: string | null
         }
@@ -108,6 +113,7 @@ export type Database = {
           nom_complet?: string
           photo_path?: string | null
           prenom?: string | null
+          slug?: string
           tmdb_id?: number | null
           updated_at?: string | null
         }
@@ -177,6 +183,243 @@ export type Database = {
           {
             foreignKeyName: "emprunts_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_deposits: {
+        Row: {
+          additional_notes: string | null
+          completed_at: string | null
+          created_at: string
+          digitized_at: string | null
+          film_title: string
+          id: string
+          movie_id: string | null
+          processed_by_admin_id: string | null
+          received_at: string | null
+          registry_id: string | null
+          rejection_reason: string | null
+          sent_at: string
+          status: string
+          support_type: string
+          tmdb_id: number | null
+          tracking_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          digitized_at?: string | null
+          film_title: string
+          id?: string
+          movie_id?: string | null
+          processed_by_admin_id?: string | null
+          received_at?: string | null
+          registry_id?: string | null
+          rejection_reason?: string | null
+          sent_at?: string
+          status?: string
+          support_type: string
+          tmdb_id?: number | null
+          tracking_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          digitized_at?: string | null
+          film_title?: string
+          id?: string
+          movie_id?: string | null
+          processed_by_admin_id?: string | null
+          received_at?: string | null
+          registry_id?: string | null
+          rejection_reason?: string | null
+          sent_at?: string
+          status?: string
+          support_type?: string
+          tmdb_id?: number | null
+          tracking_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_deposits_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_deposits_processed_by_admin_id_fkey"
+            columns: ["processed_by_admin_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_deposits_registry_id_fkey"
+            columns: ["registry_id"]
+            isOneToOne: false
+            referencedRelation: "films_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_deposits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      film_exchanges: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          film_offered_id: string
+          film_requested_id: string
+          id: string
+          initiator_id: string
+          payment_id: string | null
+          proposed_at: string
+          recipient_id: string
+          responded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          film_offered_id: string
+          film_requested_id: string
+          id?: string
+          initiator_id: string
+          payment_id?: string | null
+          proposed_at?: string
+          recipient_id: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          film_offered_id?: string
+          film_requested_id?: string
+          id?: string
+          initiator_id?: string
+          payment_id?: string | null
+          proposed_at?: string
+          recipient_id?: string
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "film_exchanges_film_offered_id_fkey"
+            columns: ["film_offered_id"]
+            isOneToOne: false
+            referencedRelation: "films_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_exchanges_film_requested_id_fkey"
+            columns: ["film_requested_id"]
+            isOneToOne: false
+            referencedRelation: "films_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_exchanges_initiator_id_fkey"
+            columns: ["initiator_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_exchanges_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "film_exchanges_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      films_registry: {
+        Row: {
+          acquisition_date: string
+          acquisition_method: string
+          created_at: string
+          current_owner_id: string
+          deposit_date: string
+          id: string
+          movie_id: string
+          physical_support_type: string
+          previous_owner_id: string | null
+          transfer_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          acquisition_date?: string
+          acquisition_method: string
+          created_at?: string
+          current_owner_id: string
+          deposit_date?: string
+          id?: string
+          movie_id: string
+          physical_support_type: string
+          previous_owner_id?: string | null
+          transfer_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acquisition_date?: string
+          acquisition_method?: string
+          created_at?: string
+          current_owner_id?: string
+          deposit_date?: string
+          id?: string
+          movie_id?: string
+          physical_support_type?: string
+          previous_owner_id?: string | null
+          transfer_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "films_registry_current_owner_id_fkey"
+            columns: ["current_owner_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "films_registry_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "films_registry_previous_owner_id_fkey"
+            columns: ["previous_owner_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
@@ -296,18 +539,17 @@ export type Database = {
       movies: {
         Row: {
           annee_sortie: number | null
-          copies_disponibles: number
           created_at: string | null
           duree: number | null
           genres: string[] | null
           id: string
           langue_vo: string | null
           lien_vimeo: string | null
-          nombre_copies: number
           note_tmdb: number | null
           poster_local_path: string | null
           random_order: number | null
           search_vector: unknown
+          slug: string
           statut: string | null
           subtitle_path: string | null
           synopsis: string | null
@@ -318,18 +560,17 @@ export type Database = {
         }
         Insert: {
           annee_sortie?: number | null
-          copies_disponibles?: number
           created_at?: string | null
           duree?: number | null
           genres?: string[] | null
           id?: string
           langue_vo?: string | null
           lien_vimeo?: string | null
-          nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
           random_order?: number | null
           search_vector?: unknown
+          slug: string
           statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
@@ -340,26 +581,81 @@ export type Database = {
         }
         Update: {
           annee_sortie?: number | null
-          copies_disponibles?: number
           created_at?: string | null
           duree?: number | null
           genres?: string[] | null
           id?: string
           langue_vo?: string | null
           lien_vimeo?: string | null
-          nombre_copies?: number
           note_tmdb?: number | null
           poster_local_path?: string | null
           random_order?: number | null
           search_vector?: unknown
+          slug?: string
           statut?: string | null
           subtitle_path?: string | null
           synopsis?: string | null
+          titre_francais?: string | null
           titre_original?: string | null
           tmdb_id?: number
           updated_at?: string | null
         }
         Relationships: []
+      }
+      ownership_history: {
+        Row: {
+          created_at: string
+          exchange_id: string | null
+          film_registry_id: string
+          from_owner_id: string | null
+          id: string
+          to_owner_id: string
+          transfer_date: string
+          transfer_type: string
+        }
+        Insert: {
+          created_at?: string
+          exchange_id?: string | null
+          film_registry_id: string
+          from_owner_id?: string | null
+          id?: string
+          to_owner_id: string
+          transfer_date?: string
+          transfer_type: string
+        }
+        Update: {
+          created_at?: string
+          exchange_id?: string | null
+          film_registry_id?: string
+          from_owner_id?: string | null
+          id?: string
+          to_owner_id?: string
+          transfer_date?: string
+          transfer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_history_film_registry_id_fkey"
+            columns: ["film_registry_id"]
+            isOneToOne: false
+            referencedRelation: "films_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_history_from_owner_id_fkey"
+            columns: ["from_owner_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_history_to_owner_id_fkey"
+            columns: ["to_owner_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -432,6 +728,93 @@ export type Database = {
             foreignKeyName: "payments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_badges: {
+        Row: {
+          awarded_at: string
+          badge_level: string
+          created_at: string
+          id: string
+          sponsorship_count: number
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_level: string
+          created_at?: string
+          id?: string
+          sponsorship_count: number
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_level?: string
+          created_at?: string
+          id?: string
+          sponsorship_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsorships: {
+        Row: {
+          badge_awarded: string | null
+          created_at: string
+          film_given_id: string
+          id: string
+          sponsor_id: string
+          sponsored_user_id: string
+          sponsorship_date: string
+        }
+        Insert: {
+          badge_awarded?: string | null
+          created_at?: string
+          film_given_id: string
+          id?: string
+          sponsor_id: string
+          sponsored_user_id: string
+          sponsorship_date?: string
+        }
+        Update: {
+          badge_awarded?: string | null
+          created_at?: string
+          film_given_id?: string
+          id?: string
+          sponsor_id?: string
+          sponsored_user_id?: string
+          sponsorship_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorships_film_given_id_fkey"
+            columns: ["film_given_id"]
+            isOneToOne: false
+            referencedRelation: "films_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsorships_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsorships_sponsored_user_id_fkey"
+            columns: ["sponsored_user_id"]
+            isOneToOne: true
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -524,66 +907,163 @@ export type Database = {
         }
         Relationships: []
       }
-      video_watch_sessions: {
-        Row: {
-          completed: boolean | null
-          created_at: string | null
-          id: string
-          last_position: number | null
-          movie_id: string
-          session_id: string
-          updated_at: string | null
-          user_id: string | null
-          watch_duration: number | null
-        }
-        Insert: {
-          completed?: boolean | null
-          created_at?: string | null
-          id?: string
-          last_position?: number | null
-          movie_id: string
-          session_id: string
-          updated_at?: string | null
-          user_id?: string | null
-          watch_duration?: number | null
-        }
-        Update: {
-          completed?: boolean | null
-          created_at?: string | null
-          id?: string
-          last_position?: number | null
-          movie_id?: string
-          session_id?: string
-          updated_at?: string | null
-          user_id?: string | null
-          watch_duration?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "video_watch_sessions_movie_id_fkey"
-            columns: ["movie_id"]
-            isOneToOne: false
-            referencedRelation: "movies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      count_overdue_rentals: { Args: never; Returns: number }
-      expire_overdue_rentals: { Args: never; Returns: number }
+      accept_film_exchange: {
+        Args: { p_exchange_id: string; p_recipient_id: string }
+        Returns: Json
+      }
+      admin_complete_deposit: {
+        Args: { p_admin_id: string; p_deposit_id: string; p_movie_id: string }
+        Returns: Json
+      }
+      admin_get_pending_deposits: {
+        Args: { p_admin_id: string }
+        Returns: {
+          additional_notes: string
+          deposit_id: string
+          film_title: string
+          sent_at: string
+          status: string
+          support_type: string
+          tracking_number: string
+          user_email: string
+        }[]
+      }
+      admin_mark_deposit_received: {
+        Args: { p_admin_id: string; p_deposit_id: string }
+        Returns: Json
+      }
+      admin_reject_deposit: {
+        Args: {
+          p_admin_id: string
+          p_deposit_id: string
+          p_rejection_reason: string
+        }
+        Returns: Json
+      }
+      assign_welcome_film: { Args: { p_new_user_id: string }; Returns: Json }
+      count_overdue_rentals: { Args: Record<string, never>; Returns: number }
+      create_film_deposit: {
+        Args: {
+          p_additional_notes?: string
+          p_film_title: string
+          p_support_type: string
+          p_tmdb_id?: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      expire_overdue_rentals: { Args: Record<string, never>; Returns: number }
       filter_directors_by_movies: {
         Args: {
-          p_decade_start: number | null
-          p_decade_end: number | null
-          p_language: string | null
+          p_decade_end?: number
+          p_decade_start?: number
+          p_language?: string
         }
-        Returns: { director_id: string }[]
+        Returns: {
+          director_id: string
+        }[]
       }
-      refresh_random_order: { Args: never; Returns: undefined }
+      generate_tracking_number: { Args: Record<string, never>; Returns: string }
+      get_available_films_for_exchange: {
+        Args: { p_user_id: string }
+        Returns: {
+          is_available: boolean
+          movie_id: string
+          movie_title: string
+          owner_email: string
+          owner_id: string
+          physical_support_type: string
+          registry_id: string
+        }[]
+      }
+      get_film_owner: {
+        Args: { p_registry_id: string }
+        Returns: {
+          acquisition_date: string
+          acquisition_method: string
+          owner_email: string
+          owner_id: string
+        }[]
+      }
+      get_film_ownership_history: {
+        Args: { p_registry_id: string }
+        Returns: {
+          from_owner_email: string
+          to_owner_email: string
+          transfer_date: string
+          transfer_id: string
+          transfer_type: string
+        }[]
+      }
+      get_my_sponsor: {
+        Args: { p_user_id: string }
+        Returns: {
+          badge_awarded: string
+          film_title: string
+          sponsor_email: string
+          sponsor_id: string
+          sponsorship_date: string
+        }[]
+      }
+      get_my_sponsored_users: {
+        Args: { p_user_id: string }
+        Returns: {
+          film_title: string
+          sponsored_user_email: string
+          sponsored_user_id: string
+          sponsorship_date: string
+        }[]
+      }
+      get_user_badges: {
+        Args: { p_user_id: string }
+        Returns: {
+          awarded_at: string
+          badge_level: string
+          sponsorship_count: number
+        }[]
+      }
+      get_user_deposits: {
+        Args: { p_user_id: string }
+        Returns: {
+          completed_at: string
+          deposit_id: string
+          film_title: string
+          received_at: string
+          rejection_reason: string
+          sent_at: string
+          status: string
+          support_type: string
+          tracking_number: string
+        }[]
+      }
+      get_user_films: {
+        Args: { p_user_id: string }
+        Returns: {
+          acquisition_date: string
+          acquisition_method: string
+          deposit_date: string
+          movie_id: string
+          movie_title: string
+          physical_support_type: string
+          registry_id: string
+        }[]
+      }
+      get_user_highest_badge: { Args: { p_user_id: string }; Returns: string }
+      instant_film_exchange: {
+        Args: {
+          p_offered_film_id: string
+          p_payment_id?: string
+          p_requested_film_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      refresh_random_order: { Args: Record<string, never>; Returns: undefined }
       rent_movie: {
         Args: { p_auth_user_id: string; p_movie_id: string }
         Returns: Json
@@ -618,9 +1098,19 @@ export type Database = {
           titre_original: string
         }[]
       }
-      show_limit: { Args: never; Returns: number }
+      show_limit: { Args: Record<string, never>; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
-      update_overdue_emprunts: { Args: never; Returns: undefined }
+      slugify: { Args: { text_input: string }; Returns: string }
+      update_overdue_emprunts: { Args: Record<string, never>; Returns: undefined }
+      update_sponsor_badge: { Args: { p_sponsor_id: string }; Returns: string }
+      verify_legacy_cleanup: {
+        Args: Record<string, never>
+        Returns: {
+          check_name: string
+          item_exists: boolean
+          status: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

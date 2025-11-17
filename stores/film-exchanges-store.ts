@@ -1,6 +1,5 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import {
   PendingExchangeRequest,
   PendingExchangeProposal,
@@ -38,26 +37,10 @@ async function fetchUserExchanges(userId: string | null): Promise<ExchangeData> 
     return { requests: [], proposals: [] }
   }
 
-  const supabase = createClient()
-
-  // Fetch en parallèle des demandes reçues et propositions envoyées
-  const [requestsResult, proposalsResult] = await Promise.all([
-    supabase.rpc("get_pending_exchange_requests", { p_user_id: userId }),
-    supabase.rpc("get_pending_exchange_proposals", { p_user_id: userId }),
-  ])
-
-  if (requestsResult.error) {
-    console.error("Error fetching exchange requests:", requestsResult.error)
-  }
-
-  if (proposalsResult.error) {
-    console.error("Error fetching exchange proposals:", proposalsResult.error)
-  }
-
-  return {
-    requests: requestsResult.data || [],
-    proposals: proposalsResult.data || [],
-  }
+  // NOTE: Système d'échange migré vers échanges instantanés (Nov 2025)
+  // Plus de demandes en attente - les échanges sont automatiques et immédiats
+  // Ce store est conservé pour compatibilité mais retourne toujours des tableaux vides
+  return { requests: [], proposals: [] }
 }
 
 // ============================================================================

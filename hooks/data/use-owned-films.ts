@@ -43,10 +43,8 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
       const supabase = createClient()
 
       // Récupérer les films possédés par l'utilisateur avec métadonnées complètes
-      // Type cast needed: films_registry table exists in DB but not in generated types yet
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: registryData, error: registryError } = await supabase
-        .from("films_registry" as any)
+        .from("films_registry")
         .select(
           `
           id,
@@ -61,6 +59,16 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
             langue_vo,
             poster_local_path,
             synopsis,
+            created_at,
+            genres,
+            lien_vimeo,
+            note_tmdb,
+            random_order,
+            search_vector,
+            statut,
+            subtitle_path,
+            tmdb_id,
+            updated_at,
             movie_directors (
               directors (
                 id,
@@ -108,6 +116,16 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
             langue_vo: film.movies.langue_vo,
             poster_local_path: film.movies.poster_local_path,
             synopsis: film.movies.synopsis,
+            created_at: film.movies.created_at,
+            genres: film.movies.genres,
+            lien_vimeo: film.movies.lien_vimeo,
+            note_tmdb: film.movies.note_tmdb,
+            random_order: film.movies.random_order,
+            search_vector: film.movies.search_vector,
+            statut: film.movies.statut,
+            subtitle_path: film.movies.subtitle_path,
+            tmdb_id: film.movies.tmdb_id,
+            updated_at: film.movies.updated_at,
             movie_directors: film.movies.movie_directors || [],
           },
         }))

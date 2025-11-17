@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, CreditCard, Sparkles, AlertCircle, Film, Loader2 } from "lucide-react"
+import { Check, AlertCircle, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useSubscription } from "@/hooks/use-subscription"
 import { getSubscriptionDisplayStatus } from "@/lib/utils/subscription"
@@ -27,9 +27,7 @@ export default function AbonnementPage() {
     loadingSubscriptions,
     userSubscription,
     hasActiveSubscription,
-    daysUntilExpiration,
-    subscribe,
-    cancelSubscription
+    daysUntilExpiration
   } = useSubscription(user)
 
   useEffect(() => {
@@ -164,15 +162,6 @@ export default function AbonnementPage() {
     } finally {
       setCancelling(false)
     }
-  }
-
-  const formatPrice = (prix: number) => {
-    return prix.toFixed(2).replace('.', ',')
-  }
-
-  const calculateSavings = (monthlyPrice: number, annualPrice: number, months: number) => {
-    const totalMonthlyPrice = monthlyPrice * months
-    return totalMonthlyPrice - annualPrice
   }
 
   if (loading || loadingSubscriptions) {
