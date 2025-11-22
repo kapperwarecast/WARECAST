@@ -114,13 +114,13 @@ warecast-app/
 - **Payé par** : Celui qui PREND le film
 - **Exemple** : Si je prends "Matrix" de User A en échange de mon "Tenet", je paie 1,50€ (sauf si abonné)
 
-### Types d'emprunt (contrainte CHECK)
+### Types de session (contrainte CHECK)
 
-La table `emprunts` n'accepte que **2 types** via contrainte CHECK :
-- **`'unitaire'`** : Location payante 1,50€ (non-abonnés)
-- **`'abonnement'`** : Gratuit (abonnés OU films possédés)
+La table `viewing_sessions` accepte **2 types** via contrainte CHECK :
+- **`'unit'`** : Session payante 1,50€ (non-abonnés)
+- **`'subscription'`** : Gratuit (abonnés OU films possédés)
 
-**IMPORTANT** : Pour les films possédés, le système utilise type `'abonnement'` (même si non abonné), car c'est gratuit.
+**IMPORTANT** : Pour les films possédés, le système utilise type `'subscription'` (même si non abonné), car c'est gratuit.
 
 ### Différences clés
 
@@ -164,10 +164,17 @@ films_registry:
 
 ### Règles de disponibilité à l'échange
 
-⚠️ **CRITIQUE** : Un film est disponible à l'échange SI ET SEULEMENT SI le propriétaire n'a PAS de session de lecture active (48h)
+⚠️ **CRITIQUE** : Une copie physique est disponible à l'échange SI ET SEULEMENT SI elle n'a PAS de session de lecture active (48h)
 
 ```
-Film disponible ⇔ AUCUNE session active (emprunts.statut = 'en_cours')
+Copie disponible ⇔ AUCUNE session active (viewing_sessions.statut = 'en_cours')
+```
+
+**Support multi-copies** (NOUVEAU - Nov 2025) :
+Le système supporte maintenant plusieurs copies physiques du même film (différents propriétaires) :
+```
+Matrix (Blu-ray) → User A [Session active] → NON DISPONIBLE
+Matrix (DVD) → User B [Aucune session] → DISPONIBLE
 ```
 
 **Exemple concret** :
@@ -179,18 +186,43 @@ Films DISPONIBLES à l'échange : 4 films (tous sauf Inception)
 Films NON DISPONIBLES : 1 film (Inception, en cours de lecture)
 ```
 
-### Gestion des sessions de lecture
+### Gestion des sessions de lecture (NOUVEAU - Nov 2025)
 
-**Table `emprunts` (sessions de 48h)** :
-- **But** : Tracker quel film est "occupé" (en cours de lecture)
+**Table `viewing_sessions` (sessions de 48h)** :
+- **But** : Tracker quelle **copie physique** est "occupée" (en cours de lecture)
 - **Durée** : 48h maximum par session
 - **Limitation** : 1 seule session active par utilisateur
-- **Type** : `'abonnement'` pour films possédés (gratuit)
+- **Type** : `'subscription'` pour films possédés (gratuit), `'unit'` pour paiement unitaire (1,50€)
+
+**Architecture** :
+```sql
+viewing_sessions:
+  - id (UUID) - ID de la session
+  - user_id (UUID) - Utilisateur qui visionne
+  - registry_id (UUID) - Copie physique spécifique (films_registry.id) ⭐ NOUVEAU
+  - movie_id (UUID) - Film du catalogue (dénormalisé pour performance)
+  - statut (TEXT) - 'en_cours' | 'rendu' | 'expiré'
+  - session_type (TEXT) - 'subscription' | 'unit'
+  - amount_paid (NUMERIC) - Montant payé (0 si abonné/propriétaire)
+  - session_start_date (TIMESTAMP)
+  - return_date (TIMESTAMP) - Date de fin (48h)
+  - payment_id (UUID) - Référence paiement Stripe (si unitaire)
+```
 
 **Statuts** :
-- `en_cours` : Film en cours de lecture (NON disponible à l'échange)
-- `rendu` : Session terminée (film redevient disponible)
+- `en_cours` : Copie physique en cours de visionnage (NON disponible à l'échange)
+- `rendu` : Session terminée (copie redevient disponible)
 - `expiré` : Session expirée après 48h
+
+**Mapping des types** :
+- `'subscription'` = Session gratuite (abonné OU propriétaire du film)
+- `'unit'` = Session payante 1,50€ (non-abonné via échange)
+
+**Migration** (Nov 2025) :
+- ✅ Ancienne table `emprunts` → Nouvelle table `viewing_sessions`
+- ✅ Ajout `registry_id` pour support multi-copies physiques
+- ✅ Renommage colonnes : `type_emprunt` → `session_type`, `montant_paye` → `amount_paid`, etc.
+- ✅ Vue de compatibilité temporaire `emprunts` (à supprimer après transition)
 
 ## Abonnements à vie (Admin)
 
@@ -229,7 +261,67 @@ Fonctions concernées :
 
 ### Principe
 
-Chaque nouvel utilisateur reçoit automatiquement **1 film** d'un parrain existant lors de son inscription.
+Chaque nouvel utilisateur reçoit **automatiquement** 1 film d'un parrain existant lors de son inscription.
+
+### Déclenchement automatique (NOUVEAU - Nov 2025)
+
+Le parrainage s'exécute **automatiquement** via trigger PostgreSQL :
+
+```
+Inscription user → auth.users INSERT
+  ↓
+Trigger: on_auth_user_created → handle_new_user()
+  ↓
+1. Création user_profiles (nom, prénom)
+2. Appel assign_welcome_film(user_id)
+  ↓
+Film attribué automatiquement ✅
+```
+
+**Fonction `handle_new_user()`** :
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+  v_sponsorship_result json;
+BEGIN
+  -- 1. Créer profil utilisateur
+  INSERT INTO public.user_profiles (id, nom, prenom)
+  VALUES (NEW.id, ...);
+
+  -- 2. Pause 100ms pour commit
+  PERFORM pg_sleep(0.1);
+
+  -- 3. Assigner film de bienvenue
+  BEGIN
+    SELECT public.assign_welcome_film(NEW.id) INTO v_sponsorship_result;
+    RAISE LOG 'SPONSORSHIP SUCCESS - User: %, Result: %', NEW.id, v_sponsorship_result;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE LOG 'SPONSORSHIP ERROR - User: %, Error: %', NEW.id, SQLERRM;
+  END;
+
+  RETURN NEW;
+END;
+$function$;
+```
+
+**⚠️ CRITIQUE - Fix search_path** :
+La fonction `assign_welcome_film()` **DOIT** avoir `SET search_path = public` pour éviter l'erreur "relation does not exist" quand appelée depuis un trigger `SECURITY DEFINER` :
+
+```sql
+CREATE OR REPLACE FUNCTION public.assign_welcome_film(p_new_user_id uuid)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public  -- ⭐ OBLIGATOIRE
+AS $function$
+-- ... code de la fonction
+END;
+$function$;
+```
 
 ### Tables
 
@@ -239,7 +331,8 @@ Chaque nouvel utilisateur reçoit automatiquement **1 film** d'un parrain exista
 - sponsor_id (UUID) - Parrain
 - sponsored_user_id (UUID) - Filleul
 - film_given_id (UUID) - Film transféré (films_registry.id)
-- created_at (TIMESTAMP)
+- sponsorship_date (TIMESTAMP)
+- badge_awarded (TEXT) - Badge attribué au parrain (bronze/silver/gold)
 ```
 
 **`sponsor_badges`** :
@@ -269,11 +362,18 @@ L'algorithme `assign_welcome_film()` sélectionne un parrain selon :
 
 ### RPC Sponsorship
 
-- `assign_welcome_film(p_new_user_id)` - Attribution automatique
+- `assign_welcome_film(p_new_user_id)` - Attribution automatique (appelée par trigger)
 - `get_my_sponsor(p_user_id)` - Voir son parrain
 - `get_my_sponsored_users(p_user_id)` - Voir ses filleuls
 - `get_user_highest_badge(p_user_id)` - Badge le plus élevé
 - `update_sponsor_badge(p_user_id)` - Recalcul automatique
+
+### Edge Function (optionnel)
+
+Une Edge Function `assign-welcome-film` existe comme fallback pour webhook Auth (si besoin de déclenchement externe) :
+- **Path** : `supabase/functions/assign-welcome-film/index.ts`
+- **Usage** : Webhook Supabase Auth (event `user.created`)
+- **Actuellement** : Non utilisé (trigger SQL suffit)
 
 ## Système de dépôts de films physiques
 
@@ -349,9 +449,9 @@ SELECT current_owner_id FROM films_registry WHERE movie_id = p_movie_id
 → Sinon : Continuer
 ```
 
-**ÉTAPE 2** : Vérifier disponibilité film demandé
+**ÉTAPE 2** : Vérifier disponibilité copie physique demandée
 ```
-Vérifier : Propriétaire n'a PAS de session active (emprunts.statut = 'en_cours')
+Vérifier : Copie physique n'a PAS de session active (viewing_sessions.statut = 'en_cours' WHERE registry_id = ...)
 → Non disponible : Erreur FILM_NOT_AVAILABLE
 → Disponible : Continuer
 ```
@@ -377,7 +477,7 @@ Critères :
 **ÉTAPE 5** : Libérer ancienne session (si rotation abonné)
 ```
 Si user a déjà une session active sur un autre film :
-  UPDATE emprunts SET statut='rendu' WHERE user_id = p_auth_user_id AND statut='en_cours'
+  UPDATE viewing_sessions SET statut='rendu' WHERE user_id = p_auth_user_id AND statut='en_cours'
 ```
 
 **ÉTAPE 6** : ÉCHANGE INSTANTANÉ (transaction atomique)
@@ -396,13 +496,13 @@ BEGIN;
 COMMIT;
 ```
 
-**ÉTAPE 7** : Créer session de lecture sur film POSSÉDÉ
+**ÉTAPE 7** : Créer session de lecture sur copie physique POSSÉDÉE
 ```sql
-INSERT INTO emprunts (
-  user_id, movie_id, statut='en_cours',
-  type_emprunt='abonnement', -- Gratuit car film possédé
-  montant_paye=0,
-  date_retour=NOW()+48h
+INSERT INTO viewing_sessions (
+  user_id, registry_id, movie_id, statut='en_cours',
+  session_type='subscription', -- Gratuit car film possédé
+  amount_paid=0,
+  return_date=NOW()+48h
 )
 ```
 
@@ -469,15 +569,15 @@ Vérifie : Aucune autre session active ✅
   ↓
 RPC rent_or_access_movie(movie_id, user_id, null)
   ↓
-Crée emprunts (statut='en_cours', type='abonnement', montant=0, date_retour=NOW()+48h)
+Crée viewing_sessions (statut='en_cours', session_type='subscription', amount_paid=0, return_date=NOW()+48h, registry_id=...)
   ↓
-Film devient NON disponible à l'échange (session active)
+Copie physique devient NON disponible à l'échange (session active)
   ↓
 Redirect /movie-player/[id]
   ↓
 Après 48h ou fin manuelle → statut='rendu'
   ↓
-Film redevient disponible à l'échange
+Copie physique redevient disponible à l'échange
 ```
 
 ### Flux échange instantané + lecture
@@ -499,7 +599,7 @@ Transaction atomique :
   1. UPDATE films_registry : Y.owner = B, X.owner = A
   2. INSERT ownership_history (2 transferts)
   3. INSERT film_exchanges (status='completed')
-  4. INSERT emprunts (B, Y, 'en_cours', 'abonnement', 0)
+  4. INSERT viewing_sessions (B, Y, registry_id_Y, 'en_cours', 'subscription', 0)
   ↓
 User B possède maintenant Y et peut le regarder
 User A possède maintenant X (découvre en consultant sa collection)
@@ -515,7 +615,7 @@ AUCUNE notification envoyée (transparent)
 |-------|-------------|-------------------|
 | `movies` | Catalogue films (métadonnées) | `titre_francais`, `slug`, `lien_vimeo`, `tmdb_id`, `synopsis`, `genres` |
 | **`films_registry`** | **Registre de propriété** (NOUVEAU) | `id`, `movie_id`, `current_owner_id`, `previous_owner_id`, `acquisition_method`, `physical_support_type` |
-| `emprunts` | Sessions de lecture (48h) | `user_id`, `movie_id`, `statut`, `type_emprunt` (unitaire/abonnement), `date_retour` |
+| **`viewing_sessions`** | **Sessions de lecture (48h)** (NOUVEAU Nov 2025) | `user_id`, `registry_id`, `movie_id`, `statut`, `session_type` (unit/subscription), `return_date` |
 | `film_exchanges` | Historique des échanges | `requester_id`, `requested_film_id`, `offered_film_id`, `status`, `completed_at` |
 | `ownership_history` | Audit des transferts | `registry_id`, `from_user_id`, `to_user_id`, `transfer_type`, `exchange_id` |
 | `film_deposits` | Dépôts physiques | `user_id`, `film_title`, `support_type`, `tracking_number`, `status` |
@@ -532,7 +632,7 @@ AUCUNE notification envoyée (transparent)
 
 ### RLS Policies (Row Level Security)
 
-- `emprunts` - Users lisent uniquement leurs sessions, INSERT/UPDATE/DELETE via RPC uniquement
+- `viewing_sessions` - Users lisent uniquement leurs sessions, INSERT/UPDATE/DELETE via RPC uniquement
 - `films_registry` - Lecture publique (pour voir propriétaires/disponibilité), modifications via RPC uniquement
 - `film_exchanges` - Users voient uniquement leurs échanges
 - `ownership_history` - Lecture publique pour audit, INSERT via RPC uniquement
@@ -544,7 +644,7 @@ AUCUNE notification envoyée (transparent)
 
 ### Realtime Channels
 
-- `rentals` - Sessions de lecture (INSERT, UPDATE, DELETE sur `emprunts`)
+- `viewing_sessions` - Sessions de lecture (INSERT, UPDATE, DELETE sur `viewing_sessions`)
 - `subscriptions` - Abonnements (INSERT, UPDATE sur `user_abonnements`)
 - `ownership` - Propriété films (UPDATE sur `films_registry.current_owner_id`)
 - `deposits` - Dépôts (INSERT, UPDATE sur `film_deposits`)
@@ -552,7 +652,11 @@ AUCUNE notification envoyée (transparent)
 
 ### Triggers
 
-**AUCUN trigger actif sur le système d'échange/propriété** :
+**Triggers actifs** :
+- `on_auth_user_created` (auth.users) → `handle_new_user()` - Création profil + parrainage automatique
+
+**Système d'échange/propriété** :
+- Aucun trigger sur `films_registry` ou `viewing_sessions`
 - Tous les transferts sont gérés par RPC `SECURITY DEFINER` atomiques
 - Garantie de cohérence via transactions PostgreSQL
 
@@ -658,6 +762,154 @@ AUCUNE notification envoyée (transparent)
 7. User E voit "Dunkerque" dans "Mes Films"
 8. User E peut échanger ou regarder Dunkerque
 ```
+
+## Fonctions RPC Utilitaires (NOUVEAU - Nov 2025)
+
+Suite à la migration viewing_sessions, de nouvelles fonctions utilitaires ont été créées :
+
+### Vérification de disponibilité
+
+```sql
+is_registry_available(registry_id UUID) → BOOLEAN
+```
+Vérifie si une copie physique spécifique est disponible pour échange/visionnage.
+
+**Exemple** :
+```typescript
+const { data: isAvailable } = await supabase.rpc('is_registry_available', {
+  p_registry_id: 'xxx-uuid-xxx'
+})
+```
+
+### Sessions actives utilisateur
+
+```sql
+get_user_active_sessions(user_id UUID) → TABLE
+```
+Retourne toutes les sessions actives d'un utilisateur avec détails complets (film, registry, temps restant).
+
+**Colonnes retournées** :
+- `session_id`, `registry_id`, `movie_id`, `movie_title`
+- `physical_support_type`, `session_type`, `amount_paid`
+- `session_start_date`, `return_date`, `time_remaining`
+
+### Disponibilité multi-copies
+
+```sql
+get_movie_availability(movie_id UUID) → TABLE
+```
+Récupère la disponibilité de **toutes les copies physiques** d'un film donné (support multi-copies).
+
+**Colonnes retournées** :
+- `registry_id`, `current_owner_id`, `owner_email`
+- `physical_support_type`, `is_available`
+- `active_session_id`, `session_return_date`
+
+**Exemple** :
+```typescript
+// Vérifier si Matrix a des copies disponibles
+const { data: copies } = await supabase.rpc('get_movie_availability', {
+  p_movie_id: 'matrix-uuid'
+})
+
+// Trouver une copie disponible
+const availableCopy = copies?.find(c => c.is_available)
+```
+
+### Expiration automatique
+
+```sql
+expire_overdue_sessions() → INTEGER
+```
+Marque comme expirées les sessions dépassant 48h. Retourne le nombre de sessions expirées.
+
+**Usage** : À appeler périodiquement via cron job ou Edge Function.
+
+### Statistiques utilisateur
+
+```sql
+get_user_viewing_stats(user_id UUID) → JSON
+```
+Retourne les statistiques de visionnage d'un utilisateur.
+
+**Champs retournés** :
+```json
+{
+  "total_sessions": 42,
+  "active_sessions": 1,
+  "completed_sessions": 38,
+  "expired_sessions": 3,
+  "total_spent": 15.00
+}
+```
+
+## Migration emprunts → viewing_sessions (Nov 2025)
+
+### Contexte
+
+Le système a été migré pour supporter plusieurs copies physiques du même film appartenant à différents utilisateurs.
+
+### Changements majeurs
+
+**1. Nouvelle table `viewing_sessions`** :
+- Remplace `emprunts`
+- Ajout colonne `registry_id` (référence copie physique)
+- Renommage colonnes : `type_emprunt` → `session_type`, `montant_paye` → `amount_paid`, etc.
+- Mapping valeurs : `'abonnement'` → `'subscription'`, `'unitaire'` → `'unit'`
+
+**2. RPC `rent_or_access_movie` mis à jour** :
+- Insère dans `viewing_sessions` au lieu de `emprunts`
+- Inclut `registry_id` dans INSERT
+- Retourne `registry_id` dans JSON result
+
+**3. Hooks frontend mis à jour** :
+- `use-owned-films.ts` : Requête `viewing_sessions` par `registry_id`
+- `use-film-availability.ts` : Vérification disponibilité par `registry_id`
+- Types RPC : Ajout `registry_id` dans `RentOrAccessMovieResult`
+
+**4. Channels Realtime** :
+- Channel `rentals` écoute maintenant `viewing_sessions` (pas `emprunts`)
+- Filtres par `user_id` conservés
+
+### Ordre d'exécution des migrations
+
+```bash
+# 1. Créer viewing_sessions + vue emprunts (compatibilité)
+20251120_create_viewing_sessions_table.sql
+
+# 2. Migrer données existantes
+20251120_migrate_emprunts_data.sql
+
+# 3. Mettre à jour RPC rent_or_access_movie
+20251120_update_rpc_viewing_sessions.sql
+
+# 4. Créer fonctions utilitaires
+20251120_create_utility_rpc_functions.sql
+
+# 5. Cleanup (APRÈS tests complets)
+20251120_cleanup_emprunts_table.sql
+```
+
+### Instructions post-migration
+
+**1. Régénérer types TypeScript** :
+```bash
+npx supabase gen types typescript --project-id <project-id> > lib/supabase/types.ts
+```
+
+**2. Tester l'application** :
+- Créer session sur film possédé
+- Effectuer échange instantané
+- Vérifier rotation abonné
+- Vérifier Realtime (broadcast sessions)
+
+**3. Vérifier logs Supabase** :
+- Channels `viewing_sessions` actifs
+- Aucune erreur RPC
+
+**4. Cleanup (optionnel)** :
+- Exécuter `20251120_cleanup_emprunts_table.sql`
+- Supprimer vue `emprunts` et ancienne table
 
 ## Conventions de code importantes
 
@@ -954,6 +1206,12 @@ TMDB_API_KEY=xxx
 
 8. **Build Vercel** :
    - `useSearchParams()` TOUJOURS dans Suspense
+
+9. **Parrainage automatique (NOUVEAU - Nov 2025)** :
+   - Trigger `on_auth_user_created` → `handle_new_user()` → `assign_welcome_film()`
+   - ⚠️ CRITIQUE : `assign_welcome_film()` DOIT avoir `SET search_path = public`
+   - Sans ce fix : Erreur "relation sponsorships does not exist" dans trigger
+   - Edge Function créée mais non utilisée (trigger SQL suffit)
 
 ### Patterns à suivre
 
