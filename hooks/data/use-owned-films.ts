@@ -89,14 +89,14 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
 
       // Récupérer les sessions actives de l'utilisateur
       const { data: sessionsData } = await supabase
-        .from("emprunts")
-        .select("movie_id")
+        .from("viewing_sessions")
+        .select("registry_id")
         .eq("user_id", user.id)
         .eq("statut", "en_cours")
-        .gt("date_retour", new Date().toISOString())
+        .gt("return_date", new Date().toISOString())
 
-      const activeMovieIds = new Set(
-        (sessionsData || []).map((s) => s.movie_id)
+      const activeRegistryIds = new Set(
+        (sessionsData || []).map((s) => s.registry_id)
       )
 
       // Combiner les données avec métadonnées complètes du film
@@ -105,27 +105,9 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
         .map((film: any) => ({
           registry_id: film.id,
           movie_id: film.movie_id,
-          has_active_session: activeMovieIds.has(film.movie_id),
+          has_active_session: activeRegistryIds.has(film.id),
           movie: {
-            id: film.movies.id,
-            slug: film.movies.slug,
-            titre_francais: film.movies.titre_francais,
-            titre_original: film.movies.titre_original,
-            annee_sortie: film.movies.annee_sortie,
-            duree: film.movies.duree,
-            langue_vo: film.movies.langue_vo,
-            poster_local_path: film.movies.poster_local_path,
-            synopsis: film.movies.synopsis,
-            created_at: film.movies.created_at,
-            genres: film.movies.genres,
-            lien_vimeo: film.movies.lien_vimeo,
-            note_tmdb: film.movies.note_tmdb,
-            random_order: film.movies.random_order,
-            search_vector: film.movies.search_vector,
-            statut: film.movies.statut,
-            subtitle_path: film.movies.subtitle_path,
-            tmdb_id: film.movies.tmdb_id,
-            updated_at: film.movies.updated_at,
+            ...film.movies,
             movie_directors: film.movies.movie_directors || [],
           },
         }))
@@ -144,6 +126,33 @@ export function useOwnedFilms(): UseOwnedFilmsReturn {
   React.useEffect(() => {
     fetchOwnedFilms()
   }, [fetchOwnedFilms])
+
+  // Realtime subscription pour les sessions de lecture (viewing_sessions)
+  React.useEffect(() => {
+    if (!user) return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`user-sessions-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'viewing_sessions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Rafraîchir les films quand une session change
+          fetchOwnedFilms()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [user, fetchOwnedFilms])
 
   return {
     films,

@@ -41,9 +41,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Vérifier que l'emprunt appartient bien à l'utilisateur et est actif
+    // Vérifier que la session appartient bien à l'utilisateur et est active
     const { data: rental, error: rentalError } = await supabase
-      .from("emprunts")
+      .from("viewing_sessions")
       .select("id, user_id, movie_id, statut")
       .eq("id", rentalId)
       .eq("user_id", user.id)
@@ -53,14 +53,14 @@ export async function POST(request: NextRequest) {
 
     if (rentalError || !rental) {
       return NextResponse.json(
-        { success: false, message: "Emprunt non trouvé ou expiré" },
+        { success: false, message: "Session non trouvée ou expirée" },
         { status: 404 }
       )
     }
 
     // Mettre à jour la position de lecture et le timestamp
     const { error: updateError } = await supabase
-      .from("emprunts")
+      .from("viewing_sessions")
       .update({
         position_seconds: Math.floor(position),
         last_watched_at: new Date().toISOString(),

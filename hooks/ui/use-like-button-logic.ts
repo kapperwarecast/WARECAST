@@ -6,9 +6,10 @@ import { ANIMATION_DURATIONS } from "@/constants"
 
 interface UseLikeButtonLogicProps {
   movieId: string
+  isHydrated?: boolean
 }
 
-export function useLikeButtonLogic({ movieId }: UseLikeButtonLogicProps) {
+export function useLikeButtonLogic({ movieId, isHydrated = true }: UseLikeButtonLogicProps) {
   const { isLiked, count, loading, hasPendingAction, toggle } = useMovieLike(movieId)
   const [isAnimating, setIsAnimating] = useState(false)
 
@@ -41,6 +42,6 @@ export function useLikeButtonLogic({ movieId }: UseLikeButtonLogicProps) {
     handleClick,
 
     // Computed properties
-    ariaLabel: isLiked ? "Unlike this movie" : "Like this movie",
+    ariaLabel: isHydrated ? (isLiked ? "Unlike this movie" : "Like this movie") : "Toggle favorite",
   }
 }

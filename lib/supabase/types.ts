@@ -18,31 +18,31 @@ export type Database = {
         Row: {
           created_at: string | null
           duree_mois: number
-          emprunts_illimites: boolean
           id: string
           nom: string
           prix: number
           stripe_price_id: string | null
+          unlimited_viewing_sessions: boolean
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           duree_mois: number
-          emprunts_illimites?: boolean
           id?: string
           nom: string
           prix: number
           stripe_price_id?: string | null
+          unlimited_viewing_sessions?: boolean
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           duree_mois?: number
-          emprunts_illimites?: boolean
           id?: string
           nom?: string
           prix?: number
           stripe_price_id?: string | null
+          unlimited_viewing_sessions?: boolean
           updated_at?: string | null
         }
         Relationships: []
@@ -118,76 +118,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      emprunts: {
-        Row: {
-          created_at: string | null
-          date_emprunt: string | null
-          date_retour: string
-          id: string
-          last_watched_at: string | null
-          montant_paye: number | null
-          movie_id: string
-          payment_id: string | null
-          position_seconds: number | null
-          statut: string
-          type_emprunt: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          date_emprunt?: string | null
-          date_retour: string
-          id?: string
-          last_watched_at?: string | null
-          montant_paye?: number | null
-          movie_id: string
-          payment_id?: string | null
-          position_seconds?: number | null
-          statut?: string
-          type_emprunt: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          date_emprunt?: string | null
-          date_retour?: string
-          id?: string
-          last_watched_at?: string | null
-          montant_paye?: number | null
-          movie_id?: string
-          payment_id?: string | null
-          position_seconds?: number | null
-          statut?: string
-          type_emprunt?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "emprunts_movie_id_fkey"
-            columns: ["movie_id"]
-            isOneToOne: false
-            referencedRelation: "movies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "emprunts_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "emprunts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       film_deposits: {
         Row: {
@@ -669,7 +599,6 @@ export type Database = {
           payment_intent_data: Json | null
           payment_method: string | null
           payment_type: string
-          rental_id: string | null
           status: string
           subscription_id: string | null
           updated_at: string
@@ -686,7 +615,6 @@ export type Database = {
           payment_intent_data?: Json | null
           payment_method?: string | null
           payment_type: string
-          rental_id?: string | null
           status?: string
           subscription_id?: string | null
           updated_at?: string
@@ -703,20 +631,12 @@ export type Database = {
           payment_intent_data?: Json | null
           payment_method?: string | null
           payment_type?: string
-          rental_id?: string | null
           status?: string
           subscription_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "payments_rental_id_fkey"
-            columns: ["rental_id"]
-            isOneToOne: false
-            referencedRelation: "emprunts"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "payments_subscription_id_fkey"
             columns: ["subscription_id"]
@@ -907,6 +827,89 @@ export type Database = {
         }
         Relationships: []
       }
+      viewing_sessions: {
+        Row: {
+          amount_paid: number | null
+          created_at: string
+          id: string
+          last_watched_at: string | null
+          movie_id: string
+          payment_id: string | null
+          position_seconds: number | null
+          registry_id: string
+          return_date: string
+          session_start_date: string
+          session_type: string
+          statut: string
+          stripe_payment_intent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          created_at?: string
+          id?: string
+          last_watched_at?: string | null
+          movie_id: string
+          payment_id?: string | null
+          position_seconds?: number | null
+          registry_id: string
+          return_date?: string
+          session_start_date?: string
+          session_type: string
+          statut: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number | null
+          created_at?: string
+          id?: string
+          last_watched_at?: string | null
+          movie_id?: string
+          payment_id?: string | null
+          position_seconds?: number | null
+          registry_id?: string
+          return_date?: string
+          session_start_date?: string
+          session_type?: string
+          statut?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewing_sessions_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viewing_sessions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viewing_sessions_registry_id_fkey"
+            columns: ["registry_id"]
+            isOneToOne: false
+            referencedRelation: "films_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viewing_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -920,17 +923,37 @@ export type Database = {
         Args: { p_admin_id: string; p_deposit_id: string; p_movie_id: string }
         Returns: Json
       }
+      admin_get_all_ownership_history: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          film_slug: string
+          film_title: string
+          from_owner_id: string
+          from_owner_nom: string
+          from_owner_prenom: string
+          from_owner_username: string
+          physical_support_type: string
+          to_owner_id: string
+          to_owner_nom: string
+          to_owner_prenom: string
+          to_owner_username: string
+          transfer_date: string
+          transfer_id: string
+          transfer_type: string
+        }[]
+      }
       admin_get_pending_deposits: {
         Args: { p_admin_id: string }
         Returns: {
-          additional_notes: string
           deposit_id: string
           film_title: string
+          notes: string
           sent_at: string
           status: string
           support_type: string
           tracking_number: string
-          user_email: string
+          user_id: string
+          user_name: string
         }[]
       }
       admin_mark_deposit_received: {
@@ -946,7 +969,7 @@ export type Database = {
         Returns: Json
       }
       assign_welcome_film: { Args: { p_new_user_id: string }; Returns: Json }
-      count_overdue_rentals: { Args: Record<string, never>; Returns: number }
+      count_overdue_rentals: { Args: never; Returns: number }
       create_film_deposit: {
         Args: {
           p_additional_notes?: string
@@ -957,7 +980,8 @@ export type Database = {
         }
         Returns: Json
       }
-      expire_overdue_rentals: { Args: Record<string, never>; Returns: number }
+      expire_overdue_rentals: { Args: never; Returns: number }
+      expire_overdue_sessions: { Args: never; Returns: number }
       filter_directors_by_movies: {
         Args: {
           p_decade_end?: number
@@ -968,7 +992,7 @@ export type Database = {
           director_id: string
         }[]
       }
-      generate_tracking_number: { Args: Record<string, never>; Returns: string }
+      generate_tracking_number: { Args: never; Returns: string }
       get_available_films_for_exchange: {
         Args: { p_user_id: string }
         Returns: {
@@ -1000,6 +1024,22 @@ export type Database = {
           transfer_type: string
         }[]
       }
+      get_movie_access_info: {
+        Args: { p_movie_id: string; p_user_id: string }
+        Returns: Json
+      }
+      get_movie_availability: {
+        Args: { p_movie_id: string }
+        Returns: {
+          active_session_id: string
+          current_owner_id: string
+          is_available: boolean
+          owner_email: string
+          physical_support_type: string
+          registry_id: string
+          session_return_date: string
+        }[]
+      }
       get_my_sponsor: {
         Args: { p_user_id: string }
         Returns: {
@@ -1017,6 +1057,21 @@ export type Database = {
           sponsored_user_email: string
           sponsored_user_id: string
           sponsorship_date: string
+        }[]
+      }
+      get_user_active_sessions: {
+        Args: { p_user_id: string }
+        Returns: {
+          amount_paid: number
+          movie_id: string
+          movie_title: string
+          physical_support_type: string
+          registry_id: string
+          return_date: string
+          session_id: string
+          session_start_date: string
+          session_type: string
+          time_remaining: unknown
         }[]
       }
       get_user_badges: {
@@ -1054,6 +1109,7 @@ export type Database = {
         }[]
       }
       get_user_highest_badge: { Args: { p_user_id: string }; Returns: string }
+      get_user_viewing_stats: { Args: { p_user_id: string }; Returns: Json }
       instant_film_exchange: {
         Args: {
           p_offered_film_id: string
@@ -1063,7 +1119,12 @@ export type Database = {
         }
         Returns: Json
       }
-      refresh_random_order: { Args: Record<string, never>; Returns: undefined }
+      is_registry_available: {
+        Args: { p_registry_id: string }
+        Returns: boolean
+      }
+      redistribute_user_films: { Args: { p_user_id: string }; Returns: number }
+      refresh_random_order: { Args: never; Returns: undefined }
       rent_movie: {
         Args: { p_auth_user_id: string; p_movie_id: string }
         Returns: Json
@@ -1073,6 +1134,7 @@ export type Database = {
           p_auth_user_id: string
           p_movie_id: string
           p_payment_id?: string
+          p_registry_id?: string
         }
         Returns: Json
       }
@@ -1088,23 +1150,34 @@ export type Database = {
         }
         Returns: {
           annee_sortie: number
-          copies_disponibles: number
+          created_at: string
           duree: number
+          genres: string[]
           id: string
           langue_vo: string
+          lien_vimeo: string
+          note_tmdb: number
           poster_local_path: string
+          random_order: number
           rank: number
+          search_vector: unknown
+          slug: string
+          statut: string
+          subtitle_path: string
+          synopsis: string
           titre_francais: string
           titre_original: string
+          tmdb_id: number
+          updated_at: string
         }[]
       }
-      show_limit: { Args: Record<string, never>; Returns: number }
+      show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       slugify: { Args: { text_input: string }; Returns: string }
-      update_overdue_emprunts: { Args: Record<string, never>; Returns: undefined }
+      update_overdue_emprunts: { Args: never; Returns: undefined }
       update_sponsor_badge: { Args: { p_sponsor_id: string }; Returns: string }
       verify_legacy_cleanup: {
-        Args: Record<string, never>
+        Args: never
         Returns: {
           check_name: string
           item_exists: boolean

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         const { error: updateError } = await supabase
           .from('payments')
           .update({
-            status: 'succeeded',
+            status: 'completed',  // ✅ CORRIGÉ: Utiliser 'completed' au lieu de 'succeeded' (contrainte CHECK)
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })

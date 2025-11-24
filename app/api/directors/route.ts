@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Apply search filter if provided
     if (search) {
-      query = query.ilike('nom_complet', `%${search}%`)
+      query = query.ilike('name', `%${search}%`)
     }
 
     // Apply filtered director IDs if we have them

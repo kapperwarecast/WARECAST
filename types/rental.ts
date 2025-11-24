@@ -1,10 +1,11 @@
 /**
- * Données d'un emprunt/location dans le store
+ * Données d'une session de visionnage dans le store
+ * (anciennement emprunt/location)
  */
 export interface RentalData {
   movieId: string
   isRented: boolean
-  rentalId: string | null
+  rentalId: string | null  // ID de la viewing_session
   expiresAt: string | null
   lastSync: number
 }

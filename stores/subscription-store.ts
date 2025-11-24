@@ -67,7 +67,7 @@ export const useSubscriptionStore = createCachedStore<
       const { data: userSubscription } = get()
       return Boolean(
         userSubscription &&
-        (userSubscription.statut === "actif" || userSubscription.statut === "résilié") &&
+        (userSubscription.statut === "actif" || userSubscription.statut === "résilié" || userSubscription.statut === "resilie") &&
         new Date(userSubscription.date_expiration) > new Date()
       )
     },

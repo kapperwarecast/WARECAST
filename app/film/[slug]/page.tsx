@@ -38,6 +38,7 @@ interface Props {
     actorSlug?: string
     actorName?: string
     actorFrom?: string
+    registryId?: string  // For owned films (multi-copy support)
   }>
 }
 
@@ -188,14 +189,15 @@ export default async function FilmPage({ params, searchParams }: Props) {
   const originalTitle = movie.titre_original !== movie.titre_francais ? movie.titre_original : null
   const posterUrl = getPosterUrl(movie.poster_local_path)
 
-  // Get directors
-  const directors = movie.movie_directors?.map(md => md.directors) || []
+  // Get directors (filter out those without slugs)
+  const directors = (movie.movie_directors?.map(md => md.directors) || []).filter((d): d is typeof d & { slug: string } => !!d.slug)
 
-  // Get actors sorted by casting order
-  const actors = movie.movie_actors
+  // Get actors sorted by casting order (filter out those without slugs)
+  const actors = (movie.movie_actors
     ?.sort((a, b) => (a.ordre_casting ?? 999) - (b.ordre_casting ?? 999))
     .slice(0, 12) // Limit to first 12 actors
-    || []
+    .filter((ma): ma is typeof ma & { actors: typeof ma.actors & { slug: string } } => !!ma.actors.slug)
+    || [])
 
   // Build contextual back button
   let backHref = '/'
@@ -245,6 +247,7 @@ export default async function FilmPage({ params, searchParams }: Props) {
             <div className="flex justify-end mb-4">
               <MovieActionButtons
                 movieId={movie.id}
+                registryId={search.registryId}
                 initialPlayData={playData || undefined}
               />
             </div>

@@ -41,7 +41,7 @@ export function MoviePlayerClient({ movieId, vimeoUrl, title }: MoviePlayerClien
         // 1. Récupérer le rental ID
         const supabase = createClient()
         const { data: rental } = await supabase
-          .from("emprunts")
+          .from("viewing_sessions")
           .select("id")
           .eq("user_id", user.id)
           .eq("movie_id", movieId)

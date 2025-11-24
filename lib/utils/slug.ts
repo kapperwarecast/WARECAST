@@ -42,24 +42,18 @@ export function generateFilmSlug(movie: {
 }
 
 /**
- * Génère un slug pour une personne (acteur/réalisateur) basé sur prénom et nom
- * Format: prenom-nom
+ * Génère un slug pour une personne (acteur/réalisateur) basé sur le nom complet
+ * Format: nom-complet-slugifie
  *
  * @example
- * generatePersonSlug({ prenom: "Leonardo", nom: "DiCaprio" }) // "leonardo-dicaprio"
+ * generatePersonSlug({ name: "Leonardo DiCaprio" }) // "leonardo-dicaprio"
  */
 export function generatePersonSlug(person: {
-  prenom: string | null
-  nom: string | null
-  nom_complet?: string | null
+  name?: string | null
   id?: string
 }): string {
-  if (person.prenom && person.nom) {
-    return `${slugify(person.prenom)}-${slugify(person.nom)}`
-  }
-
-  if (person.nom_complet) {
-    return slugify(person.nom_complet)
+  if (person.name) {
+    return slugify(person.name)
   }
 
   // Fallback avec ID si pas de nom disponible

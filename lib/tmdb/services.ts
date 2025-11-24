@@ -148,26 +148,18 @@ export class MovieImportService {
             console.log(`📷 No profile photo available for actor ${castMember.name}`)
           }
 
-          // Séparer le nom complet en nom et prénom
-          const parsedName = parseName(castMember.name)
-          console.log(`Parsing actor name: "${castMember.name}" → prénom: "${parsedName.prenom}", nom: "${parsedName.nom}"`)
-
           // Import slug generation utilities
           const { generatePersonSlug } = await import('@/lib/utils/slug')
 
           // Generate slug for actor
           const actorSlug = generatePersonSlug({
-            prenom: parsedName.prenom || null,
-            nom: parsedName.nom || null,
-            nom_complet: castMember.name
+            name: castMember.name
           })
 
           const actorInsert: TablesInsert<"actors"> = {
             tmdb_id: castMember.id,
             slug: actorSlug,
             nom_complet: castMember.name,
-            prenom: parsedName.prenom || null,
-            nom: parsedName.nom || null,
             photo_path: photoPath
           }
 
@@ -239,26 +231,18 @@ export class MovieImportService {
             console.log(`📷 No profile photo available for director ${director.name}`)
           }
 
-          // Séparer le nom complet en nom et prénom
-          const parsedName = parseName(director.name)
-          console.log(`Parsing director name: "${director.name}" → prénom: "${parsedName.prenom}", nom: "${parsedName.nom}"`)
-
           // Import slug generation utilities
           const { generatePersonSlug } = await import('@/lib/utils/slug')
 
           // Generate slug for director
           const directorSlug = generatePersonSlug({
-            prenom: parsedName.prenom || null,
-            nom: parsedName.nom || null,
-            nom_complet: director.name
+            name: director.name
           })
 
           const directorInsert: TablesInsert<"directors"> = {
             tmdb_id: director.id,
             slug: directorSlug,
             nom_complet: director.name,
-            prenom: parsedName.prenom || null,
-            nom: parsedName.nom || null,
             photo_path: photoPath
           }
 

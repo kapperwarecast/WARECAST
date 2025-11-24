@@ -30,32 +30,32 @@ export function useMovieAccess(movieId: string): UseMovieAccessReturn {
         return
       }
 
-      // 2. VÉRIFIER L'EXISTENCE d'un emprunt en cours (sans créer)
+      // 2. VÉRIFIER L'EXISTENCE d'une session active (sans créer)
       //    Le player ne fait QUE vérifier que l'user a accès
-      //    La création de l'emprunt se fait AVANT (dans le bouton Play)
+      //    La création de la session se fait AVANT (dans le bouton Play)
       const supabase = createClient()
 
       const { data: rental, error: rentalError } = await supabase
-        .from('emprunts')
-        .select('id, date_retour')
+        .from('viewing_sessions')
+        .select('id, return_date')
         .eq('user_id', user.id)
         .eq('movie_id', movieId)
         .eq('statut', 'en_cours')
         .single()
 
-      console.log('[MOVIE ACCESS] Rental check:', { rental, error: rentalError })
+      console.log('[MOVIE ACCESS] Session check:', { rental, error: rentalError })
 
-      // 3. Gérer l'absence d'emprunt
+      // 3. Gérer l'absence de session
       if (rentalError || !rental) {
-        console.error('[MOVIE ACCESS] No active rental found for this movie')
-        setError('Vous n\'avez pas loué ce film')
+        console.error('[MOVIE ACCESS] No active session found for this movie')
+        setError('Vous n\'avez pas de session active pour ce film')
         setShouldRedirect('/')
         setStatus('redirect')
         return
       }
 
-      // 4. Succès ! L'user a bien un emprunt en cours
-      console.log('[MOVIE ACCESS] Access granted - Rental ID:', rental.id)
+      // 4. Succès ! L'user a bien une session en cours
+      console.log('[MOVIE ACCESS] Access granted - Session ID:', rental.id)
       setStatus('granted')
 
     } catch (err) {

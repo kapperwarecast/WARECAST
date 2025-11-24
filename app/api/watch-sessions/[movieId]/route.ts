@@ -29,61 +29,44 @@ export async function GET(
       )
     }
 
-    // Récupérer l'emprunt actif avec position de lecture
-    const { data: rental, error: rentalError } = await supabase
-      .from("emprunts")
-      .select(`
-        id,
-        user_id,
-        movie_id,
-        statut,
-        position_seconds,
-        last_watched_at,
-        movies (
-          duree
-        )
-      `)
+    // Récupérer la session active avec position sauvegardée
+    const { data: session, error: sessionError } = await supabase
+      .from("viewing_sessions")
+      .select("id, position_seconds, last_watched_at, session_start_date, return_date")
       .eq("user_id", user.id)
       .eq("movie_id", movieId)
       .eq("statut", "en_cours")
       .single()
 
-    // Pas d'emprunt actif
-    if (rentalError || !rental) {
+    if (sessionError || !session) {
       return NextResponse.json<VideoResumeResponse>({
         success: true,
         data: null,
-        message: "Aucun emprunt actif"
+        message: "Aucune session active"
       }, {
         headers: { 'Cache-Control': 'no-store' }
       })
     }
 
-    // Vérifier si une position existe
-    const position = rental.position_seconds || 0
-    if (position === 0) {
+    // Vérifier si la position est significative (> 30 secondes)
+    // En dessous de 30s, on considère que c'est le début du film
+    if (!session.position_seconds || session.position_seconds < 30) {
       return NextResponse.json<VideoResumeResponse>({
         success: true,
         data: null,
-        message: "Aucune position de lecture"
+        message: "Position trop proche du début"
       }, {
         headers: { 'Cache-Control': 'no-store' }
       })
     }
 
-    // Vérifier l'expiration (30 jours)
-    if (rental.last_watched_at) {
-      const lastWatched = new Date(rental.last_watched_at)
-      const now = new Date()
-      const daysDiff = (now.getTime() - lastWatched.getTime()) / (1000 * 60 * 60 * 24)
+    // Vérifier expiration 30 jours (optionnel)
+    // Si l'utilisateur n'a pas regardé depuis > 30 jours, on ignore la position
+    if (session.last_watched_at) {
+      const lastWatch = new Date(session.last_watched_at)
+      const daysSinceLastWatch = (Date.now() - lastWatch.getTime()) / (1000 * 60 * 60 * 24)
 
-      if (daysDiff > 30) {
-        // Position expirée, la réinitialiser
-        await supabase
-          .from("emprunts")
-          .update({ position_seconds: 0 })
-          .eq("id", rental.id)
-
+      if (daysSinceLastWatch > 30) {
         return NextResponse.json<VideoResumeResponse>({
           success: true,
           data: null,
@@ -94,42 +77,31 @@ export async function GET(
       }
     }
 
-    // Calculer la durée en secondes (duree est en minutes dans la DB)
-    const movieData = rental.movies as { duree: number | null } | null
-    const durationMinutes = movieData?.duree || 0
-    const duration = durationMinutes * 60
+    // Récupérer la durée totale du film depuis movies
+    const { data: movieData } = await supabase
+      .from("movies")
+      .select("duree")
+      .eq("id", movieId)
+      .single()
 
-    if (duration === 0) {
-      return NextResponse.json<VideoResumeResponse>({
-        success: true,
-        data: null,
-        message: "Durée du film inconnue"
-      }, {
-        headers: { 'Cache-Control': 'no-store' }
-      })
-    }
+    // Durée en secondes (duree est stockée en minutes dans movies)
+    // Si durée non disponible, estimation à 2h (7200s)
+    const durationInSeconds = movieData?.duree ? movieData.duree * 60 : 7200
 
-    // Calculer le pourcentage de progression
-    const percentage = Math.min(100, (position / duration) * 100)
-
-    // Construire les données de reprise
+    // Retourner les données de reprise
     const resumeData: VideoResumeData = {
-      position,
-      duration,
-      percentage,
-      lastWatchedAt: rental.last_watched_at || new Date().toISOString(),
-      rentalId: rental.id
+      position: session.position_seconds,
+      duration: durationInSeconds,
+      percentage: (session.position_seconds / durationInSeconds) * 100,
+      lastWatchedAt: session.last_watched_at || session.session_start_date,
+      rentalId: session.id
     }
 
     return NextResponse.json<VideoResumeResponse>({
       success: true,
       data: resumeData
     }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
+      headers: { 'Cache-Control': 'no-store' }
     })
 
   } catch (error) {

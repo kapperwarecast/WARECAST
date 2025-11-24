@@ -345,7 +345,7 @@ export default function AbonnementPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      <span>Emprunts illimités de films</span>
+                      <span>Visionnages illimités</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Check className="h-5 w-5 text-green-500 flex-shrink-0" />

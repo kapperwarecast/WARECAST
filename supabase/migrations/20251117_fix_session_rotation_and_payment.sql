@@ -1,8 +1,9 @@
 -- ============================================================================
--- MIGRATION: Fix rent_or_access_movie - Complete avec echanges automatiques
+-- MIGRATION: Fix rent_or_access_movie - Session rotation et payment field
 -- Date: 2025-11-17
--- Description: Correction du RPC pour gerer les echanges automatiques
---              avec types d'emprunt corrects (unitaire/abonnement uniquement)
+-- Description:
+--   - BUG 1: Ajouter rotation de session pour films possédés
+--   - BUG 2: Corriger requires_payment → requires_payment_choice
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION rent_or_access_movie(
@@ -71,6 +72,15 @@ BEGIN
       );
     END IF;
 
+    -- FIX BUG 1: Liberer toute session active sur un AUTRE film possédé
+    -- Cette rotation s'applique pour TOUS les utilisateurs (pas seulement abonnés)
+    UPDATE emprunts
+    SET statut = 'rendu',
+        updated_at = NOW()
+    WHERE user_id = p_auth_user_id
+      AND statut = 'en_cours'
+      AND movie_id != p_movie_id;
+
     -- Creer nouvelle session de lecture (gratuite car proprietaire)
     INSERT INTO emprunts (
       user_id,
@@ -102,20 +112,16 @@ BEGIN
       'rental_type', 'subscription',
       'amount_charged', 0,
       'expires_at', (NOW() + INTERVAL '48 hours')::TEXT,
-      'existing_rental', false,
       'owns_film', true
     );
   END IF;
 
   -- ========================================================================
-  -- ETAPE 3: User ne possede PAS le film → Verifier disponibilite
+  -- ETAPE 3: Verifier disponibilite du film (propriétaire n a pas session active)
   -- ========================================================================
-
-  -- Verifier si le proprietaire actuel a une session active
   SELECT NOT EXISTS(
     SELECT 1 FROM emprunts
     WHERE user_id = v_film_owner_id
-      AND movie_id = p_movie_id
       AND statut = 'en_cours'
       AND date_retour > NOW()
   ) INTO v_film_available;
@@ -123,34 +129,32 @@ BEGIN
   IF NOT v_film_available THEN
     RETURN json_build_object(
       'success', false,
-      'error', 'Le film est actuellement en cours de lecture par son proprietaire',
+      'error', 'Film actuellement indisponible (en cours de lecture par le propriétaire)',
       'code', 'FILM_NOT_AVAILABLE'
     );
   END IF;
 
   -- ========================================================================
-  -- ETAPE 4: Trouver automatiquement un film disponible de l utilisateur
+  -- ETAPE 4: Selectionner automatiquement film de l utilisateur a offrir
   -- ========================================================================
-
   SELECT fr.id INTO v_user_film_to_exchange_id
   FROM films_registry fr
   WHERE fr.current_owner_id = p_auth_user_id
-    AND fr.id != v_registry_id  -- Pas le meme film
+    AND fr.movie_id != p_movie_id
     AND NOT EXISTS(
-      -- Film pas en cours de lecture par l utilisateur
       SELECT 1 FROM emprunts e
-      WHERE e.movie_id = fr.movie_id
-        AND e.user_id = p_auth_user_id
+      WHERE e.user_id = p_auth_user_id
+        AND e.movie_id = fr.movie_id
         AND e.statut = 'en_cours'
         AND e.date_retour > NOW()
     )
-  ORDER BY fr.acquisition_date ASC  -- Le plus ancien en premier
+  ORDER BY fr.acquisition_date ASC
   LIMIT 1;
 
   IF v_user_film_to_exchange_id IS NULL THEN
     RETURN json_build_object(
       'success', false,
-      'error', 'Vous n avez aucun film disponible a echanger (tous en cours de lecture)',
+      'error', 'Aucun film disponible pour l''échange',
       'code', 'NO_FILM_TO_EXCHANGE'
     );
   END IF;
@@ -158,18 +162,17 @@ BEGIN
   -- ========================================================================
   -- ETAPE 5: Verifier abonnement OU paiement
   -- ========================================================================
-
-  -- Verifier si paiement fourni et succeeded
   IF p_payment_id IS NOT NULL THEN
-    SELECT status INTO v_payment_status
-    FROM payments
+    -- Verifier statut paiement Stripe
+    SELECT metadata->>'status' INTO v_payment_status
+    FROM stripe_payments
     WHERE id = p_payment_id
       AND user_id = p_auth_user_id;
 
     IF v_payment_status IS NULL THEN
       RETURN json_build_object(
         'success', false,
-        'error', 'Paiement introuvable',
+        'error', 'Paiement non trouvé',
         'code', 'PAYMENT_NOT_FOUND'
       );
     END IF;
@@ -177,15 +180,13 @@ BEGIN
     IF v_payment_status != 'succeeded' THEN
       RETURN json_build_object(
         'success', false,
-        'error', 'Le paiement n a pas ete confirme',
+        'error', 'Paiement non confirmé',
         'code', 'PAYMENT_NOT_SUCCEEDED'
       );
     END IF;
 
-    -- Paiement valide
-    v_user_has_subscription := false;
-    v_type_emprunt := 'unitaire'; -- Paiement 1.50 euros
-    v_montant_paye := 1.5;
+    v_type_emprunt := 'unitaire'; -- Paiement 1.50€
+    v_montant_paye := 1.50;
   ELSE
     -- Verifier abonnement
     SELECT EXISTS(
@@ -195,10 +196,10 @@ BEGIN
     ) INTO v_user_has_subscription;
 
     IF NOT v_user_has_subscription THEN
-      -- Non-abonne et pas de paiement → requires_payment
+      -- FIX BUG 2: Corriger requires_payment → requires_payment_choice
       RETURN json_build_object(
         'success', false,
-        'requires_payment', true,
+        'requires_payment_choice', true,
         'amount', 1.50,
         'code', 'PAYMENT_REQUIRED'
       );
@@ -237,56 +238,75 @@ BEGIN
   SET
     previous_owner_id = current_owner_id,
     current_owner_id = p_auth_user_id,
-    transfer_date = NOW(),
-    acquisition_date = NOW(),
-    acquisition_method = 'exchange'
+    updated_at = NOW()
   WHERE id = v_registry_id;
 
-  -- Film offert : utilisateur → proprietaire du film demande
+  -- Film offert : utilisateur → ancien proprietaire du film demande
   UPDATE films_registry
   SET
     previous_owner_id = current_owner_id,
     current_owner_id = v_film_owner_id,
-    transfer_date = NOW(),
-    acquisition_date = NOW(),
-    acquisition_method = 'exchange'
+    updated_at = NOW()
   WHERE id = v_user_film_to_exchange_id;
 
-  -- Creer entree d echange dans l historique
+  -- Enregistrer l echange
   INSERT INTO film_exchanges (
-    initiator_id,
-    recipient_id,
-    film_offered_id,
-    film_requested_id,
+    requester_id,
+    requested_film_id,
+    offered_film_id,
     status,
-    proposed_at,
-    responded_at,
-    completed_at,
-    payment_id
+    created_at,
+    completed_at
   )
   VALUES (
     p_auth_user_id,
-    v_film_owner_id,
-    v_user_film_to_exchange_id,
     v_registry_id,
+    v_user_film_to_exchange_id,
     'completed',
     NOW(),
-    NOW(),
-    NOW(),
-    p_payment_id
+    NOW()
   )
   RETURNING id INTO v_exchange_id;
 
-  -- Mettre a jour l historique de propriete avec l ID d echange
-  UPDATE ownership_history
-  SET exchange_id = v_exchange_id
-  WHERE film_registry_id IN (v_registry_id, v_user_film_to_exchange_id)
-    AND transfer_date >= NOW() - INTERVAL '1 second';
+  -- Historique proprietaire film demande
+  INSERT INTO ownership_history (
+    registry_id,
+    from_user_id,
+    to_user_id,
+    transfer_type,
+    exchange_id,
+    created_at
+  )
+  VALUES (
+    v_registry_id,
+    v_film_owner_id,
+    p_auth_user_id,
+    'exchange',
+    v_exchange_id,
+    NOW()
+  );
+
+  -- Historique proprietaire film offert
+  INSERT INTO ownership_history (
+    registry_id,
+    from_user_id,
+    to_user_id,
+    transfer_type,
+    exchange_id,
+    created_at
+  )
+  VALUES (
+    v_user_film_to_exchange_id,
+    p_auth_user_id,
+    v_film_owner_id,
+    'exchange',
+    v_exchange_id,
+    NOW()
+  );
 
   -- ========================================================================
-  -- ETAPE 8: Creer session de lecture sur le nouveau film possede
+  -- ETAPE 8: Creer session de lecture sur le film POSSEDE (apres echange)
   -- ========================================================================
-
   INSERT INTO emprunts (
     user_id,
     movie_id,
@@ -295,7 +315,6 @@ BEGIN
     montant_paye,
     date_emprunt,
     date_retour,
-    payment_id,
     created_at,
     updated_at
   )
@@ -307,32 +326,20 @@ BEGIN
     v_montant_paye,
     NOW(),
     NOW() + INTERVAL '48 hours',
-    p_payment_id,
     NOW(),
     NOW()
   )
   RETURNING id INTO v_new_rental_id;
 
-  -- ========================================================================
-  -- ETAPE 9: Retourner le resultat
-  -- ========================================================================
-
   RETURN json_build_object(
     'success', true,
     'emprunt_id', v_new_rental_id,
-    'rental_type', CASE
-      WHEN v_type_emprunt = 'abonnement' THEN 'subscription'
-      WHEN v_type_emprunt = 'unitaire' THEN 'paid'
-      ELSE v_type_emprunt
-    END,
+    'rental_type', v_type_emprunt,
     'amount_charged', v_montant_paye,
     'expires_at', (NOW() + INTERVAL '48 hours')::TEXT,
-    'previous_rental_released', v_existing_rental_id IS NOT NULL,
-    'previous_rental_id', v_existing_rental_id,
-    'existing_rental', false,
     'exchange_performed', true,
     'exchange_id', v_exchange_id,
-    'owns_film', true  -- Maintenant user possede le film
+    'owns_film', true
   );
 
 EXCEPTION
@@ -344,9 +351,3 @@ EXCEPTION
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
-COMMENT ON FUNCTION rent_or_access_movie IS 'Point d entree unique pour lecture de films : gere propriete, echange automatique, et sessions de lecture (48h)';
-
--- ============================================================================
--- FIN DE LA MIGRATION
--- ============================================================================

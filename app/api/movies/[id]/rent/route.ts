@@ -71,11 +71,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 500 })
     }
 
-    // Succès - emprunt créé ou existant
+    // Succès - session de visionnage créée ou existante
     return NextResponse.json({
       success: true,
       existing_rental: result.existing_rental || false,
-      emprunt_id: result.emprunt_id,
+      session_id: result.session_id,
       subscription_access: result.rental_type === 'subscription',
       previous_rental_released: result.previous_rental_released || false,
       movie_title: result.movie_title,

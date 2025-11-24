@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import type { Movie } from '@/types/movie'
 
 const MOVIES_PER_PAGE = 20
 
@@ -84,14 +85,33 @@ export async function GET(request: NextRequest) {
       const { count } = await supabase
         .from('movies')
         .select('*', { count: 'exact', head: true })
-        .eq('statut', 'en ligne')
         .textSearch('search_vector', tsQuery)
 
       const totalPages = Math.ceil((count || 0) / limit)
 
+      // Enrichir les résultats avec les informations des réalisateurs
+      let enrichedResults = searchResults || []
+      if (searchResults && searchResults.length > 0) {
+        const movieIds = searchResults.map((m: Movie) => m.id)
+
+        // Récupérer les réalisateurs pour tous les films
+        const { data: directorsData } = await supabase
+          .from('movie_directors')
+          .select('movie_id, directors(name)')
+          .in('movie_id', movieIds)
+
+        // Enrichir chaque film avec ses réalisateurs
+        enrichedResults = searchResults.map((movie: Movie) => ({
+          ...movie,
+          movie_directors: directorsData
+            ?.filter(md => md.movie_id === movie.id)
+            .map(md => ({ directors: md.directors })) || []
+        }))
+      }
+
       // OPTIMIZATION: Ajouter headers de cache HTTP pour CDN Vercel
       const response = NextResponse.json({
-        movies: searchResults || [],
+        movies: enrichedResults,
         pagination: {
           page,
           limit,

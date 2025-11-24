@@ -76,7 +76,7 @@ async function fetchSponsorshipData(
   }
 
   // Type cast sponsor data badge_awarded de string vers BadgeLevel
-  const rawSponsor = sponsorResult.data?.[0]
+  const rawSponsor = (sponsorResult.data as any)?.[0]
   const sponsor: MySponsor | null = rawSponsor
     ? {
         ...rawSponsor,
@@ -85,14 +85,14 @@ async function fetchSponsorshipData(
     : null
 
   // Type cast badges badge_level de string vers BadgeLevel
-  const badges: UserBadge[] = (badgesResult.data || []).map((badge) => ({
+  const badges: UserBadge[] = ((badgesResult.data as any) || []).map((badge: any) => ({
     ...badge,
     badge_level: badge.badge_level as BadgeLevel,
   }))
 
   return {
     sponsor,
-    sponsoredUsers: sponsoredUsersResult.data || [],
+    sponsoredUsers: (sponsoredUsersResult.data as any) || [],
     badges,
     highestBadge: (highestBadgeResult.data as BadgeLevel) || null,
   }

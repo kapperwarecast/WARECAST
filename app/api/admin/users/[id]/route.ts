@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
@@ -13,6 +13,7 @@ export async function DELETE(
   try {
     const { id: targetUserId } = await params
     const supabase = await createClient()
+    const adminClient = createAdminClient()
 
     // Vérifier l'authentification
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -54,8 +55,90 @@ export async function DELETE(
       .single()
 
     if (targetProfileError || !targetProfile) {
+      console.error('[DELETE /api/admin/users/[id]] User not found in user_profiles:', {
+        targetUserId,
+        error: targetProfileError
+      })
+
+      // Vérifier si l'utilisateur existe dans auth.users mais pas dans user_profiles
+      const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(targetUserId)
+
+      console.log('[DELETE /api/admin/users/[id]] getUserById result:', {
+        hasData: !!authUser,
+        hasUser: !!authUser?.user,
+        error: authUserError
+      })
+
+      if (authUserError) {
+        console.error('[DELETE /api/admin/users/[id]] Error fetching auth user:', authUserError)
+        return NextResponse.json(
+          { error: `Erreur lors de la vérification du compte auth: ${authUserError.message}` },
+          { status: 500 }
+        )
+      }
+
+      if (authUser?.user) {
+        console.log('[DELETE /api/admin/users/[id]] User exists in auth but not in user_profiles')
+
+        // Nettoyer les données de l'utilisateur orphelin AVANT suppression
+        console.log('[DELETE /api/admin/users/[id]] Cleaning orphan user data...')
+
+        // 1. Supprimer les likes
+        await supabase
+          .from('likes')
+          .delete()
+          .eq('user_id', targetUserId)
+
+        // 2. Supprimer les sessions de visionnage
+        await supabase
+          .from('viewing_sessions')
+          .delete()
+          .eq('user_id', targetUserId)
+
+        // 3. Supprimer les abonnements
+        await supabase
+          .from('user_abonnements')
+          .delete()
+          .eq('user_id', targetUserId)
+
+        // 4. Redistribuer les films (si l'utilisateur en possède)
+        const { data: redistributionResult, error: redistributionError } = await supabase
+          .rpc('redistribute_user_films', { p_user_id: targetUserId })
+
+        if (redistributionError) {
+          console.error('[DELETE /api/admin/users/[id]] Error redistributing orphan user films:', redistributionError)
+          // Continue quand même
+        } else {
+          console.log(`[DELETE /api/admin/users/[id]] ${redistributionResult} orphan film(s) redistributé(s)`)
+        }
+
+        // 5. Supprimer les sponsorships (parrainages)
+        await supabase
+          .from('sponsorships')
+          .delete()
+          .or(`sponsor_id.eq.${targetUserId},sponsored_user_id.eq.${targetUserId}`)
+
+        // 6. Maintenant on peut supprimer de auth.users
+        const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(targetUserId)
+
+        if (deleteAuthError) {
+          console.error('[DELETE /api/admin/users/[id]] Error deleting auth-only user:', deleteAuthError)
+          return NextResponse.json(
+            { error: 'Erreur lors de la suppression du compte auth' },
+            { status: 500 }
+          )
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Compte auth supprimé (profil introuvable)',
+          films_redistributed: redistributionResult || 0
+        })
+      }
+
+      console.log('[DELETE /api/admin/users/[id]] User not found in auth.users either')
       return NextResponse.json(
-        { error: 'Utilisateur non trouvé' },
+        { error: 'Utilisateur non trouvé dans le système' },
         { status: 404 }
       )
     }
@@ -69,23 +152,30 @@ export async function DELETE(
       .delete()
       .eq('user_id', targetUserId)
 
-    // 2. Supprimer les emprunts (et leurs paiements associés via FK cascade)
+    // 2. Supprimer les sessions de visionnage (contient les infos de paiement)
     await supabase
-      .from('emprunts')
+      .from('viewing_sessions')
       .delete()
       .eq('user_id', targetUserId)
 
-    // 3. Supprimer les paiements (si pas déjà supprimés par cascade)
-    await supabase
-      .from('payments')
-      .delete()
-      .eq('user_id', targetUserId)
-
-    // 4. Supprimer les abonnements
+    // 3. Supprimer les abonnements
     await supabase
       .from('user_abonnements')
       .delete()
       .eq('user_id', targetUserId)
+
+    // 4. Redistribuer les films de l'utilisateur avant suppression
+    const { data: redistributionResult, error: redistributionError } = await supabase
+      .rpc('redistribute_user_films', { p_user_id: targetUserId })
+
+    if (redistributionError) {
+      console.error('[DELETE /api/admin/users/[id]] Error redistributing films:', redistributionError)
+      // Si erreur de redistribution, on continue quand même car :
+      // - Soit l'utilisateur n'a pas de films (normal)
+      // - Soit erreur FK qui sera gérée par CASCADE maintenant
+    } else {
+      console.log(`[DELETE /api/admin/users/[id]] ${redistributionResult} film(s) redistribué(s)`)
+    }
 
     // 5. Supprimer le profil utilisateur
     const { error: deleteProfileError } = await supabase
@@ -102,7 +192,7 @@ export async function DELETE(
     }
 
     // 6. Supprimer l'utilisateur de auth.users (nécessite admin)
-    const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(targetUserId)
+    const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(targetUserId)
 
     if (deleteAuthError) {
       console.error('[DELETE /api/admin/users/[id]] Error deleting auth user:', deleteAuthError)
@@ -115,7 +205,8 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Utilisateur supprimé avec succès'
+      message: 'Utilisateur supprimé avec succès',
+      films_redistributed: redistributionResult || 0
     })
   } catch (error) {
     console.error('[DELETE /api/admin/users/[id]] Unexpected error:', error)

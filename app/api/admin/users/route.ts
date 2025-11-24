@@ -49,7 +49,6 @@ export async function GET() {
         nom,
         avatar_url,
         is_admin,
-        stripe_customer_id,
         created_at
       `)
       .order('created_at', { ascending: false })
@@ -85,19 +84,25 @@ export async function GET() {
         // Trouver l'email correspondant
         const authUser = authUsers.find(u => u.id === profile.id)
 
-        // Compter les locations payantes (type='unitaire')
+        // Compter les sessions payantes (type='unit')
         const { count: paidRentalsCount } = await adminClient
-          .from('emprunts')
+          .from('viewing_sessions')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', profile.id)
-          .eq('type_emprunt', 'unitaire')
+          .eq('session_type', 'unit')
 
-        // Compter les emprunts abonnement (type='abonnement')
+        // Compter les sessions abonnement (type='subscription')
         const { count: subscriptionRentalsCount } = await adminClient
-          .from('emprunts')
+          .from('viewing_sessions')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', profile.id)
-          .eq('type_emprunt', 'abonnement')
+          .eq('session_type', 'subscription')
+
+        // Compter les films possédés (films_registry)
+        const { count: ownedFilmsCount } = await adminClient
+          .from('films_registry')
+          .select('id', { count: 'exact', head: true })
+          .eq('current_owner_id', profile.id)
 
         // Récupérer le statut d'abonnement actuel
         const { data: subscription } = await adminClient
@@ -130,13 +135,13 @@ export async function GET() {
           nom: profile.nom,
           avatar_url: profile.avatar_url,
           is_admin: profile.is_admin,
-          stripe_customer_id: profile.stripe_customer_id,
           created_at: profile.created_at,
           last_sign_in_at: authUser?.last_sign_in_at || null,
           subscription_status: subscriptionStatus,
           subscription_expires_at: subscription?.date_expiration || null,
           total_paid_rentals: paidRentalsCount || 0,
           total_subscription_rentals: subscriptionRentalsCount || 0,
+          owned_films_count: ownedFilmsCount || 0,
         }
       })
     )

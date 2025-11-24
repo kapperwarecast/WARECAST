@@ -72,16 +72,21 @@ export function DeleteUserDialog({
           </AlertDialogTitle>
           <AlertDialogDescription className="text-zinc-400">
             Êtes-vous sûr de vouloir supprimer <strong className="text-white">{userName}</strong> ?
-            <br />
-            <br />
-            Cette action est <strong className="text-red-400">irréversible</strong> et supprimera :
-            <ul className="mt-2 space-y-1 list-disc list-inside">
-              <li>Le profil utilisateur</li>
-              <li>L&apos;historique des emprunts</li>
-              <li>L&apos;historique des paiements</li>
-              <li>Les favoris</li>
-            </ul>
           </AlertDialogDescription>
+          <div className="text-sm text-zinc-400 space-y-2">
+            <p>
+              Cette action est <strong className="text-red-400">irréversible</strong> et :
+            </p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>Supprimera le profil utilisateur</li>
+              <li>Supprimera l&apos;historique des sessions</li>
+              <li>Supprimera l&apos;historique des paiements</li>
+              <li>Supprimera les favoris</li>
+              <li className="text-green-400 font-medium">
+                Redistribuera ses films (parrain en priorité, puis autres utilisateurs)
+              </li>
+            </ul>
+          </div>
           {error && (
             <p className="text-sm text-red-400 mt-2">{error}</p>
           )}

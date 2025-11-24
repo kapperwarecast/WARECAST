@@ -202,18 +202,6 @@ export default async function PersonnePage({ params, searchParams }: Props) {
             <div className="space-y-3">
               <h3 className="text-lg font-semibold">Informations</h3>
               <div className="flex flex-col gap-3 text-sm">
-                {person.prenom && (
-                  <div>
-                    <span className="text-zinc-400">Prénom: </span>
-                    <span>{person.prenom}</span>
-                  </div>
-                )}
-                {person.nom && (
-                  <div>
-                    <span className="text-zinc-400">Nom: </span>
-                    <span>{person.nom}</span>
-                  </div>
-                )}
                 <div>
                   <span className="text-zinc-400">Nombre de {filmCountLabel}: </span>
                   <span>{movies.length}</span>
@@ -229,7 +217,7 @@ export default async function PersonnePage({ params, searchParams }: Props) {
             <h3 className="text-2xl font-semibold">
               {type === 'acteur' ? 'Filmographie' : 'Films réalisés'}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {movies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} referrer={referrer} />
               ))}

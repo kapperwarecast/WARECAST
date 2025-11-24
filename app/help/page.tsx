@@ -107,7 +107,7 @@ export default function HelpPage() {
         </div>
       </section>
 
-      {/* Section Copies limitées */}
+      {/* Section Propriété unique */}
       <section className="relative bg-black py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 space-y-4">
@@ -117,11 +117,11 @@ export default function HelpPage() {
             </div>
 
             <h2 className="text-5xl md:text-6xl font-bold text-white">
-              Un système de copies limitées
+              Propriété unique et échanges
             </h2>
 
             <p className="text-xl text-zinc-400 max-w-3xl mx-auto">
-              Comme une vidéothèque physique, chaque film a un nombre de copies limité
+              Chaque film physique appartient à un seul utilisateur et peut être échangé librement
             </p>
           </div>
 
@@ -130,9 +130,9 @@ export default function HelpPage() {
               <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-4">
                 <Film className="h-6 w-6 text-orange-500" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">1 film = 1 copie</h3>
+              <h3 className="text-xl font-bold text-white mb-2">1 film = 1 propriétaire</h3>
               <p className="text-zinc-400">
-                Chaque film physique déposé génère une copie numérique disponible
+                Chaque film physique déposé vous appartient. Vous en êtes le propriétaire unique, physique et numérique.
               </p>
             </div>
 
@@ -142,7 +142,7 @@ export default function HelpPage() {
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Disponibilité réelle</h3>
               <p className="text-zinc-400">
-                Si toutes les copies sont empruntées, le film devient indisponible pour tous
+                Un film devient indisponible uniquement si le propriétaire est en train de le regarder (session active de 48h)
               </p>
             </div>
 
@@ -152,14 +152,14 @@ export default function HelpPage() {
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Temps réel</h3>
               <p className="text-zinc-400">
-                Dès qu&apos;un utilisateur rend un film, il redevient disponible instantanément
+                Dès qu&apos;une session se termine, le film redevient disponible pour échange instantanément
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Section Emprunter */}
+      {/* Section Accéder à vos films */}
       <section className="relative bg-zinc-950 py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 space-y-4">
@@ -169,7 +169,7 @@ export default function HelpPage() {
             </div>
 
             <h2 className="text-5xl md:text-6xl font-bold text-white">
-              Empruntez vos films
+              Accédez à vos films
             </h2>
 
             <p className="text-xl text-zinc-400 max-w-3xl mx-auto">
@@ -184,7 +184,7 @@ export default function HelpPage() {
                 <h3 className="text-2xl font-bold text-white mb-2">À la carte</h3>
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-bold text-white">1,50€</span>
-                  <span className="text-zinc-400">par film</span>
+                  <span className="text-zinc-400">par échange</span>
                 </div>
               </div>
 
@@ -195,7 +195,7 @@ export default function HelpPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-zinc-300">Plusieurs films simultanés</span>
+                  <span className="text-zinc-300">1 film à la fois</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
@@ -203,7 +203,7 @@ export default function HelpPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-zinc-300">48 heures par film</span>
+                  <span className="text-zinc-300">48 heures par session</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
@@ -211,7 +211,15 @@ export default function HelpPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-zinc-300">Paiement unique</span>
+                  <span className="text-zinc-300">Échanges illimités</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-zinc-300">Paiement par échange</span>
                 </li>
               </ul>
             </div>
@@ -247,7 +255,7 @@ export default function HelpPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-zinc-300">Emprunts illimités</span>
+                  <span className="text-zinc-300">Échanges gratuits illimités</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
@@ -255,7 +263,7 @@ export default function HelpPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-zinc-300">48h par film</span>
+                  <span className="text-zinc-300">48h par session</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
@@ -263,14 +271,14 @@ export default function HelpPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-zinc-300">Rotation libre</span>
+                  <span className="text-zinc-300">Rotation automatique</span>
                 </li>
               </ul>
             </div>
           </div>
 
           <p className="text-center text-zinc-500 mt-8">
-            ⚠️ Toutes les formules sont soumises à la disponibilité des copies
+            ⚠️ Tous les échanges nécessitent que le film soit disponible (propriétaire ne le regarde pas)
           </p>
         </div>
       </section>
@@ -284,18 +292,111 @@ export default function HelpPage() {
           </div>
 
           <h2 className="text-5xl md:text-6xl font-bold text-white">
-            Échangez entre vous
+            Échanges automatiques et définitifs
           </h2>
 
           <p className="text-xl text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-            Notre plateforme d&apos;échanges permet aux utilisateurs de transférer leurs films.
-            Chaque échange transfère à la fois la copie numérique et le film physique.
+            Pour regarder un film qui ne vous appartient pas, vous devez l&apos;échanger contre un de vos films.
+            L&apos;échange est <strong className="text-white">instantané et définitif</strong> : vous devenez propriétaire du film échangé, et l&apos;autre utilisateur devient propriétaire du vôtre.
           </p>
         </div>
       </section>
 
-      {/* Section Pourquoi payer */}
+      {/* Section Parrainage */}
       <section className="relative bg-zinc-950 py-32 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16 space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-full text-orange-500 text-sm font-medium">
+              <Users className="h-4 w-4" />
+              Parrainage communautaire
+            </div>
+
+            <h2 className="text-5xl md:text-6xl font-bold text-white">
+              Film de bienvenue
+            </h2>
+
+            <p className="text-xl text-zinc-400 max-w-3xl mx-auto">
+              Chaque nouvel utilisateur reçoit automatiquement un film d&apos;un membre existant
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Pour les nouveaux */}
+            <div className="p-8 bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl space-y-6">
+              <h3 className="text-2xl font-bold text-white">Vous rejoignez Warecast</h3>
+
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-zinc-300">Recevez automatiquement un film lors de votre inscription</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-zinc-300">Le film vous appartient définitivement</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-zinc-300">Commencez immédiatement à échanger</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Pour les parrains */}
+            <div className="p-8 bg-gradient-to-b from-orange-950 to-black border-2 border-orange-500 rounded-2xl space-y-6">
+              <h3 className="text-2xl font-bold text-white">Vous parrainez</h3>
+
+              <p className="text-zinc-300">
+                Chaque fois qu&apos;un nouvel utilisateur s&apos;inscrit, un membre existant partage automatiquement un de ses films pour l&apos;accueillir.
+              </p>
+
+              <div>
+                <h4 className="text-lg font-semibold text-white mb-4">Système de badges</h4>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-zinc-300"><strong className="text-orange-400">Bronze</strong> : 1 à 5 parrainages</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-zinc-300"><strong className="text-zinc-400">Argent</strong> : 6 à 15 parrainages</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-zinc-300"><strong className="text-yellow-400">Or</strong> : 16+ parrainages</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section Pourquoi payer */}
+      <section className="relative bg-black py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 rounded-full text-orange-500 text-sm font-medium">
@@ -308,7 +409,7 @@ export default function HelpPage() {
             </h2>
 
             <p className="text-xl text-zinc-400 max-w-3xl mx-auto">
-              Les films ne nous appartiennent pas. Vos paiements couvrent l&apos;infrastructure et les services
+              Les films vous appartiennent. Vos paiements couvrent l&apos;infrastructure et les services
             </p>
           </div>
 

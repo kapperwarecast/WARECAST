@@ -39,14 +39,14 @@ export async function GET(
       })
     }
 
-    // 2. Vérifier si l'utilisateur a loué ce film spécifique (et que c'est encore valide)
+    // 2. Vérifier si l'utilisateur a une session active pour ce film (et qu'elle est encore valide)
     const { data: rental, error: rentalError } = await supabase
-      .from('emprunts')
-      .select('id, statut, date_retour')
+      .from('viewing_sessions')
+      .select('id, statut, return_date')
       .eq('user_id', user.id)
       .eq('movie_id', movieId)
       .eq('statut', 'en_cours')
-      .gt('date_retour', new Date().toISOString()) // Vérifier que la location n'est pas expirée
+      .gt('return_date', new Date().toISOString()) // Vérifier que la session n'est pas expirée
       .single()
 
     if (rental && !rentalError) {

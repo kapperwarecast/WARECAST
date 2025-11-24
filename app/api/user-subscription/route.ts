@@ -21,7 +21,7 @@ export async function GET() {
         abonnement:abonnements(*)
       `)
       .eq("user_id", user.id)
-      .in("statut", ["actif", "résilié"])
+      .in("statut", ["actif", "résilié", "resilie"])
       .order("date_expiration", { ascending: false })
       .limit(1)
       .maybeSingle()

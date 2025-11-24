@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { useOwnedFilms } from "@/hooks/data/use-owned-films"
 import { Package, Loader2, PlayCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -25,7 +26,12 @@ const getPosterUrl = (path: string | null): string | null => {
 }
 
 export default function MesFilmsPage() {
-  const { films, loading, error } = useOwnedFilms()
+  const { films, loading, error, refresh } = useOwnedFilms()
+
+  // Force refresh on mount (fallback en cas de problème Realtime)
+  React.useEffect(() => {
+    refresh()
+  }, [refresh])
 
   // Séparer le film en cours de lecture des autres
   const currentFilm = films.find(f => f.has_active_session)
@@ -69,20 +75,15 @@ export default function MesFilmsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Package className="w-8 h-8 text-orange-500" />
-            <h1 className="text-3xl font-bold text-white">Mes films</h1>
-          </div>
-          <p className="text-zinc-400">
-            Votre collection personnelle de {films.length} film{films.length > 1 ? 's' : ''}
-          </p>
+          <h1 className="text-3xl font-bold text-white">
+            Mes films ({films.length})
+          </h1>
         </div>
 
         {/* Film en cours de lecture - Section mise en avant */}
         {currentFilm && (
           <div className="mb-12">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <PlayCircle className="w-6 h-6 text-orange-500" />
+            <h2 className="text-xl font-semibold text-white mb-4">
               En cours de lecture
             </h2>
             <div className="bg-gradient-to-r from-orange-950/40 to-orange-900/20 border-2 border-orange-500/50 rounded-lg p-6">
@@ -123,13 +124,13 @@ export default function MesFilmsPage() {
                   </div>
 
                   <div className="flex gap-3">
-                    <Link href={`/movie-player/${currentFilm.movie_id}`}>
+                    <Link href={`/movie-player/${currentFilm.movie_id}?registryId=${currentFilm.registry_id}`}>
                       <Button className="bg-orange-500 hover:bg-orange-600">
                         <PlayCircle className="w-4 h-4 mr-2" />
                         Continuer la lecture
                       </Button>
                     </Link>
-                    <Link href={`/film/${currentFilm.movie.slug}`}>
+                    <Link href={`/film/${currentFilm.movie.slug}?registryId=${currentFilm.registry_id}`}>
                       <Button variant="outline" className="border-zinc-700 hover:border-orange-500">
                         Voir les détails
                       </Button>
@@ -165,9 +166,9 @@ export default function MesFilmsPage() {
               Films disponibles {currentFilm ? `(${availableFilms.length})` : ''}
             </h2>
 
-            {/* Grille de films avec MovieCard - identique au catalogue */}
+            {/* Grille de films avec MovieCard - utilise ownedFilms pour multi-copy support */}
             <MovieGrid
-              movies={availableFilms.map(f => f.movie)}
+              ownedFilms={availableFilms}
               loading={loading}
             />
           </div>

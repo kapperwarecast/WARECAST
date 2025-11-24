@@ -43,6 +43,7 @@ export interface AdminUser {
   subscription_expires_at: string | null
   total_paid_rentals: number
   total_subscription_rentals: number
+  owned_films_count: number
 }
 
 export function UsersTable() {
@@ -212,6 +213,7 @@ export function UsersTable() {
               <TableHead className="text-zinc-400">Email</TableHead>
               <TableHead className="text-zinc-400">Statut</TableHead>
               <TableHead className="text-zinc-400">Admin</TableHead>
+              <TableHead className="text-zinc-400 text-right">Films possédés</TableHead>
               <TableHead className="text-zinc-400 text-right">Films achetés</TableHead>
               <TableHead className="text-zinc-400 text-right">Films abonnement</TableHead>
               <TableHead className="text-zinc-400">Inscrit le</TableHead>
@@ -221,7 +223,7 @@ export function UsersTable() {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12 text-zinc-500">
+                <TableCell colSpan={9} className="text-center py-12 text-zinc-500">
                   Aucun utilisateur trouvé
                 </TableCell>
               </TableRow>
@@ -284,6 +286,11 @@ export function UsersTable() {
                       ) : (
                         <span className="text-zinc-500 text-sm">-</span>
                       )}
+                    </TableCell>
+
+                    {/* Owned films count */}
+                    <TableCell className="text-right text-zinc-300">
+                      {user.owned_films_count}
                     </TableCell>
 
                     {/* Paid rentals count */}

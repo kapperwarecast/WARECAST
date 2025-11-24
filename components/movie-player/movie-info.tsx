@@ -77,31 +77,17 @@ export function MovieInfo({ movie, className }: MovieInfoProps) {
         </div>
       )}
 
-      {/* Status and Rating */}
-      <div className="flex items-center gap-4 pt-4 border-t border-zinc-800">
-        {movie.statut && (
-          <div className="text-sm">
-            <span className="text-zinc-400">Statut : </span>
-            <span className={cn(
-              "font-medium",
-              movie.statut === "en ligne"
-                ? "text-green-400"
-                : "text-yellow-400"
-            )}>
-              {movie.statut === "en ligne" ? "En ligne" : "En traitement"}
-            </span>
-          </div>
-        )}
-
-        {movie.note_tmdb && (
+      {/* Rating */}
+      {movie.note_tmdb && (
+        <div className="pt-4 border-t border-zinc-800">
           <div className="text-sm">
             <span className="text-zinc-400">Note TMDB : </span>
             <span className="font-medium text-white">
               {parseFloat(movie.note_tmdb.toString()).toFixed(1)}/10
             </span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -20,10 +20,12 @@ interface MovieCardProps {
   movie: MovieWithDirector
   priority?: boolean
   referrer?: Referrer
+  registryId?: string           // For owned films (multi-copy support)
+  hasActiveSession?: boolean    // Is user currently watching this copy?
 }
 
 // OPTIMIZATION: Supprimer Intersection Observer custom (double lazy loading avec Next.js Image)
-export function MovieCard({ movie, priority = false, referrer }: MovieCardProps) {
+export function MovieCard({ movie, priority = false, referrer, registryId, hasActiveSession: _hasActiveSession }: MovieCardProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
 
@@ -34,23 +36,29 @@ export function MovieCard({ movie, priority = false, referrer }: MovieCardProps)
   const duration = formatDuration(movie.duree)
   const language = movie.langue_vo
 
-  // Build movie URL with optional referrer context
+  // Build movie URL with optional referrer context and registryId
   const buildMovieUrl = (): string => {
     const baseUrl = `/film/${movie.slug}`
-    if (!referrer) return baseUrl
+    const params = new URLSearchParams()
 
-    const params = new URLSearchParams({
-      from: referrer.type,
-      [`${referrer.type}Slug`]: referrer.slug,
-      [`${referrer.type}Name`]: referrer.name
-    })
-
-    // Pass original context if available (e.g., from directors-list)
-    if (referrer.from) {
-      params.append(`${referrer.type}From`, referrer.from)
+    // Add registry_id if owned film (for multi-copy support)
+    if (registryId) {
+      params.append('registryId', registryId)
     }
 
-    return `${baseUrl}?${params.toString()}`
+    // Add referrer if provided
+    if (referrer) {
+      params.append('from', referrer.type)
+      params.append(`${referrer.type}Slug`, referrer.slug)
+      params.append(`${referrer.type}Name`, referrer.name)
+
+      // Pass original context if available (e.g., from directors-list)
+      if (referrer.from) {
+        params.append(`${referrer.type}From`, referrer.from)
+      }
+    }
+
+    return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl
   }
 
   const movieUrl = buildMovieUrl()

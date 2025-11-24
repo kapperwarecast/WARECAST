@@ -7,8 +7,8 @@ import { useRealtimeSubscription } from './use-realtime-subscription'
 import type { UseRealtimeUserRentalReturn } from '@/types'
 
 /**
- * Hook pour s'abonner aux emprunts de l'utilisateur en temps réel
- * Détecte instantanément quand un film est loué ou rendu
+ * Hook pour s'abonner aux sessions de visionnage de l'utilisateur en temps réel
+ * Détecte instantanément quand une session est créée ou terminée
  */
 export function useRealtimeUserRental(movieId: string): UseRealtimeUserRentalReturn {
   const { user } = useAuth()
@@ -27,8 +27,8 @@ export function useRealtimeUserRental(movieId: string): UseRealtimeUserRentalRet
 
     const supabase = createClient()
     const { data, error } = await supabase
-      .from('emprunts')
-      .select('id, date_retour, statut')
+      .from('viewing_sessions')
+      .select('id, return_date, statut')
       .eq('user_id', user.id)
       .eq('movie_id', movieId)
       .eq('statut', 'en_cours')
@@ -37,7 +37,7 @@ export function useRealtimeUserRental(movieId: string): UseRealtimeUserRentalRet
     if (!error && data) {
       setIsCurrentlyRented(true)
       setRentalId(data.id)
-      setExpiresAt(data.date_retour)
+      setExpiresAt(data.return_date)
       console.log(`📡 [Realtime Rental] État initial: Film ${movieId} loué`)
     } else {
       setIsCurrentlyRented(false)
@@ -57,16 +57,16 @@ export function useRealtimeUserRental(movieId: string): UseRealtimeUserRentalRet
         config: {
           event: 'INSERT',
           schema: 'public',
-          table: 'emprunts',
+          table: 'viewing_sessions',
           filter: `user_id=eq.${user?.id}`,
         },
         handler: (payload) => {
-          const newRecord = payload.new as { movie_id?: string; statut?: string; id?: string; date_retour?: string }
+          const newRecord = payload.new as { movie_id?: string; statut?: string; id?: string; return_date?: string }
           if (newRecord.movie_id === movieId && newRecord.statut === 'en_cours') {
             console.log(`📡 [Realtime Rental] INSERT détecté: Film ${movieId} loué`)
             setIsCurrentlyRented(true)
             setRentalId(newRecord.id || null)
-            setExpiresAt(newRecord.date_retour || null)
+            setExpiresAt(newRecord.return_date || null)
           }
         },
       },
@@ -74,17 +74,17 @@ export function useRealtimeUserRental(movieId: string): UseRealtimeUserRentalRet
         config: {
           event: 'UPDATE',
           schema: 'public',
-          table: 'emprunts',
+          table: 'viewing_sessions',
           filter: `user_id=eq.${user?.id}`,
         },
         handler: (payload) => {
-          const newRecord = payload.new as { movie_id?: string; statut?: string; id?: string; date_retour?: string }
+          const newRecord = payload.new as { movie_id?: string; statut?: string; id?: string; return_date?: string }
           if (newRecord.movie_id === movieId) {
             if (newRecord.statut === 'en_cours') {
               console.log(`📡 [Realtime Rental] UPDATE détecté: Film ${movieId} toujours loué`)
               setIsCurrentlyRented(true)
               setRentalId(newRecord.id || null)
-              setExpiresAt(newRecord.date_retour || null)
+              setExpiresAt(newRecord.return_date || null)
             } else {
               console.log(`📡 [Realtime Rental] UPDATE détecté: Film ${movieId} rendu`)
               setIsCurrentlyRented(false)
@@ -98,7 +98,7 @@ export function useRealtimeUserRental(movieId: string): UseRealtimeUserRentalRet
         config: {
           event: 'DELETE',
           schema: 'public',
-          table: 'emprunts',
+          table: 'viewing_sessions',
           filter: `user_id=eq.${user?.id}`,
         },
         handler: (payload) => {

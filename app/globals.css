@@ -147,8 +147,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem; /* 12px au lieu de 24px */
     justify-content: center;
-    max-width: 1500px;
-    margin: 0 auto;
 
     /* Tablette et desktop: comportement auto-fill */
     @media (min-width: 768px) {

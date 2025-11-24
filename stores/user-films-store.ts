@@ -39,7 +39,7 @@ async function fetchUserFilms(userId: string | null): Promise<UserFilm[]> {
   }
 
   // Type cast des champs enums de string vers types appropriés
-  const typedFilms: UserFilm[] = (data || []).map((film) => ({
+  const typedFilms: UserFilm[] = ((data as any) || []).map((film: any) => ({
     ...film,
     physical_support_type: film.physical_support_type as PhysicalSupportType,
     acquisition_method: film.acquisition_method as AcquisitionMethod,

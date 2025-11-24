@@ -29,26 +29,29 @@ export async function GET(
       )
     }
 
-    // Vérifier si l'utilisateur possède ce film dans films_registry
-    const { data: ownership, error: ownershipError } = await supabase
-      .from("films_registry")
-      .select("id, acquisition_date")
-      .eq("current_owner_id", user.id)
+    // ✅ CORRIGÉ: Vérifier si l'utilisateur a une SESSION ACTIVE pour ce film
+    // (utilisé par le polling après paiement pour détecter quand la session est créée)
+    const { data: session, error: sessionError } = await supabase
+      .from("viewing_sessions")
+      .select("id, return_date, statut")
+      .eq("user_id", user.id)
       .eq("movie_id", movieId)
+      .eq("statut", "en_cours")
+      .gt("return_date", new Date().toISOString())
       .maybeSingle()
 
-    if (ownershipError) {
-      console.error("[movie-rental-status] Error checking ownership:", ownershipError)
+    if (sessionError) {
+      console.error("[movie-rental-status] Error checking session:", sessionError)
       return NextResponse.json(
-        { error: "Erreur lors de la vérification de la propriété" },
+        { error: "Erreur lors de la vérification de la session" },
         { status: 500 }
       )
     }
 
-    // Retourner le statut de propriété (format compatible avec l'ancien système)
+    // Retourner le statut de session (format compatible avec l'ancien système)
     return NextResponse.json({
-      isCurrentlyRented: !!ownership, // Conservé pour compatibilité - signifie "isOwned" maintenant
-      rentalId: ownership?.id || null, // ID de l'entrée dans films_registry
+      isCurrentlyRented: !!session, // TRUE si session active existe
+      rentalId: session?.id || null, // ID de la session
       movieId: movieId,
     })
   } catch (error) {

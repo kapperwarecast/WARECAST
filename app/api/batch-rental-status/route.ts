@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Requête optimisée : récupérer tous les emprunts en cours pour ces films en une seule requête
+    // Requête optimisée : récupérer toutes les sessions en cours pour ces films en une seule requête
     const { data: rentals, error: rentalsError } = await supabase
-      .from('emprunts')
+      .from('viewing_sessions')
       .select('movie_id, id, statut')
       .eq('user_id', user.id)
       .eq('statut', 'en_cours')

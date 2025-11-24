@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
 
     // Requête optimisée : récupérer les films et le count en une seule requête
     const { data: rentals, error: rentalsError, count } = await supabase
-      .from('emprunts')
+      .from('viewing_sessions')
       .select(`
         id,
-        date_emprunt,
-        date_retour,
+        created_at,
+        return_date,
         statut,
-        montant_paye,
-        type_emprunt,
+        amount_paid,
+        session_type,
         movies (
           id,
           tmdb_id,
@@ -47,20 +47,17 @@ export async function GET(request: NextRequest) {
           synopsis,
           note_tmdb,
           poster_local_path,
-          statut,
           movie_directors (
             directors (
               id,
-              nom_complet,
-              prenom,
-              nom
+              nom_complet
             )
           )
         )
       `, { count: 'exact' })
       .eq('user_id', user.id)
       .in('statut', ['rendu', 'expiré'])
-      .order('date_emprunt', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (rentalsError) {
@@ -71,31 +68,47 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const total = count || 0
-    const totalPages = Math.ceil(total / limit)
-
     // Transformer les données pour correspondre au format attendu
-    const transformedMovies = rentals?.map((rental) => ({
-      ...rental.movies,
-      directors: rental.movies?.movie_directors?.map((md) => md.directors) || [],
-      rental: {
-        id: rental.id,
-        date_emprunt: rental.date_emprunt,
-        date_retour: rental.date_retour,
-        statut: rental.statut,
-        montant_paye: rental.montant_paye,
-        type_emprunt: rental.type_emprunt
+    const transformedMovies = rentals?.map((rental) => {
+      const movies = rental.movies as Record<string, unknown> | null
+      return {
+        ...(movies || {}),
+        directors: rental.movies?.movie_directors?.map((md) => md.directors) || [],
+        rental: {
+          id: rental.id,
+          date_emprunt: rental.created_at,
+          date_retour: rental.return_date,
+          statut: rental.statut,
+          montant_paye: rental.amount_paid,
+          type_emprunt: rental.session_type
+        }
       }
-    })) || []
+    }) || []
+
+    // Dédupliquer les films (garder seulement la session la plus récente pour chaque film)
+    const uniqueMovies = transformedMovies.reduce((acc, movie) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const movieId = (movie as any).id as string
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!acc.find(m => (m as any).id === movieId)) {
+        acc.push(movie)
+      }
+      return acc
+    }, [] as typeof transformedMovies)
+
+    // Ajuster la pagination en fonction du nombre de films uniques
+    const actualTotal = uniqueMovies.length
+    const totalPages = Math.ceil((count || 0) / limit) // Basé sur le total de sessions
+    const hasMoreData = rentals && rentals.length === limit
 
     const response = {
-      movies: transformedMovies,
+      movies: uniqueMovies,
       pagination: {
         page,
         limit,
-        total,
+        total: count || 0, // Total de sessions
         totalPages,
-        hasNextPage: page < totalPages,
+        hasNextPage: hasMoreData, // Il y a plus de données si on a reçu le nombre max
         hasPreviousPage: page > 1
       }
     }

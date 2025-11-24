@@ -78,6 +78,8 @@ export function LikeButton({
 
 // Compact version specifically for cards with hydration fix
 export function LikeButtonCompact(props: BaseLikeButtonProps) {
+  const { isHydrated } = useHydration()
+
   const {
     isLiked,
     loading,
@@ -85,19 +87,7 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
     isAnimating,
     handleClick,
     ariaLabel,
-  } = useLikeButtonLogic({ movieId: props.movieId })
-
-  const { isHydrated } = useHydration()
-
-  // Return invisible placeholder during hydration to maintain layout
-  if (!isHydrated) {
-    return (
-      <div
-        className="absolute top-2 right-2 z-10 w-10 h-10 opacity-0 pointer-events-none"
-        aria-hidden="true"
-      />
-    )
-  }
+  } = useLikeButtonLogic({ movieId: props.movieId, isHydrated })
 
   return (
     <button
@@ -124,7 +114,8 @@ export function LikeButtonCompact(props: BaseLikeButtonProps) {
         isAnimating && "scale-110",
         props.className
       )}
-      aria-label={isHydrated ? ariaLabel : "Toggle favorite"}
+      aria-label={ariaLabel}
+      suppressHydrationWarning
     >
       <Heart
         size={ICON_SIZES.COMPACT}

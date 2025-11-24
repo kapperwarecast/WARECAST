@@ -1,4 +1,4 @@
-// Supabase Edge Function - Expiration automatique des emprunts
+// Supabase Edge Function - Expiration automatique des sessions de visionnage
 // Cette fonction doit être planifiée pour s'exécuter périodiquement (toutes les heures)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
@@ -35,17 +35,17 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    // Appeler la fonction PostgreSQL expire_overdue_rentals()
-    const { data, error } = await supabase.rpc("expire_overdue_rentals");
+    // Appeler la fonction PostgreSQL expire_overdue_sessions()
+    const { data, error } = await supabase.rpc("expire_overdue_sessions");
 
     if (error) {
-      console.error("Error expiring rentals:", error);
+      console.error("Error expiring sessions:", error);
       throw error;
     }
 
     const expiredCount = data || 0;
 
-    console.log(`Successfully expired ${expiredCount} rentals`);
+    console.log(`Successfully expired ${expiredCount} viewing sessions`);
 
     const result: RentalExpirationResult = {
       expired_count: expiredCount,

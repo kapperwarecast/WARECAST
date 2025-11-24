@@ -9,7 +9,6 @@ export const ROUTES = {
   WATCHED: '/watched',
   FILMS_EN_COURS: '/films-en-cours', // Legacy - deprecated
   MA_COLLECTION: '/mes-films', // Renommé de /ma-collection en /mes-films
-  ECHANGES: '/echanges',
   REALISATEURS: '/realisateurs',
   FORMULES: '/formules',
   CONTACT: '/contact',

@@ -225,7 +225,9 @@ export class PosterImportService {
 
       const moviesByTmdbId = new Map<number, MovieMinimal>()
       movies?.forEach(movie => {
-        moviesByTmdbId.set(movie.tmdb_id, movie)
+        if (movie.tmdb_id !== null) {
+          moviesByTmdbId.set(movie.tmdb_id, movie)
+        }
       })
 
       console.log(`🎬 ${movies?.length} films trouvés en base`)

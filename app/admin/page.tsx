@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Download, ImageIcon, Users } from "lucide-react"
+import { Download, ImageIcon, Users, ArrowLeftRight, Film, Library } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -112,6 +112,105 @@ export default function AdminPage() {
                   <Link href="/admin/users">
                     <Users className="h-4 w-4 mr-2" />
                     Gérer les utilisateurs
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Film Transfers History */}
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors group">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-3">
+                <div className="p-2 bg-orange-600 rounded-lg group-hover:bg-orange-500 transition-colors">
+                  <ArrowLeftRight className="h-6 w-6 text-white" />
+                </div>
+                Historique des échanges
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Consultez l&apos;historique complet des transferts et échanges de films entre utilisateurs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-zinc-500">
+                  <p>• Tous les transferts de propriété</p>
+                  <p>• Dépôts, échanges et redistributions</p>
+                  <p>• Recherche et filtrage par utilisateur</p>
+                </div>
+                <Button
+                  asChild
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  <Link href="/admin/history">
+                    <ArrowLeftRight className="h-4 w-4 mr-2" />
+                    Voir l&apos;historique
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Films Catalogue */}
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors group">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-3">
+                <div className="p-2 bg-yellow-600 rounded-lg group-hover:bg-yellow-500 transition-colors">
+                  <Film className="h-6 w-6 text-white" />
+                </div>
+                Catalogue de films
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Gérez tous les films disponibles dans le catalogue avec possibilité d&apos;édition complète
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-zinc-500">
+                  <p>• Liste complète des 413 films</p>
+                  <p>• Édition des métadonnées et liens Vimeo</p>
+                  <p>• Filtrage des films en traitement</p>
+                </div>
+                <Button
+                  asChild
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+                >
+                  <Link href="/admin/films/catalogue">
+                    <Film className="h-4 w-4 mr-2" />
+                    Voir le catalogue
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Films Registry */}
+          <Card className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors group">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-3">
+                <div className="p-2 bg-red-600 rounded-lg group-hover:bg-red-500 transition-colors">
+                  <Library className="h-6 w-6 text-white" />
+                </div>
+                Registre de propriété
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Consultez toutes les copies physiques avec leur propriétaire actuel et historique complet
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-zinc-500">
+                  <p>• Toutes les copies physiques</p>
+                  <p>• Propriétaires actuels et disponibilité</p>
+                  <p>• Historique des transferts de propriété</p>
+                </div>
+                <Button
+                  asChild
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Link href="/admin/films/registry">
+                    <Library className="h-4 w-4 mr-2" />
+                    Voir le registre
                   </Link>
                 </Button>
               </div>

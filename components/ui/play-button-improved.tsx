@@ -1,27 +1,29 @@
 "use client"
 
-import { Play } from "lucide-react"
+import { Play, Ban } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useHydration } from "@/hooks/use-hydration"
 import { usePlayButton } from "@/hooks/actions"
 import { useMovieRentalStore } from "@/stores/rental-store"
-import { useRealtimeUserRental, useRealtimeMovieAvailability } from "@/hooks/realtime"
+import { useRealtimeUserRental } from "@/hooks/realtime"
 import { useAuth } from "@/contexts/auth-context"
 import { useSubscription } from "@/hooks/use-subscription"
-import { useFilmAvailability } from "@/hooks/data/use-film-availability"
+import { useMovieButtonState } from "@/hooks/data/use-movie-button-state"
 import { PaymentChoiceModal } from "@/components/ui/payment-choice-modal"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ICON_SIZES, HOVER_SCALE_CLASSES, FOCUS_CLASSES } from "@/constants"
 import type { MoviePlayData } from "@/types"
 
 interface PlayButtonProps {
   movieId: string
+  registryId?: string  // For owned films (multi-copy support)
   className?: string
   disabled?: boolean
   initialPlayData?: MoviePlayData
 }
 
-export function PlayButtonCompact({ movieId, className, disabled = false, initialPlayData }: PlayButtonProps) {
+export function PlayButtonCompact({ movieId, registryId, className, disabled = false, initialPlayData }: PlayButtonProps) {
   const { isHydrated } = useHydration()
   const { handleClick, getAction } = usePlayButton()
   const { user } = useAuth()
@@ -44,9 +46,8 @@ export function PlayButtonCompact({ movieId, className, disabled = false, initia
     ? initialPlayData.hasActiveSubscription
     : hasActiveSubscription
 
-  // Vérifier la disponibilité du film via le hook
-  // Un film est disponible si son propriétaire n'a PAS de session active (48h)
-  const { isAvailable, loading: loadingAvailability } = useFilmAvailability(movieId)
+  // Vérifier la disponibilité et l'état du film via le hook simplifié
+  const { isAvailable, isLoading: loadingAvailability, buttonState } = useMovieButtonState(movieId)
   const isUnavailable = !isAvailable
 
   // Déterminer si on est en chargement (seulement si pas de données SSR)
@@ -58,7 +59,7 @@ export function PlayButtonCompact({ movieId, className, disabled = false, initia
 
     if (disabled || isUnavailable) return
 
-    handleClick(movieId, isCurrentlyRented, isLoading, () => setShowPaymentModal(true))
+    handleClick(movieId, registryId, isCurrentlyRented, isLoading, () => setShowPaymentModal(true))
   }
 
   // Obtenir l'action actuelle
@@ -159,7 +160,7 @@ export function PlayButtonCompact({ movieId, className, disabled = false, initia
       />
       {isUnavailable && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-full h-0.5 bg-white rotate-[-45deg]" />
+          <Ban className="w-6 h-6 text-white/90 stroke-[3]" />
         </div>
       )}
     </button>
@@ -167,7 +168,19 @@ export function PlayButtonCompact({ movieId, className, disabled = false, initia
 
   return (
     <>
-      {buttonContent}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {buttonContent}
+          </TooltipTrigger>
+          {isUnavailable && (
+            <TooltipContent>
+              <p className="font-semibold">Film en cours de lecture</p>
+              <p className="text-xs opacity-70 mt-1">Ce film est actuellement regardé par son propriétaire</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Modale de choix de paiement */}
       <PaymentChoiceModal
