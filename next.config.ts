@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // OPTIMIZATION: Restreindre remotePatterns pour sécurité et performance
+    // Désactiver l'optimisation Vercel (limite gratuite atteinte - erreur 402)
+    // Les images sont servies directement depuis Supabase Storage et TMDB
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -15,12 +17,6 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
-    formats: ['image/avif', 'image/webp'],
-    // OPTIMIZATION: Réduire deviceSizes pour moins de variants générés
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256],
-    // OPTIMIZATION: Augmenter cache TTL à 24h
-    minimumCacheTTL: 86400,
   },
 
   // OPTIMIZATION: Retirer console.log en production
