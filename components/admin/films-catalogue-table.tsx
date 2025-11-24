@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Search, Pencil, Trash2, Loader2, Filter } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -44,15 +44,31 @@ export function FilmsCatalogueTable() {
   const [films, setFilms] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [showOnlyProcessing, setShowOnlyProcessing] = useState(false)
   const [selectedFilm, setSelectedFilm] = useState<Movie | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const isFirstRender = useRef(true)
 
-  const fetchFilms = useCallback(async () => {
+  // Debounce de la recherche (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Fetch films avec paramètres de recherche serveur-side
+  const fetchFilms = useCallback(async (search: string, processingOnly: boolean) => {
     try {
       setLoading(true)
-      const res = await fetch('/api/admin/films/catalogue')
+      const params = new URLSearchParams()
+      if (search) params.set('search', search)
+      if (processingOnly) params.set('showProcessingOnly', 'true')
+
+      const url = `/api/admin/films/catalogue${params.toString() ? '?' + params.toString() : ''}`
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch films')
       const data = await res.json()
       setFilms(data.films)
@@ -63,30 +79,16 @@ export function FilmsCatalogueTable() {
     }
   }, [])
 
+  // Fetch initial et à chaque changement de filtres
   useEffect(() => {
-    fetchFilms()
-  }, [fetchFilms])
-
-  const filteredFilms = useMemo(() => {
-    let filtered = films
-
-    // Filtre "En traitement" (sans lien Vimeo)
-    if (showOnlyProcessing) {
-      filtered = filtered.filter(film => !film.lien_vimeo)
+    // Skip first render pour éviter double fetch
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      fetchFilms('', false)
+      return
     }
-
-    // Recherche par titre
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        film =>
-          film.titre_francais?.toLowerCase().includes(query) ||
-          film.titre_original?.toLowerCase().includes(query)
-      )
-    }
-
-    return filtered
-  }, [films, searchQuery, showOnlyProcessing])
+    fetchFilms(debouncedSearch, showOnlyProcessing)
+  }, [debouncedSearch, showOnlyProcessing, fetchFilms])
 
   const handleEdit = (film: Movie) => {
     setSelectedFilm(film)
@@ -99,13 +101,13 @@ export function FilmsCatalogueTable() {
   }
 
   const handleFilmUpdated = () => {
-    fetchFilms()
+    fetchFilms(debouncedSearch, showOnlyProcessing)
     setEditDialogOpen(false)
     setSelectedFilm(null)
   }
 
   const handleFilmDeleted = () => {
-    fetchFilms()
+    fetchFilms(debouncedSearch, showOnlyProcessing)
     setDeleteDialogOpen(false)
     setSelectedFilm(null)
   }
@@ -126,7 +128,7 @@ export function FilmsCatalogueTable() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
-            placeholder="Rechercher par titre..."
+            placeholder="Rechercher par titre, acteur, réalisateur..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-zinc-900 border-zinc-800 text-white"
@@ -144,8 +146,8 @@ export function FilmsCatalogueTable() {
 
       {/* Results count */}
       <div className="text-sm text-zinc-400">
-        {filteredFilms.length} film(s) trouvé(s)
-        {showOnlyProcessing && ` (${films.filter(f => !f.lien_vimeo).length} en traitement)`}
+        {films.length} film(s) trouvé(s)
+        {debouncedSearch && ` pour "${debouncedSearch}"`}
       </div>
 
       {/* Table */}
@@ -165,14 +167,14 @@ export function FilmsCatalogueTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFilms.length === 0 ? (
+            {films.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center text-zinc-500 py-8">
-                  Aucun film trouvé
+                  {debouncedSearch ? `Aucun film trouvé pour "${debouncedSearch}"` : 'Aucun film trouvé'}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredFilms.map((film) => (
+              films.map((film) => (
                 <TableRow
                   key={film.id}
                   className="border-zinc-800 hover:bg-zinc-900/50"

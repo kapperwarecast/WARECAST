@@ -1,12 +1,18 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * GET /api/admin/films/catalogue
  * Liste tous les films du catalogue avec le nombre de copies physiques
+ * Supporte la recherche serveur-side avec préfixes et normalisation accents
+ *
+ * Query params:
+ * - search: Recherche dans titres, acteurs, réalisateurs (préfixes supportés)
+ * - showProcessingOnly: Filtrer les films sans lien Vimeo
+ *
  * Réservé aux administrateurs
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -34,16 +40,18 @@ export async function GET() {
       )
     }
 
-    // Récupérer tous les films avec le count des copies physiques
+    // Récupérer les paramètres de recherche
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get('search') || null
+    const showProcessingOnly = searchParams.get('showProcessingOnly') === 'true'
+
+    // Utiliser la RPC admin_search_films pour recherche serveur-side
     const adminClient = createAdminClient()
 
-    const { data: films, error: filmsError } = await adminClient
-      .from('movies')
-      .select(`
-        *,
-        copies:films_registry(count)
-      `)
-      .order('created_at', { ascending: false })
+    const { data: films, error: filmsError } = await adminClient.rpc('admin_search_films', {
+      p_search_query: search || undefined,
+      p_show_processing_only: showProcessingOnly
+    })
 
     if (filmsError) {
       console.error('[GET /api/admin/films/catalogue] Error fetching films:', filmsError)
@@ -53,15 +61,9 @@ export async function GET() {
       )
     }
 
-    // Formatter les données pour inclure le count
-    const formattedFilms = films.map(film => ({
-      ...film,
-      copies_count: film.copies?.[0]?.count || 0
-    }))
-
     return NextResponse.json({
-      films: formattedFilms,
-      total: formattedFilms.length
+      films: films || [],
+      total: films?.length || 0
     })
   } catch (error) {
     console.error('[GET /api/admin/films/catalogue] Unexpected error:', error)

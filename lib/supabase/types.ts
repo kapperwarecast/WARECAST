@@ -968,6 +968,25 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_search_films: {
+        Args: { p_search_query?: string; p_show_processing_only?: boolean }
+        Returns: {
+          annee_sortie: number
+          copies_count: number
+          created_at: string
+          duree: number
+          genres: string[]
+          id: string
+          lien_vimeo: string
+          poster_local_path: string
+          slug: string
+          statut: string
+          synopsis: string
+          titre_francais: string
+          titre_original: string
+          tmdb_id: number
+        }[]
+      }
       assign_welcome_film: { Args: { p_new_user_id: string }; Returns: Json }
       count_overdue_rentals: { Args: never; Returns: number }
       create_film_deposit: {
@@ -1110,6 +1129,7 @@ export type Database = {
       }
       get_user_highest_badge: { Args: { p_user_id: string }; Returns: string }
       get_user_viewing_stats: { Args: { p_user_id: string }; Returns: Json }
+      immutable_unaccent: { Args: { "": string }; Returns: string }
       instant_film_exchange: {
         Args: {
           p_offered_film_id: string
@@ -1174,6 +1194,7 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       slugify: { Args: { text_input: string }; Returns: string }
+      unaccent: { Args: { "": string }; Returns: string }
       update_overdue_emprunts: { Args: never; Returns: undefined }
       update_sponsor_badge: { Args: { p_sponsor_id: string }; Returns: string }
       verify_legacy_cleanup: {

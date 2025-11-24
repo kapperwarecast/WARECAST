@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         // Récupérer les réalisateurs pour tous les films
         const { data: directorsData } = await supabase
           .from('movie_directors')
-          .select('movie_id, directors(name)')
+          .select('movie_id, directors(nom_complet)')
           .in('movie_id', movieIds)
 
         // Enrichir chaque film avec ses réalisateurs
