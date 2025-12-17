@@ -25,8 +25,8 @@ export default function SendMoviePage() {
           </h1>
 
           <p className="text-xl md:text-2xl text-zinc-400 mb-8">
-            Envoyez vos DVD/Blu-ray à Warecast pour une numérisation professionnelle
-            et un accès en streaming depuis votre espace personnel.
+            Vous voulez contribuer afin que Warecast affiche un catalogue toujours plus riche,
+            plus divers et à votre image ? Nous vous invitons à déposer des DVD ou Blu-ray sur Warecast.
           </p>
 
           {!user && (
@@ -229,14 +229,6 @@ export default function SendMoviePage() {
             </div>
           </div>
 
-          {/* Warning */}
-          <div className="mt-8 bg-orange-500/10 border border-orange-500/20 rounded-lg p-6">
-            <p className="text-orange-500 text-sm">
-              <strong>Important :</strong> Les films ne correspondant pas à notre ligne éditoriale ou en mauvais état
-              ne seront pas numérisés et pourront ne pas être restitués. Warecast se réserve le droit de refuser
-              certains contenus sans avoir à se justifier.
-            </p>
-          </div>
         </div>
       </section>
 

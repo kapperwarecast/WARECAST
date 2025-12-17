@@ -10,7 +10,7 @@ import type { RentOrAccessMovieResult } from '@/types/rpc'
 export type PlayButtonAction = 
   | 'login'           // User non connecté -> redirection login
   | 'play'            // User abonné ou film loué -> player direct
-  | 'payment'         // User non abonné sans location -> modal paiement
+  | 'payment'         // User non abonné sans échange -> modal paiement
   | 'loading'         // État de chargement
 
 interface UsePlayButtonReturn {
@@ -53,7 +53,7 @@ export function usePlayButton(): UsePlayButtonReturn {
       return 'play'
     }
     
-    // 5. User non abonné sans location -> Payment
+    // 5. User non abonné sans échange -> Payment
     return 'payment'
   }, [user, hasActiveSubscription, loadingUserSubscription])
 
@@ -100,7 +100,7 @@ export function usePlayButton(): UsePlayButtonReturn {
 
             if (rpcError) {
               console.error('[PLAY BUTTON] RPC error:', rpcError)
-              setError('Erreur technique lors de la location')
+              setError('Erreur technique lors de l\'échange')
               setIsRenting(false)
               return
             }

@@ -160,7 +160,7 @@ export function PaymentChoiceModalSimple({
                       <CreditCard className="h-5 w-5 text-white" />
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <div className="font-bold text-base text-white truncate">Location 48h</div>
+                      <div className="font-bold text-base text-white truncate">Échange 48h</div>
                       <div className="text-xs text-blue-100 leading-tight">Accès immédiat pendant 48 heures</div>
                     </div>
                   </div>

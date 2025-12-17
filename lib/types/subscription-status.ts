@@ -5,12 +5,12 @@
 export type SubscriptionStatus = 'actif' | 'résilié' | 'suspendu' | 'expiré'
 
 /**
- * Statuts qui donnent accès aux emprunts illimités
+ * Statuts qui donnent accès aux échanges illimités
  */
 export const VALID_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = ['actif', 'résilié']
 
 /**
- * Vérifie si un abonnement est valide (donne accès aux emprunts illimités)
+ * Vérifie si un abonnement est valide (donne accès aux échanges illimités)
  * Un abonnement est valide si :
  * - Le statut est 'actif' ou 'résilié' (résiliation programmée)
  * - La date d'expiration n'est pas dépassée

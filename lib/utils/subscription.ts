@@ -19,7 +19,7 @@ export interface UserSubscriptionData extends UserAbonnement {
 }
 
 /**
- * Vérifie si un utilisateur peut accéder aux emprunts illimités
+ * Vérifie si un utilisateur peut accéder aux échanges illimités
  */
 export function canAccessUnlimitedRentals(
   subscription: UserSubscriptionData | null

@@ -147,12 +147,34 @@ export async function GET(request: NextRequest) {
       query = query.eq('langue_vo', language)
     }
 
-    // DEPRECATED: copies_disponibles filter removed in ownership system
-    // All films are always "available" since availability is based on ownership, not copies
-    // Keeping the parameter for backward compatibility but ignoring it
+    // Filtre disponibilité : utiliser la vue available_movies
+    // Cette vue contient les films avec au moins une copie sans session active
     if (availableOnly) {
-      // No-op: Dans le nouveau système de propriété, tous les films sont "disponibles"
-      // car la disponibilité dépend de la propriété individuelle, pas des copies
+      // Recréer la query sur la vue available_movies au lieu de movies
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      query = (supabase as any)
+        .from('available_movies')
+        .select(preview ? '*' : `
+          *,
+          movie_directors(
+            directors(
+              nom_complet
+            )
+          )
+        `, { count: 'exact' })
+        .eq('statut', 'en ligne')
+
+      // Réappliquer les autres filtres
+      if (genres.length > 0) {
+        query = query.overlaps('genres', genres)
+      }
+      if (decade) {
+        const decadeStart = parseInt(decade.replace('s', ''))
+        query = query.gte('annee_sortie', decadeStart).lte('annee_sortie', decadeStart + 9)
+      }
+      if (language) {
+        query = query.eq('langue_vo', language)
+      }
     }
 
     // For preview mode, we only need the count

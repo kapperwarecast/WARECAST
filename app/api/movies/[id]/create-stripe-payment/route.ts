@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           user_id: user.id,
           rental_duration_hours: '48'
         },
-        description: `Location du film "${movieTitle}" pour 48h`,
+        description: `Échange du film "${movieTitle}" pour 48h`,
       })
 
       // Enregistrer le paiement en attente dans notre base de données
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           status: 'pending',
           payment_method: 'stripe',
           external_payment_id: paymentIntent.id,
-          description: `Location du film "${movieTitle}" pour 48h`,
+          description: `Échange du film "${movieTitle}" pour 48h`,
           payment_intent_data: {
             movie_id: movieId,
             movie_title: movieTitle,

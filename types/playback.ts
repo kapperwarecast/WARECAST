@@ -14,8 +14,8 @@ export interface MoviePlayData {
  */
 export type PlayButtonAction =
   | 'login'           // User non connecté -> redirection login
-  | 'play'            // User abonné ou film loué -> player direct
-  | 'payment'         // User non abonné sans location -> modal paiement
+  | 'play'            // User abonné ou film en cours -> player direct
+  | 'payment'         // User non abonné sans échange -> modal paiement
   | 'loading'         // État de chargement
 
 /**
@@ -31,7 +31,7 @@ export interface VideoResumeData {
   percentage: number
   /** Timestamp de la dernière mise à jour */
   lastWatchedAt: string
-  /** ID de l'emprunt associé */
+  /** ID de la session associée */
   rentalId: string
 }
 

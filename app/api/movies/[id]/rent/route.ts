@@ -10,7 +10,7 @@ interface RouteParams {
 
 /**
  * POST /api/movies/[id]/rent
- * Point d'entrée pour location via abonnement
+ * Point d'entrée pour échange via abonnement
  * Utilise la RPC rent_or_access_movie pour garantir validation atomique
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (userError || !user) {
       return NextResponse.json({
         success: false,
-        error: "Vous devez être connecté pour emprunter un film"
+        error: "Vous devez être connecté pour échanger un film"
       }, { status: 401 })
     }
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       console.error("Erreur RPC rent_or_access_movie:", rpcError)
       return NextResponse.json({
         success: false,
-        error: "Erreur technique lors de la location"
+        error: "Erreur technique lors de l'échange"
       }, { status: 500 })
     }
 

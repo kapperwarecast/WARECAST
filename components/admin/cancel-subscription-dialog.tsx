@@ -77,7 +77,7 @@ export function CancelSubscriptionDialog({
             Conséquences :
             <ul className="mt-2 space-y-1 list-disc list-inside">
               <li>L&apos;abonnement sera marqué comme &quot;résilié&quot;</li>
-              <li>L&apos;utilisateur pourra continuer à emprunter jusqu&apos;à la date d&apos;expiration</li>
+              <li>L&apos;utilisateur pourra continuer à échanger jusqu&apos;à la date d&apos;expiration</li>
               <li>Aucun renouvellement automatique ne sera effectué</li>
               <li>L&apos;abonnement Stripe sera annulé</li>
             </ul>

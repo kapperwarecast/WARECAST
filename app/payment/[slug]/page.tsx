@@ -270,7 +270,7 @@ export default function PaymentPage() {
 
           if (data.isCurrentlyRented) {
             // Emprunt créé avec succès !
-            setProcessingMessage("Location confirmée ! Redirection...")
+            setProcessingMessage("Échange confirmé ! Redirection...")
             await new Promise(r => setTimeout(r, 500))
             router.push(`/movie-player/${slug}`)
             return
@@ -294,7 +294,7 @@ export default function PaymentPage() {
     // Timeout atteint - Afficher une erreur mais donner une option
     setIsProcessing(false)
     setProcessingMessage('')
-    alert("La location prend plus de temps que prévu. Veuillez vérifier vos locations dans votre espace personnel ou recharger la page dans quelques instants.")
+    alert("L'échange prend plus de temps que prévu. Veuillez vérifier vos films dans votre espace personnel ou recharger la page dans quelques instants.")
     router.push('/')
   }
 
@@ -351,7 +351,7 @@ export default function PaymentPage() {
             <div className="min-w-0">
               <h1 className="font-semibold truncate">Paiement sécurisé</h1>
               <p className="text-sm text-muted-foreground truncate">
-                Location de &ldquo;{movieTitle}&rdquo;
+                Échange de &ldquo;{movieTitle}&rdquo;
               </p>
             </div>
           </div>
@@ -365,7 +365,7 @@ export default function PaymentPage() {
           <div className="text-center">
             <h2 className="text-xl font-bold mb-2">{movieTitle}</h2>
             <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span>Location 48h</span>
+              <span>Échange 48h</span>
               <span>•</span>
               <span className="font-semibold text-foreground">{rentalPrice}€</span>
             </div>
@@ -412,7 +412,7 @@ export default function PaymentPage() {
             <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-center text-xl font-semibold mb-2">{processingMessage}</p>
             <p className="text-center text-sm text-muted-foreground">
-              Veuillez patienter pendant que nous finalisons votre location...
+              Veuillez patienter pendant que nous finalisons votre échange...
             </p>
           </div>
         </div>

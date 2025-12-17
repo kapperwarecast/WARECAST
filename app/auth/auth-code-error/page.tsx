@@ -13,7 +13,7 @@ export default function AuthCodeErrorPage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-black">Warecast</h1>
             <p className="text-sm text-gray-600 mt-2">
-              Votre plateforme de location de films
+              Votre plateforme d&apos;échange de films
             </p>
           </div>
 

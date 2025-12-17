@@ -17,7 +17,6 @@ interface DepositFormProps {
 export function DepositForm({ onSuccess }: DepositFormProps) {
   const [filmTitle, setFilmTitle] = useState("")
   const [supportType, setSupportType] = useState<SupportType>("Blu-ray")
-  const [tmdbId, setTmdbId] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,7 +39,6 @@ export function DepositForm({ onSuccess }: DepositFormProps) {
         body: JSON.stringify({
           filmTitle,
           supportType,
-          tmdbId: tmdbId ? parseInt(tmdbId) : null,
           additionalNotes: additionalNotes || null,
         }),
       })
@@ -58,7 +56,6 @@ export function DepositForm({ onSuccess }: DepositFormProps) {
         })
         // Reset form
         setFilmTitle("")
-        setTmdbId("")
         setAdditionalNotes("")
         setSupportType("Blu-ray")
 
@@ -172,25 +169,6 @@ export function DepositForm({ onSuccess }: DepositFormProps) {
                 <div className="text-xs mt-1">(Standard)</div>
               </button>
             </div>
-          </div>
-
-          {/* TMDB ID (optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="tmdbId" className="text-white">
-              ID TMDB (optionnel)
-            </Label>
-            <Input
-              id="tmdbId"
-              type="number"
-              value={tmdbId}
-              onChange={(e) => setTmdbId(e.target.value)}
-              placeholder="Ex: 27205"
-              className="bg-black border-zinc-700 text-white"
-            />
-            <p className="text-xs text-zinc-500">
-              Si vous connaissez l&apos;ID TMDB du film, cela facilitera son
-              identification
-            </p>
           </div>
 
           {/* Additional Notes */}

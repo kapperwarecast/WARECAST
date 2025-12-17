@@ -30,7 +30,7 @@ export function PlayButtonCompact({ movieId, registryId, className, disabled = f
   const { hasActiveSubscription, loadingUserSubscription } = useSubscription(user)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
 
-  // Utiliser Realtime pour les emprunts de l'utilisateur (instantané) avec fallback sur le store
+  // Utiliser Realtime pour les sessions de l'utilisateur (instantané) avec fallback sur le store
   const { isCurrentlyRented: realtimeRented } = useRealtimeUserRental(movieId)
   const { isCurrentlyRented: storeRented, loading } = useMovieRentalStore(movieId)
 
@@ -88,7 +88,7 @@ export function PlayButtonCompact({ movieId, registryId, className, disabled = f
       case 'play':
         const playLabel = effectiveHasActiveSubscription
           ? "Regarder le film (Abonnement)"
-          : "Regarder le film (Loué)"
+          : "Regarder le film"
         return {
           ariaLabel: playLabel,
           iconClass: "!text-white !fill-white",
@@ -97,9 +97,9 @@ export function PlayButtonCompact({ movieId, registryId, className, disabled = f
         }
       case 'payment':
         return {
-          ariaLabel: "Louer ou s'abonner pour regarder le film",
+          ariaLabel: "Échanger ou s'abonner pour regarder le film",
           iconClass: "!text-white !fill-white",
-          tooltipMessage: "Louer ou s'abonner",
+          tooltipMessage: "Échanger ou s'abonner",
           bgClass: "!bg-blue-500/80 !border-2 !border-white hover:!bg-white hover:!border-blue-500 hover:[&_svg]:!text-blue-500 hover:[&_svg]:!fill-blue-500"
         }
       default: // loading

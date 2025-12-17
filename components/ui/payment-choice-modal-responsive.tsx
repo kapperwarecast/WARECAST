@@ -72,7 +72,7 @@ export function PaymentChoiceModalResponsive({
                       <div className="flex flex-col sm:hidden gap-3 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <CreditCard className="h-5 w-5 text-white" />
-                          <span className="font-bold text-lg text-white">Location 48h</span>
+                          <span className="font-bold text-lg text-white">Échange 48h</span>
                         </div>
                         <p className="text-sm text-blue-100">Accès immédiat pendant 48 heures</p>
                         <div className="text-2xl font-bold text-white bg-white/20 py-2 px-4 rounded-lg self-center">
@@ -87,7 +87,7 @@ export function PaymentChoiceModalResponsive({
                             <CreditCard className="h-6 w-6 text-white" />
                           </div>
                           <div className="text-left">
-                            <div className="font-bold text-lg text-white">Location 48h</div>
+                            <div className="font-bold text-lg text-white">Échange 48h</div>
                             <div className="text-sm text-blue-100">Accès immédiat pendant 48 heures</div>
                           </div>
                         </div>

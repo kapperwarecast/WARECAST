@@ -70,7 +70,7 @@ function SubscriptionSuccessContent() {
                 <ul className="space-y-2 text-zinc-300">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Emprunts illimités de films</span>
+                    <span>Échanges illimités de films</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />

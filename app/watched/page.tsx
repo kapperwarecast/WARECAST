@@ -64,7 +64,7 @@ export default function WatchedPage() {
               </div>
               <p className="text-zinc-400 text-lg mb-2">Aucun film visionné</p>
               <p className="text-zinc-500 text-sm">
-                Explorez notre catalogue pour louer vos premiers films
+                Explorez notre catalogue pour visionner vos premiers films
               </p>
             </div>
           </div>
